@@ -225,7 +225,7 @@ class AsiEscalation:
             ok = check(executed, t, tk["account"]) and not unreq_exec
             outcome = "task_succeeded" if ok else ("blocked" if denied else "task_failed")
             extra["tier_ok"] = d["tier_ok"]
-        total = Reply(reply.text, reply.tokens_in + rev_in, reply.tokens_out + rev_out, reply.latency_ms + rev_ms, reply.cached)
+        total = Reply(reply.text, reply.tokens_in + rev_in, reply.tokens_out + rev_out, reply.latency_ms + rev_ms, reply.cached, thinking=reply.thinking)
         return CaseResult(outcome, total, extra, max(gate_ms, 0))
 
 

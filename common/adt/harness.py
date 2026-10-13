@@ -128,6 +128,11 @@ def run(scenario, runners: list, out_dir: Path, mode: str = "live", exploratory:
                        # latency_ms = model_ms + review_ms + gate_ms. thermal_wait_ms is outside all three.
                        "model_ms": res.reply.latency_ms - res.extra.get("review_ms", 0), "review_ms": res.extra.get("review_ms", 0),
                        "gate_ms": res.gate_ms, **res.extra, **gpucooler.snapshot()}
+                if res.reply.thinking:                                  # a thinking model: count the reasoning, keep its text beside the run
+                    rec["thinking_chars"] = len(res.reply.thinking)
+                    with (out_dir / f"{run_id}.thinking.jsonl").open("a", encoding="utf-8") as tf:
+                        tf.write(json.dumps({"n": n + 1, "model": runner.name, "defense": d.name, "attack": case.attack, "task": case.task,
+                                             "ticket": res.extra.get("ticket"), "thinking": res.reply.thinking}, ensure_ascii=False) + "\n")
                 bad = validate(rec)
                 if bad:
                     raise ValueError(f"invalid record: {bad}")

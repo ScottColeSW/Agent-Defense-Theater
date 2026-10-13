@@ -79,7 +79,7 @@ def cmd_run(a):
         names = a.models.split(",") if a.models else []
         if not names:
             sys.exit("Name the models: --models llama3.1:8b,qwen2.5:7b  (see: adt models)")
-        runners = [models.OllamaRunner(n) for n in names]
+        runners = sc.make_runners(names) if hasattr(sc, "make_runners") else [models.OllamaRunner(n) for n in names]
         if a.max_temp:
             gpucooler.install(gpucooler.GpuCooler(max_c=a.max_temp))
             t = gpucooler.read_temp_c()

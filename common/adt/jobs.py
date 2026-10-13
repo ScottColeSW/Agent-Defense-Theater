@@ -139,7 +139,8 @@ class JobManager:
         if hasattr(sc, "configure"):
             sc.configure(reviewer=spec["reviewer"], strong_reviewer=spec["strong_reviewer"])
         defs = [d for d in sc.defenses if not spec["defenses"] or d.name in spec["defenses"]]
-        runners = [models.ScriptedRunner()] if mode == "scripted" else [models.OllamaRunner(m) for m in spec["models"]]
+        runners = ([models.ScriptedRunner()] if mode == "scripted" else sc.make_runners(spec["models"]) if hasattr(sc, "make_runners")
+                   else [models.OllamaRunner(m) for m in spec["models"]])
         if mode == "live" and spec["max_temp"]:
             gpucooler.install(gpucooler.GpuCooler(max_c=spec["max_temp"], say=lambda m: self._say(job, m)))
         t["state"] = "running"

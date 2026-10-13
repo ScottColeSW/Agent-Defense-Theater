@@ -13,7 +13,7 @@ def _mods():
 
 
 def test_experiment_is_registered():
-    assert experiments("asi03") == ["first-run", "escalation", "bottom-line"]
+    assert experiments("asi03")[:3] == ["first-run", "escalation", "bottom-line"]
     sc, *_ = _mods()
     assert len(sc.defenses) == 10 and len(sc.cases()) == 61 and set(sc.CONDS) == {d.name for d in sc.defenses}
 

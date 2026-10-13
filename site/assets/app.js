@@ -156,7 +156,8 @@ function gpuStatic(root, gpu) {
 
 /* The trade-off every defense makes: attacks that got through (up is worse) against valid work completed (right is better).
    The corner to be in is the bottom right: protected, and still useful. */
-function tradeoffChart(el, summary) {
+function tradeoffChart(el, summary, L = {}) {
+  const vx = L.valid_axis || "valid work completed (higher is better)", sy = L.success_axis || "attacks that got through (lower is better)";
   const rows = summary.filter(r => r.valid && r.valid.n && r.success && r.success.n);
   if (!rows.length) { el.innerHTML = `<p class="muted small" style="margin:0">This run has no valid-work cases to plot.</p>`; return; }
   const W = 720, H = 340, m = {l: 62, r: 24, t: 18, b: 46}, X = v => m.l + v * (W - m.l - m.r), Y = v => H - m.b - v * (H - m.t - m.b);
@@ -166,8 +167,8 @@ function tradeoffChart(el, summary) {
     s += `<line x1="${X(v)}" x2="${X(v)}" y1="${m.t}" y2="${H - m.b}" stroke="${T.grid}" stroke-opacity=".6"/><text x="${X(v)}" y="${H - m.b + 16}" text-anchor="middle" fill="${T.muted}" font-size="11">${Math.round(v * 100)}%</text>`;
     s += `<line x1="${m.l}" x2="${W - m.r}" y1="${Y(v)}" y2="${Y(v)}" stroke="${T.grid}" stroke-opacity=".6"/><text x="${m.l - 8}" y="${Y(v) + 4}" text-anchor="end" fill="${T.muted}" font-size="11">${Math.round(v * 100)}%</text>`;
   }
-  s += `<text x="${(W + m.l) / 2}" y="${H - 6}" text-anchor="middle" fill="${T.muted}" font-size="11">valid work completed (higher is better)</text>`;
-  s += `<text transform="translate(14 ${(H - m.b + m.t) / 2}) rotate(-90)" text-anchor="middle" fill="${T.muted}" font-size="11">attacks that got through (lower is better)</text>`;
+  s += `<text x="${(W + m.l) / 2}" y="${H - 6}" text-anchor="middle" fill="${T.muted}" font-size="11">${esc(vx)}</text>`;
+  s += `<text transform="translate(14 ${(H - m.b + m.t) / 2}) rotate(-90)" text-anchor="middle" fill="${T.muted}" font-size="11">${esc(sy)}</text>`;
   // Conditions with identical results share one point and one label. Labels are placed so they do not run over each other.
   const groups = {};
   rows.forEach(r => { const k = `${r.valid.k}/${r.valid.n}-${r.success.k}/${r.success.n}`; (groups[k] = groups[k] || {r, names: []}).names.push(r.defense); });
@@ -176,7 +177,7 @@ function tradeoffChart(el, summary) {
   const hit = (a, b) => a.x0 < b.x1 && a.x1 > b.x0 && a.y0 < b.y1 && a.y1 > b.y0;
   list.forEach((g, i) => {
     const r = g.r, x = boxes[i].x, y = boxes[i].y, best = r.success.rate <= .15 && r.valid.rate >= .5, col = best ? T.green : r.success.rate >= .4 ? T.red : T.blue;
-    const tipHtml = esc(`<b>${g.names.join("<br>")}</b><br>valid work done ${pct(r.valid.rate)} (${r.valid.k}/${r.valid.n})<br>attacks that got through ${pct(r.success.rate)} (${r.success.k}/${r.success.n})`);
+    const tipHtml = esc(`<b>${g.names.join("<br>")}</b><br>${L.valid || "valid work done"} ${pct(r.valid.rate)} (${r.valid.k}/${r.valid.n})<br>${L.success || "attacks that got through"} ${pct(r.success.rate)} (${r.success.k}/${r.success.n})`);
     s += `<line x1="${X(r.valid.ci[0])}" x2="${X(r.valid.ci[1])}" y1="${y}" y2="${y}" stroke="${col}" stroke-opacity=".35"/><line x1="${x}" x2="${x}" y1="${Y(r.success.ci[0])}" y2="${Y(r.success.ci[1])}" stroke="${col}" stroke-opacity=".35"/>`;
     s += `<circle cx="${x}" cy="${y}" r="7" fill="${col}" fill-opacity=".9" data-tip="${tipHtml}"/>`;
     const text = g.names[0] + (g.names.length > 1 ? ` +${g.names.length - 1}` : ""), w = text.length * 6.4;

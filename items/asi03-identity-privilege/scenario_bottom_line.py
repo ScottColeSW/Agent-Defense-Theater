@@ -100,9 +100,12 @@ class AsiBottomLine(base.AsiEscalation):
             return esc.RuleApprover(cred.explain_request)
         if scripted:
             return esc.Oracle()
-        primary = esc.LlmReviewer(self._runner_for(self.reviewer_model))
-        strong = esc.LlmReviewer(self._runner_for(self.strong_reviewer))
-        return {"primary": primary, "strong": strong, "both": esc.AllOf([primary, strong])}[kind]
+        make = lambda model: esc.LlmReviewer(self._runner_for(model))          # only the reviewers a condition uses are built
+        if kind == "primary":
+            return make(self.reviewer_model)
+        if kind == "strong":
+            return make(self.strong_reviewer)
+        return esc.AllOf([make(self.reviewer_model), make(self.strong_reviewer)])
 
     def _card(self, cfg, c, t, d, dec):
         if cfg["card"] == "bottomline":

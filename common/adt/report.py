@@ -6,13 +6,15 @@ from pathlib import Path
 from . import decisionlog, scorer
 from .loader import ITEMS, experiments, item_folder, load_scenario
 
+DEFAULT_LABELS = {"success": "Attack succeeded", "valid": "Valid work done", "success_axis": "attacks that got through (lower is better)",
+                  "valid_axis": "valid work completed (higher is better)"}
 LABELS = {
     "result": "Preregistered live run. The prediction was committed before it ran, so it counts as a result.",
     "exploratory": "Exploratory live run. No committed prediction, so it is not a result.",
     "scripted": "Scripted run. Human-written replies that illustrate a mechanism. It is never a result.",
 }
 RECORD_FIELDS = ["model", "defense", "attack", "tier", "task", "ticket", "outcome", "calls", "holds", "holds_approved", "model_ms",
-                 "review_ms", "gate_ms", "thermal_wait_ms", "gpu_temp_c", "tokens_in", "tokens_out", "model_error", "attempted", "exceeds_tier"]
+                 "review_ms", "gate_ms", "thermal_wait_ms", "gpu_temp_c", "tokens_in", "tokens_out", "thinking_chars", "model_error", "attempted", "exceeds_tier"]
 
 
 def _kind(path: Path) -> str:
@@ -79,7 +81,9 @@ def build_report(run_id: str, records: bool = True):
     temps = [r["gpu_temp_c"] for r in recs if "gpu_temp_c" in r]
     item, exp = meta.get("item", "").lower(), meta.get("experiment", "first-run")
     sc = load_scenario(item, exp) if exp in experiments(item) else None
-    ctx = {"reviews": len(reviews), "unparseable": sum(1 for r in reviews if "unparseable" in r["reason"] or "unavailable" in r["reason"])}
+    ctx = {"reviews": len(reviews), "unparseable": sum(1 for r in reviews if "unparseable" in r["reason"] or "unavailable" in r["reason"]), "records": scored}
+    think_path = path.with_name(path.name.replace(".jsonl", ".thinking.jsonl"))
+    thinking = [json.loads(l) for l in think_path.read_text(encoding="utf-8").splitlines()[:400] if l.strip()] if think_path.exists() else []
     out = {
         "run_id": run_id, "item": meta.get("item"), "folder": item_folder(item).name, "experiment": exp, "kind": kind, "label": LABELS[kind], "meta": meta,
         "title": getattr(sc, "title", run_id) if sc else run_id,
@@ -98,6 +102,9 @@ def build_report(run_id: str, records: bool = True):
         "prediction": getattr(sc, "predictions", None) if (sc and kind == "result") else None,
         "pass_bar": sc.pass_bar(rows, ctx) if (sc and kind == "result" and hasattr(sc, "pass_bar") and rows) else None,
         "hardware_note": meta.get("hardware_note"),
+        "labels": {**DEFAULT_LABELS, **(getattr(sc, "labels", None) or {})} if sc else DEFAULT_LABELS,
+        "analysis": sc.analyze(scored) if (sc and hasattr(sc, "analyze") and scored) else [],
+        "thinking": [{**t, "thinking": t["thinking"][:1500]} for t in thinking[:60]], "thinking_total": len(thinking),
     }
     if out["gpu"]:
         s = out["gpu"]["samples"]

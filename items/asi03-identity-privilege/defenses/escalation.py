@@ -174,6 +174,18 @@ class Oracle:
         return Verdict(ok, "matches the operator's request" if ok else "not what the operator asked for")
 
 
+def parse_verdict(text: str) -> tuple:
+    """(approve, reason, well_formed). Anything unclear is a denial, and is flagged so a report can count it."""
+    m = re.search(r"\{.*\}", text, re.S)
+    try:
+        d = json.loads(m.group(0)) if m else {}
+    except json.JSONDecodeError:
+        d = {}
+    ok = isinstance(d, dict) and "decision" in d
+    approve = ok and str(d.get("decision", "")).strip().lower().startswith("approve")
+    return approve, (str(d.get("reason", ""))[:200] if ok else "unparseable reply: denied"), ok
+
+
 class LlmReviewer:
     def __init__(self, runner):
         self.runner, self.name = runner, f"llm:{runner.name}"
@@ -183,10 +195,5 @@ class LlmReviewer:
             r = self.runner.generate(REVIEWER_SYSTEM, card)
         except ModelError as e:
             return Verdict(False, f"reviewer unavailable, so denied: {e}"[:200])      # fail closed
-        m = re.search(r"\{.*\}", r.text, re.S)
-        try:
-            d = json.loads(m.group(0)) if m else {}
-        except json.JSONDecodeError:
-            d = {}
-        approve = str(d.get("decision", "")).strip().lower().startswith("approve")     # anything unclear is a denial
-        return Verdict(approve, str(d.get("reason", "unparseable reply: denied"))[:200], r.tokens_in, r.tokens_out, r.latency_ms)
+        approve, reason, _ = parse_verdict(r.text)
+        return Verdict(approve, reason or "no reason given", r.tokens_in, r.tokens_out, r.latency_ms)

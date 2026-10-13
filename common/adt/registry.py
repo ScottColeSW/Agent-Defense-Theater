@@ -39,7 +39,7 @@ def list_tests(refresh: bool = False) -> list:
                 "title": getattr(sc, "title", f"{item.upper()} {exp}"), "summary": getattr(sc, "summary", ""),
                 "cases": len(cases), "attack_cases": sum(c.kind == "attack" for c in cases), "legit_cases": sum(c.kind == "legit" for c in cases),
                 "defenses": [{"name": d.name, "layer": d.layer, "description": d.description} for d in sc.defenses],
-                "has_reviewer": hasattr(sc, "configure"), "reviewer_default": getattr(sc, "reviewer_model", None),
+                "has_reviewer": hasattr(sc, "configure"), "reviewer_default": getattr(sc, "reviewer_model", None), "second_reviewer_default": getattr(sc, "strong_reviewer", None),
                 "prereg": {"path": sc.prereg_path.relative_to(ROOT).as_posix(), "ready": ready, "message": "ok" if ready else msg},
                 "last_result": last, "live_seconds_estimate": last["seconds"] if last else None,
             })

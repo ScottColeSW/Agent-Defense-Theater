@@ -59,6 +59,7 @@ def test_live_result_is_refused_without_a_committed_prediction(monkeypatch):
     monkeypatch.setattr(jobs_mod.JobManager, "_ollama_up", staticmethod(lambda: True))
     monkeypatch.setattr(jobs_mod.models, "ollama_models", lambda: [("m", "1B")])
     monkeypatch.setattr(jobs_mod.harness, "check_prereg", lambda *a: (False, "PREREGISTRATION.md is not committed.", {}))
+    monkeypatch.setattr(jobs_mod.modelmgr, "preflight", lambda names, host=None: (True, "ok"))
     with pytest.raises(ValueError, match="is refused: .*not committed"):
         JobManager().submit({"tests": ["asi03/first-run"], "mode": "live", "models": ["m"]})
     # an exploratory run does not need one, and says so by name
@@ -160,3 +161,62 @@ def test_api_refuses_cross_site_and_malformed_requests(api):
     assert api("GET", "/api/tests", headers={"Host": "evil.example"})[0] == 403               # DNS rebinding
     s, d = api("POST", "/api/jobs", {"tests": ["asi99/nope"], "mode": "scripted"})
     assert s == 400 and "known test" in d["error"]
+
+
+# ---------------- memory management ----------------
+def _live_ready(monkeypatch, installed=("a",)):
+    monkeypatch.setattr(jobs_mod.JobManager, "_ollama_up", staticmethod(lambda: True))
+    monkeypatch.setattr(jobs_mod.models, "ollama_models", lambda: [(n, "1B") for n in installed])
+    monkeypatch.setattr(jobs_mod.modelmgr, "preflight", lambda names, host=None: (True, "ok"))
+
+
+def test_a_model_that_will_not_fit_is_refused_before_anything_starts(monkeypatch):
+    _live_ready(monkeypatch, ("huge",))
+    monkeypatch.setattr(jobs_mod.modelmgr, "preflight", lambda names, host=None: (False, "huge needs about 52.0 GB and would not fit in memory"))
+    with pytest.raises(ValueError, match="would not fit"):
+        JobManager().submit({"tests": ["asi03/first-run"], "mode": "exploratory", "models": ["huge"]})
+
+
+def test_a_live_job_starts_and_ends_with_an_empty_gpu_unless_told_not_to(iso, monkeypatch):
+    _live_ready(monkeypatch)
+    calls = []
+    monkeypatch.setattr(jobs_mod.modelmgr, "unload_all", lambda host=None: calls.append(1) or {"unloaded": ["a"], "still_loaded": []})
+    monkeypatch.setattr(jobs_mod.JobManager, "_run_test", lambda self, job, t: t.update(state="done"))
+    m = JobManager()
+    job = m.submit({"tests": ["asi03/first-run"], "mode": "exploratory", "models": ["a"]})
+    assert finished(m, job) and len(calls) == 2
+    log = " ".join(m.get(job["id"])["log"])
+    assert "memory before the run: unloaded a" in log and "memory after the run" in log
+    job2 = m.submit({"tests": ["asi03/first-run"], "mode": "exploratory", "models": ["a"], "unload_before": False, "unload_after": False})
+    assert finished(m, job2) and len(calls) == 2                                      # opted out, so it did not touch memory
+    job3 = m.submit({"tests": ["asi03/first-run"], "mode": "scripted"})
+    assert finished(m, job3) and len(calls) == 2                                      # a scripted run uses no model, so never does
+
+
+def test_api_models_unload_and_plan(api, monkeypatch):
+    from adt import server
+    fake_cat = {"memory": {"vram": {"name": "GPU", "total": 8 * 2**30, "used": 0, "free": 8 * 2**30}, "ram": None}, "models": [{"name": "m", "class": "gpu"}], "loaded": []}
+    monkeypatch.setattr(server.modelmgr, "catalog", lambda: fake_cat)
+    monkeypatch.setattr(server.modelmgr, "unload", lambda name: name == "m")
+    monkeypatch.setattr(server.modelmgr, "unload_all", lambda: {"unloaded": ["m"], "still_loaded": []})
+    monkeypatch.setattr(server.modelmgr, "plan", lambda agents, reviewers: {"ok": True, "agents": agents, "reviewers": reviewers})
+    assert api("GET", "/api/models") == (200, fake_cat)
+    assert api("POST", "/api/models/unload", {"model": "m"}) == (200, {"unloaded": ["m"], "still_loaded": []})
+    assert api("POST", "/api/models/unload", {"model": "stuck"}) == (200, {"unloaded": [], "still_loaded": ["stuck"]})
+    assert api("POST", "/api/models/unload", {}) == (200, {"unloaded": ["m"], "still_loaded": []})
+    assert api("POST", "/api/models/unload", {"model": 5})[0] == 400
+    s, d = api("POST", "/api/plan", {"agents": ["a", 7, "b"], "reviewers": ["r"]})
+    assert s == 200 and d["agents"] == ["a", "b"] and d["reviewers"] == ["r"]                    # non-names are dropped
+    assert api("POST", "/api/plan", {"agents": ["a"]}, {"Origin": "http://evil.example"})[0] == 403
+
+
+def test_api_models_says_so_when_ollama_is_down(api, monkeypatch):
+    import urllib.error
+    from adt import server
+
+    def down():
+        raise urllib.error.URLError(ConnectionRefusedError())
+
+    monkeypatch.setattr(server.modelmgr, "catalog", down)
+    s, d = api("GET", "/api/models")
+    assert s == 503 and "not reachable" in d["error"]

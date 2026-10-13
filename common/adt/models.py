@@ -34,14 +34,14 @@ def ollama_models(host: str = HOST) -> list:
 class OllamaRunner:
     """Temperature 0 and a fixed seed. JSON output mode, because the agents here answer with a tool plan."""
 
-    def __init__(self, model: str, host: str = HOST, num_ctx: int = 4096, seed: int = 0):
-        self.model, self.host, self.num_ctx, self.seed = model, host, num_ctx, seed
+    def __init__(self, model: str, host: str = HOST, num_ctx: int = 4096, seed: int = 0, keep_alive: str = "10m"):
+        self.model, self.host, self.num_ctx, self.seed, self.keep_alive = model, host, num_ctx, seed, keep_alive
         self.name = model
 
     def generate(self, system: str, user: str, hint=None) -> Reply:
         gpucooler.before_call()          # waits here while the GPU is over its limit, if a cooler is installed
         body = json.dumps({
-            "model": self.model, "stream": False, "format": "json", "keep_alive": "10m",
+            "model": self.model, "stream": False, "format": "json", "keep_alive": self.keep_alive,
             "options": {"temperature": 0, "seed": self.seed, "num_ctx": self.num_ctx},
             "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
         }).encode()
@@ -54,7 +54,11 @@ class OllamaRunner:
                 return Reply(d["message"]["content"], d.get("prompt_eval_count", 0), d.get("eval_count", 0),
                              round((time.perf_counter() - t0) * 1000))
             except urllib.error.HTTPError as e:
-                err = f"HTTP {e.code}"
+                try:
+                    body = e.read().decode("utf-8", "replace").strip()[:200]       # Ollama says why in the body
+                except Exception:
+                    body = ""
+                err = f"HTTP {e.code}" + (f": {body}" if body else "") + (" (Ollama sends 500 on memory exhaustion or a model crash)" if e.code == 500 else "")
             except urllib.error.URLError as e:
                 if isinstance(e.reason, ConnectionRefusedError):
                     raise RuntimeError(f"Ollama is not reachable at {self.host}. Start it and run again.") from e

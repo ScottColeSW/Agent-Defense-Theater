@@ -45,10 +45,29 @@ python -m pytest -q
 | --- | --- |
 | `GET /api/tests` | Every runnable test, whether its prediction is committed, its last result |
 | `GET /api/status`, `GET /api/gpu` | Runner, Ollama and GPU readiness; temperature, history, limits and cooler state |
+| `GET /api/models`, `POST /api/models/unload`, `POST /api/plan` | Installed models and what fits, unload one or all, and the plan for a model choice (see below) |
 | `POST /api/jobs`, `GET /api/jobs/<id>`, `POST /api/jobs/<id>/cancel` | Start, follow and cancel a run of one or more tests, one job at a time because there is one GPU |
 | `GET /api/reports`, `GET /api/reports/<run_id>` | Saved runs and the detailed report for one ([`adt/report.py`](adt/report.py)) |
 
 Each experiment registers itself as a test ([`adt/registry.py`](adt/registry.py)) by providing a title, a summary, its conditions, its committed predictions and its pass bar. A new experiment appears in the runner without changes to it. Protections: only local host names are served, a POST must be JSON and any browser `Origin` must be the server's own (so a page on another site cannot start runs here), and model names must be ones Ollama actually has.
+
+## Model and memory management
+
+[`adt/modelmgr.py`](adt/modelmgr.py) helps you choose models that fit before a run starts, instead of finding out from a crash. It reuses what three sibling projects learned the hard way (Evo's `ollama_client` and scheduler, the Dominion inference layer, and Aegis Vector's `resource_guard`), in the standard library only.
+
+| What | How |
+| --- | --- |
+| **Installed models** | `/api/tags`, keeping only models that can generate text. Embedding-only models are left out |
+| **What fits** | A footprint (size on disk times 1.3 for the context and runtime, replaced by the size Ollama reports once the model has been seen loaded), judged against the whole card: **fits the GPU**, **spills to RAM (slow)**, or **will not fit** |
+| **What is loaded** | `/api/ps`, with how much of each model is on the GPU |
+| **Unloading** | `keep_alive: 0`, then polling until the model has really left. Ollama answers before it has |
+| **Run plan** | Walks the order a run uses models in (each agent model, then each reviewer) with least-recently-used eviction, and reports how many loads to expect and roughly how many seconds they cost (about 7 s per GB cold on this workstation) |
+| **Preflight** | A live run is refused if a chosen model will not fit |
+| **Clean start** | A live run unloads everything before it starts and after it ends, so one run's resident models never crowd the next. Both can be turned off |
+
+In the runner UI this is the models table under the live run modes: fit, size, what is in memory now with an Unload button, a Free GPU memory button, and a plan box that updates as you tick models. Endpoints: `GET /api/models`, `POST /api/models/unload`, `POST /api/plan`.
+
+The footprint is a conservative estimate and not a simulation of Ollama's scheduler. A failed model call now keeps Ollama's own error text, since a 500 is often memory exhaustion.
 
 ## Where results go
 

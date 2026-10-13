@@ -15,6 +15,8 @@ python adt.py serve --open        # then open http://localhost:8765/start.html
 | [`start.html`](start.html) | The runner. Choose scripted, live preregistered, or live exploratory. Run every test or one. Watch progress, a live per-condition scoreboard, and the GPU cooldown panel. Cancel at any point. |
 | [`report.html?run=<run_id>`](report.html) | The detailed report for one run: integrity of the decision log, summary by condition, prediction against result with the pass bar, where the time goes, the GPU timeline, where it held and where it did not, every reviewer decision with its request card, and every record. |
 
+For live runs the start page shows a models table: size, what each model needs in memory, whether it fits the GPU, spills into system RAM, or will not fit, what is loaded now (with an Unload button), and a plan that updates as you tick models, with how many model swaps to expect. See [`../common/README.md`](../common/README.md).
+
 A live run that would count as a result needs its prediction committed first, and the runner refuses without one and says why. Scripted runs are labeled and never results, and exploratory runs are labeled and kept outside the repository. A run that is cancelled or fails leaves no partial result behind. The runner is desktop only and binds to localhost.
 
 On a static host there is no runner, so `start.html` says so and still lists the committed results, and their reports open from `data/reports/`. `python adt.py build` regenerates those files.

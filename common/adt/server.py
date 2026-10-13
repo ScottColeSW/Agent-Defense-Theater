@@ -22,7 +22,7 @@ import time
 import webbrowser
 from urllib.parse import urlparse
 
-from . import gpucooler, models, report
+from . import gpucooler, modelmgr, models, report
 from .jobs import MANAGER, Busy
 from .loader import ROOT
 from .registry import list_tests
@@ -98,6 +98,11 @@ def make_handler(port: int, monitor: GpuMonitor):
                     return self._json(self._status())
                 if path == "/api/gpu":
                     return self._json(monitor.snapshot())
+                if path == "/api/models":
+                    try:
+                        return self._json(modelmgr.catalog())
+                    except OSError:
+                        return self._json({"error": "Ollama is not reachable"}, 503)
                 if path == "/api/reports":
                     return self._json({"reports": report.list_reports()})
                 if path.startswith("/api/reports/"):
@@ -129,6 +134,17 @@ def make_handler(port: int, monitor: GpuMonitor):
             try:
                 if path == "/api/jobs":
                     return self._json(MANAGER.view(MANAGER.submit(body)), 201)
+                if path == "/api/models/unload":
+                    name = body.get("model")
+                    if name is not None and not (isinstance(name, str) and 0 < len(name) < 200):
+                        return self._json({"error": "model must be a name"}, 400)
+                    if name:
+                        gone = modelmgr.unload(name)
+                        return self._json({"unloaded": [name] if gone else [], "still_loaded": [] if gone else [name]})
+                    return self._json(modelmgr.unload_all())
+                if path == "/api/plan":
+                    names = lambda k: [x for x in (body.get(k) or []) if isinstance(x, str)][:20]
+                    return self._json(modelmgr.plan(names("agents"), names("reviewers")))
                 if path.startswith("/api/jobs/") and path.endswith("/cancel"):
                     ok = MANAGER.cancel(path.split("/")[3])
                     return self._json({"cancelled": ok}, 200 if ok else 404)
@@ -136,6 +152,8 @@ def make_handler(port: int, monitor: GpuMonitor):
                 return self._json({"error": str(e)}, 409)
             except ValueError as e:
                 return self._json({"error": str(e)}, 400)
+            except OSError:
+                return self._json({"error": "Ollama is not reachable"}, 503)
             except Exception as e:
                 return self._json({"error": f"{type(e).__name__}: {e}"}, 500)
             self._json({"error": "not found"}, 404)

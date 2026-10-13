@@ -10,7 +10,7 @@ import time
 import uuid
 from pathlib import Path
 
-from . import gpucooler, harness, models
+from . import gpucooler, harness, modelmgr, models
 from .harness import RunCancelled
 from .loader import results_dir
 from .registry import get_scenario, list_tests
@@ -36,17 +36,21 @@ class JobManager:
         if not ids or any(i not in known for i in ids):
             raise ValueError("choose at least one known test")
         spec = {"tests": ids, "mode": mode, "models": list(spec.get("models") or []), "reviewer": spec.get("reviewer") or None,
-                "max_temp": int(spec.get("max_temp", gpucooler.DEFAULT_MAX_C)), "defenses": list(spec.get("defenses") or [])}
+                "strong_reviewer": spec.get("strong_reviewer") or None, "max_temp": int(spec.get("max_temp", gpucooler.DEFAULT_MAX_C)),
+                "defenses": list(spec.get("defenses") or []), "unload_before": bool(spec.get("unload_before", True)), "unload_after": bool(spec.get("unload_after", True))}
         if mode != "scripted":
             installed = {n for n, _ in models.ollama_models()} if self._ollama_up() else None
             if installed is None:
                 raise ValueError("Ollama is not reachable. Start it, then try again.")
-            names = spec["models"] + ([spec["reviewer"]] if spec["reviewer"] else [])
+            names = spec["models"] + [r for r in (spec["reviewer"], spec["strong_reviewer"]) if r]
             if not spec["models"]:
                 raise ValueError("choose at least one model for a live run")
             missing = [n for n in names if n not in installed]
             if missing:
                 raise ValueError("not installed in Ollama: " + ", ".join(missing))
+            ok, why = modelmgr.preflight(list(dict.fromkeys(names)))            # refuse a model that will not fit, before anything starts
+            if not ok:
+                raise ValueError(why)
         if mode == "live":                       # a result needs a prediction committed first; say so before anything starts
             for i in ids:
                 sc = get_scenario(i)
@@ -93,7 +97,10 @@ class JobManager:
 
     def _work(self, job):
         job["state"], job["started"] = "running", time.time()
+        live = job["spec"]["mode"] != "scripted"
         try:
+            if live and job["spec"]["unload_before"]:
+                self._free(job, "before")
             for t in job["tests"]:
                 if job["cancel"]:
                     t["state"], t["message"] = "cancelled", "not started"
@@ -105,7 +112,18 @@ class JobManager:
             job["state"], job["error"] = "failed", f"{type(e).__name__}: {e}"
         finally:
             gpucooler.uninstall()
+            if live and job["spec"]["unload_after"]:
+                self._free(job, "after")
             job["finished"] = time.time()
+
+    def _free(self, job, when):
+        """Start (and leave) with an empty GPU, so one run's resident models never crowd the next."""
+        try:
+            r = modelmgr.unload_all()
+            self._say(job, f"memory {when} the run: " + (("unloaded " + ", ".join(r["unloaded"])) if r["unloaded"] else "nothing was loaded") +
+                      (f"; could not unload {', '.join(r['still_loaded'])}" if r["still_loaded"] else ""))
+        except Exception as e:
+            self._say(job, f"memory {when} the run: could not check ({type(e).__name__})")
 
     def _run_test(self, job, t):
         spec = job["spec"]
@@ -115,7 +133,7 @@ class JobManager:
         exploratory = spec["mode"] == "exploratory"
         sub = "scripted" if mode == "scripted" else ("exploratory" if exploratory else "")
         if hasattr(sc, "configure"):
-            sc.configure(reviewer=spec["reviewer"])
+            sc.configure(reviewer=spec["reviewer"], strong_reviewer=spec["strong_reviewer"])
         defs = [d for d in sc.defenses if not spec["defenses"] or d.name in spec["defenses"]]
         runners = [models.ScriptedRunner()] if mode == "scripted" else [models.OllamaRunner(m) for m in spec["models"]]
         if mode == "live" and spec["max_temp"]:

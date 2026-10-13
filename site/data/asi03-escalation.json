@@ -16891,11 +16891,11 @@
  },
  "attack_tiers": [
   {
-   "name": "override_refund",
+   "name": "override_export",
    "tier": "loud"
   },
   {
-   "name": "override_export",
+   "name": "override_refund",
    "tier": "loud"
   },
   {
@@ -16911,7 +16911,7 @@
    "tier": "adaptive"
   },
   {
-   "name": "in_tier_lookalike",
+   "name": "preapproval_claim",
    "tier": "adaptive"
   },
   {
@@ -16919,7 +16919,7 @@
    "tier": "adaptive"
   },
   {
-   "name": "preapproval_claim",
+   "name": "in_tier_lookalike",
    "tier": "adaptive"
   }
  ]

@@ -34,12 +34,20 @@
       </div>
       <p class="muted small" id="modeText" style="margin:10px 0 0"></p>
       <div id="live" hidden style="margin-top:14px">
-        <div class="small muted" style="margin-bottom:6px">Agent models (installed in Ollama)</div>
-        <div id="models"></div>
-        <div style="display:flex;gap:22px;flex-wrap:wrap;margin-top:12px;align-items:center">
-          <label class="small muted">Reviewer model <select id="reviewer"></select></label>
-          <label class="small muted" title="Model calls pause while the GPU is above this. 0 turns the cooler off.">Pause above <input type="number" id="maxTemp" min="0" max="95" value="72" style="width:70px"> &deg;C</label>
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap">
+          <div class="small muted">Models installed in Ollama that can run these tests. Tick the agent models to test. Models that cannot generate text are left out.</div>
+          <button class="btn ghost" id="freeGpu" type="button" title="Unload every model so the GPU starts empty">Free GPU memory</button>
         </div>
+        <div id="memBar" style="margin:12px 0"></div>
+        <div class="tblwrap"><table class="tbl" id="modelTable"></table></div>
+        <div style="display:flex;gap:22px;flex-wrap:wrap;margin-top:12px;align-items:center">
+          <label class="small muted">Reviewer <select id="reviewer"></select></label>
+          <label class="small muted" id="secondWrap" hidden>Second reviewer <select id="reviewer2"></select></label>
+          <label class="small muted" title="Model calls pause while the GPU is above this. 0 turns the cooler off.">Pause above <input type="number" id="maxTemp" min="0" max="95" value="72" style="width:70px"> &deg;C</label>
+          <label class="check small muted"><input type="checkbox" id="unloadBefore" checked>empty the GPU before the run</label>
+          <label class="check small muted"><input type="checkbox" id="unloadAfter" checked>and after</label>
+        </div>
+        <div id="planBox" style="margin-top:12px"></div>
       </div>
       <div style="margin-top:18px;display:flex;gap:12px;flex-wrap:wrap;align-items:center">
         <button class="btn big" id="runAll" type="button" disabled>Run all tests</button>
@@ -80,7 +88,11 @@ const MODE_TEXT = {
 const STATE_CHIP = {queued: "dim", running: "info pulse", done: "ok", cancelled: "warn", refused: "bad", failed: "bad"};
 let mode = "scripted", status = null, tests = [], jobId = null, pollTimer = null, gpu = null, busy = false;
 
-const selectedModels = () => [...document.querySelectorAll("#models input:checked")].map(i => i.value);
+let catalog = null, picked = new Set(), planTimer = null, preselected = false;
+const GBs = b => (b / 1073741824).toFixed(1);
+const selectedModels = () => [...picked];
+const reviewerList = () => [$("reviewer").value, $("secondWrap").hidden ? null : $("reviewer2").value].filter(Boolean);
+const FIT = {gpu: ["ok", "fits the GPU"], partial: ["warn", "spills to RAM, slow"], no: ["bad", "will not fit"]};
 function flash(msg) { const f = $("flash"); f.hidden = !msg; f.innerHTML = msg ? `<b>Not started.</b> ${esc(msg)}` : ""; if (msg) f.scrollIntoView({block: "nearest"}); }
 
 function renderChips() {
@@ -103,15 +115,52 @@ function renderControls() {
   document.querySelectorAll(".runOne").forEach(b => b.disabled = $("runAll").disabled);
 }
 
+async function refreshModels() {
+  if (!status) return;
+  try { catalog = await api("/api/models"); } catch (e) { catalog = null; }
+  renderModels();
+}
+
 function renderModels() {
   if (!status) return;
-  const used = new Set(tests.flatMap(t => (t.last_result && t.last_result.models) || []));
-  const names = status.models.map(m => m.name);
-  $("models").innerHTML = names.length ? names.map(n => `<label class="check"><input type="checkbox" value="${esc(n)}" ${used.has(n) ? "checked" : ""}>${esc(n)}</label>`).join("") :
-    `<span class="muted small">No models found. Pull one with <code>ollama pull</code>.</span>`;
-  const def = (tests.find(t => t.reviewer_default) || {}).reviewer_default;
-  $("reviewer").innerHTML = names.map(n => `<option ${n === def ? "selected" : ""}>${esc(n)}</option>`).join("");
-  $("maxTemp").value = status.max_temp_default;
+  if (!catalog) { $("modelTable").innerHTML = `<tr><td class="muted">Could not read the model list. Is Ollama running?</td></tr>`; $("memBar").innerHTML = ""; return; }
+  const v = catalog.memory.vram, r = catalog.memory.ram, res = catalog.loaded;
+  if (!preselected) { const used = new Set(tests.flatMap(t => (t.last_result && t.last_result.models) || [])); catalog.models.forEach(m => { if (used.has(m.name) && m.class !== "no") picked.add(m.name); }); preselected = true; }
+  const resident = res.reduce((a, m) => a + (m.vram || 0), 0);
+  $("memBar").innerHTML = (v ? `<div class="small muted" style="display:flex;justify-content:space-between"><span>GPU memory: ${GBs(v.used)} of ${GBs(v.total)} GB in use on ${esc(v.name)}</span><span>${r ? `system RAM ${GBs(r.free)} GB free` : ""}</span></div>
+      <div class="bar ${v.used / v.total > .9 ? "red" : v.used / v.total > .7 ? "amber" : "green"}" style="margin-top:4px"><i style="width:${v.used / v.total * 100}%"></i></div>
+      <div class="small muted" style="margin-top:4px">${res.length ? "Loaded now: " + res.map(m => `${esc(m.name)} (${GBs(m.size)} GB)`).join(", ") : "No model is loaded."}</div>` :
+      `<div class="small muted">No GPU memory reading available${r ? `; system RAM ${GBs(r.free)} GB free` : ""}.</div>`);
+  $("modelTable").innerHTML = `<thead><tr><th></th><th>Model</th><th>Size</th><th>Needs in memory</th><th>Fit</th><th>In memory now</th></tr></thead><tbody>` + catalog.models.map(m => {
+    const f = FIT[m.class], dis = m.class === "no";
+    return `<tr><td><input type="checkbox" class="pick" data-n="${esc(m.name)}" ${picked.has(m.name) && !dis ? "checked" : ""} ${dis ? "disabled" : ""}></td>
+      <td>${esc(m.name)} <span class="muted">${esc(m.params || "")} ${esc(m.quant || "")}</span></td><td>${GBs(m.disk)} GB</td>
+      <td data-tip="${esc(m.basis === "observed" ? "Measured: the size Ollama reported when it loaded this model." : "Estimate: size on disk times 1.3 for the context and runtime. It is replaced by a measurement once the model has been loaded.")}">${GBs(m.need)} GB <span class="muted">${esc(m.basis)}</span></td>
+      <td><span class="chip ${f[0]}" data-tip="${esc(m.why)}">${f[1]}</span></td>
+      <td>${m.resident ? `<span class="chip info">loaded, ${GBs(m.resident_vram)} GB on GPU</span> <button class="btn ghost unl" data-n="${esc(m.name)}" type="button" style="padding:2px 8px;font-size:11px">Unload</button>` : `<span class="muted">not loaded</span>`}</td></tr>`;
+  }).join("") + "</tbody>";
+  const names = catalog.models.map(m => m.name), keep = id => $(id).value;
+  const fill = (id, def) => { const cur = keep(id) || def; $(id).innerHTML = names.map(n => `<option ${n === cur ? "selected" : ""}>${esc(n)}</option>`).join(""); };
+  fill("reviewer", (tests.find(t => t.reviewer_default) || {}).reviewer_default);
+  fill("reviewer2", (tests.find(t => t.second_reviewer_default) || {}).second_reviewer_default);
+  $("secondWrap").hidden = !tests.some(t => t.second_reviewer_default);
+  $("maxTemp").value = $("maxTemp").dataset.set ? $("maxTemp").value : status.max_temp_default;
+  document.querySelectorAll(".pick").forEach(c => c.onchange = () => { c.checked ? picked.add(c.dataset.n) : picked.delete(c.dataset.n); schedulePlan(); });
+  document.querySelectorAll(".unl").forEach(b => b.onclick = async () => { b.disabled = true; b.textContent = "Unloading..."; try { await post("/api/models/unload", {model: b.dataset.n}); } catch (e) { flash(e.message); } refreshModels(); });
+  schedulePlan();
+}
+
+function schedulePlan() { clearTimeout(planTimer); planTimer = setTimeout(plan, 250); }
+async function plan() {
+  const box = $("planBox"), ag = selectedModels();
+  if (mode === "scripted" || !status) { box.innerHTML = ""; return; }
+  if (!ag.length) { box.innerHTML = `<div class="notice">Tick at least one agent model.</div>`; return; }
+  try {
+    const p = await post("/api/plan", {agents: ag, reviewers: reviewerList()});
+    if (p.error) { box.innerHTML = `<div class="notice bad"><b>Cannot plan.</b> ${esc(p.error)}</div>`; return; }
+    const lines = [...p.warnings.map(w => `<li>${esc(w)}</li>`), ...p.advice.map(a => `<li>${esc(a)}</li>`)].join("");
+    box.innerHTML = `<div class="notice ${p.ok ? (p.warnings.length ? "" : "ok") : "bad"}"><b>${p.ok ? "Plan" : "This plan will be refused"}.</b> ${p.load_count} model load${p.load_count === 1 ? "" : "s"}${p.est_seconds ? `, about ${p.est_seconds} s lost to loading` : ""}, in this order: ${esc((p.sequence || []).slice(0, 12).join(", "))}${(p.sequence || []).length > 12 ? ", ..." : ""}.${lines ? `<ul style="margin:8px 0 0;padding-left:18px">${lines}</ul>` : ""}</div>`;
+  } catch (e) { box.innerHTML = `<div class="notice bad"><b>Cannot plan.</b> ${esc(e.message)}</div>`; }
 }
 
 function renderTests() {
@@ -131,7 +180,8 @@ function renderTests() {
 
 async function start(ids) {
   flash("");
-  const spec = {tests: ids, mode, models: selectedModels(), reviewer: $("reviewer").value || null, max_temp: +$("maxTemp").value};
+  const spec = {tests: ids, mode, models: selectedModels(), reviewer: $("reviewer").value || null, strong_reviewer: $("secondWrap").hidden ? null : ($("reviewer2").value || null),
+    max_temp: +$("maxTemp").value, unload_before: $("unloadBefore").checked, unload_after: $("unloadAfter").checked};
   try {
     const j = await post("/api/jobs", spec);
     jobId = j.id; busy = true; renderControls(); $("runview").hidden = false; $("runview").scrollIntoView({block: "start"}); poll();
@@ -194,13 +244,16 @@ async function init() {
   if (status) {
     tests = (await api("/api/tests")).tests;
     $("gpuSection").hidden = false; gpu = gpuLive($("gpu"));
-    renderModels();
+    await refreshModels(); setInterval(() => { if (!document.hidden) refreshModels(); }, 6000);
   } else {
     try { tests = (await (await fetch("data/tests.json")).json()).tests; } catch (e) { tests = []; }
   }
   renderTests(); renderControls(); loadSaved();
-  $("mode").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; mode = b.dataset.m; flash(""); renderControls(); });
+  $("mode").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; mode = b.dataset.m; flash(""); renderControls(); schedulePlan(); });
   $("runAll").addEventListener("click", () => start(tests.map(t => t.id)));
+  $("freeGpu").addEventListener("click", async () => { $("freeGpu").disabled = true; try { await post("/api/models/unload", {}); } catch (e) { flash(e.message); } $("freeGpu").disabled = false; refreshModels(); });
+  ["reviewer", "reviewer2"].forEach(id => $(id).addEventListener("change", schedulePlan));
+  $("maxTemp").addEventListener("input", e => { e.target.dataset.set = "1"; });
   if (status) {                                   // pick up a run that is already going
     const {jobs} = await api("/api/jobs");
     const live = jobs.find(j => j.state === "queued" || j.state === "running");

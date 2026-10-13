@@ -78,3 +78,14 @@ def test_a_transient_failure_recovers_on_the_retry(monkeypatch):
     monkeypatch.setattr(models.json, "load", lambda r: {"message": {"content": "{}"}, "prompt_eval_count": 3, "eval_count": 2})
     r = OllamaRunner("m").generate("s", "u")
     assert r.text == "{}" and r.tokens_in == 3 and n["i"] == 2
+
+
+def test_the_error_keeps_what_ollama_said(monkeypatch):
+    import io
+    body = b'{"error": "model requires more system memory (6.2 GiB) than is available (5.1 GiB)"}'
+    monkeypatch.setattr(models.time, "sleep", lambda s: None)
+    monkeypatch.setattr(models.urllib.request, "urlopen",
+                        lambda req, timeout: (_ for _ in ()).throw(urllib.error.HTTPError("http://x", 500, "err", {}, io.BytesIO(body))))
+    with pytest.raises(ModelError) as e:
+        OllamaRunner("m").generate("s", "u")
+    assert "requires more system memory" in str(e.value) and "memory exhaustion" in str(e.value)

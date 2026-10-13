@@ -72,7 +72,9 @@ To change the matrix, edit `crosswalk/coverage.csv` and rebuild. The CSV is the 
 
 ## Design
 
-Dark slate palette and monospace type, matching Aegis Vector. Charts are hand-built SVG and CSS, so there is no charting library to download. Motion respects `prefers-reduced-motion`. The layout works down to phone width, and the heatmap scrolls sideways inside its card.
+A calm report style with three themes, chosen with the switcher in the nav and remembered in the browser. **Dim** is the default, **Light** is a softer light theme, and **Dark** is the original slate. None of them uses pure white. The palette lives in one place, [`assets/app.css`](assets/app.css), as tokens for each theme, and the charts read the same tokens through [`assets/theme.js`](assets/theme.js), so charts and page always agree. Switching theme reloads the page so the charts redraw in the new colors.
+
+Fonts are named with system fallbacks (Outfit for headings, Plus Jakarta Sans for text, IBM Plex Mono for numbers), so the pages need nothing from the network and work offline. If those fonts are installed they are used. Charts are hand-built SVG and CSS, with no charting library. Motion respects `prefers-reduced-motion`. The pages are for a desktop browser. The About and Books pages keep their own styles.
 
 ## Deploying
 

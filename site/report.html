@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Test Report</title>
 <link rel="stylesheet" href="assets/app.css">
+<script src="assets/theme.js"></script>
 </head>
 <body>
 <div class="wrap">
@@ -112,7 +113,7 @@ function drawBreakdowns() {
 function reviewerBlock() {
   if (!R.reviews_total) return "";
   const defs = Object.keys(R.reviewer);
-  const bars = defs.map(d => { const a = R.reviewer[d], n = a.approve + a.deny; return `<div>${esc(d)}</div><div class="stacked"><i style="width:${a.approve / n * 100}%;background:#34d399" data-tip="${a.approve} approved"></i><i style="width:${a.deny / n * 100}%;background:#f43f5e" data-tip="${a.deny} denied"></i></div><div class="muted small">${a.approve} approved · ${a.deny} denied</div>`; }).join("");
+  const bars = defs.map(d => { const a = R.reviewer[d], n = a.approve + a.deny; return `<div>${esc(d)}</div><div class="stacked"><i style="width:${a.approve / n * 100}%;background:${T.green}" data-tip="${a.approve} approved"></i><i style="width:${a.deny / n * 100}%;background:${T.red}" data-tip="${a.deny} denied"></i></div><div class="muted small">${a.approve} approved · ${a.deny} denied</div>`; }).join("");
   return sec("What the reviewer decided", `<div style="display:grid;grid-template-columns:190px 1fr 170px;gap:6px 10px;align-items:center;font-size:12px">${bars}</div>
     <div class="filters" style="margin-top:16px"><label>Condition <select id="rvDef"><option value="">all</option>${defs.map(d => `<option>${esc(d)}</option>`).join("")}</select></label>
     <label>Verdict <select id="rvVerdict"><option value="">all</option><option>approve</option><option>deny</option></select></label><span class="muted" id="rvCount"></span></div><div id="rvList"></div>`,

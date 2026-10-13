@@ -60,7 +60,8 @@ Status labels: **Stub** (plan written, nothing built), **Designed** (the design 
 | `docs/` | Threat model, methodology, preregistration template, limits register, roadmap, demo script |
 | `integrations/` | Links to Palimpsest, Aegis Vector, Void-Marauders, and RealEstateTools |
 | `demo/` | The walkthrough and what is scripted versus live |
-| `site/` | Static pages, including the About and Books pages |
+| `site/` | The static site: status, coverage matrix, ASI06 plots, About and Books. Run with `python -m http.server -d site` |
+| `tools/` | `build_data.py` generates the site data and converts saved runs to the results schema |
 
 ## Build order
 
@@ -80,7 +81,7 @@ Details and exit criteria per step are in [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ## About the author
 
-Built by Scott A. Cole. See [About](site/about.html) and [Books](site/books.html) (served from `site/`; see [`site/README.md`](site/README.md)), or [github.com/ScottColeSW](https://github.com/ScottColeSW).
+Built by Scott A. Cole. See [About](site/about.html) and [Books](site/books.html) (served from `site/`, see [`site/README.md`](site/README.md)), or [github.com/ScottColeSW](https://github.com/ScottColeSW).
 
 ## License
 

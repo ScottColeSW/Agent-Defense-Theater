@@ -41,7 +41,7 @@ Results use the shared schema in [`../common/RESULTS-SCHEMA.md`](../common/RESUL
 
 ## What exists today
 
-Palimpsest (memory gate) and Aegis Vector (forgery testbed). Both are linked from integrations/ and are not copied here.
+Palimpsest (memory gate) and Aegis Vector (forgery testbed). Both are linked from integrations/ and are not copied here. The Aegis Vector defenses battery is imported as schema-format records in [`results/`](results/) so it can be plotted on the [site](../site/README.md).
 
 ## Limits and what it would take
 

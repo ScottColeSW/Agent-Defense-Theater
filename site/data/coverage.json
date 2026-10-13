@@ -1,0 +1,102 @@
+[
+ {
+  "id": "ASI01",
+  "name": "Agent Goal Hijack",
+  "owasp_llm_2025": "LLM01 Prompt Injection",
+  "mitre_atlas": "AML.T0051 (.000 direct, .001 indirect)",
+  "status": "Partial evidence elsewhere",
+  "existing_work": "Aegis Vector (injection and spotlighting results)",
+  "folder": "asi01-goal-hijack",
+  "limits_and_what_it_would_take": "Agent stack: only a single retrieval-and-answer loop has been tested, not a tool-using planner. Needs: a tool-using agent crew in Greenroom, an adaptive red team that is not the author, and models above the 8B size this hardware allows."
+ },
+ {
+  "id": "ASI02",
+  "name": "Tool Misuse and Exploitation",
+  "owasp_llm_2025": "LLM06 Excessive Agency",
+  "mitre_atlas": "AML.T0053 AI Agent Tool Invocation",
+  "status": "Stub",
+  "existing_work": "New work",
+  "folder": "asi02-tool-misuse",
+  "limits_and_what_it_would_take": "Needs a real tool catalog with realistic argument variety and an enterprise policy engine to test at scale. A single small MCP server proves the pattern, not the coverage."
+ },
+ {
+  "id": "ASI03",
+  "name": "Identity and Privilege Abuse",
+  "owasp_llm_2025": "LLM06 Excessive Agency",
+  "mitre_atlas": "To be mapped",
+  "status": "Stub",
+  "existing_work": "New work",
+  "folder": "asi03-identity-privilege",
+  "limits_and_what_it_would_take": "Needs a real identity provider (for example Entra ID or Okta) and workload identity. A local simulation shows the logic, not production behavior."
+ },
+ {
+  "id": "ASI04",
+  "name": "Agentic Supply Chain Vulnerabilities",
+  "owasp_llm_2025": "LLM03 Supply Chain",
+  "mitre_atlas": "To be mapped",
+  "status": "Stub",
+  "existing_work": "New work",
+  "folder": "asi04-supply-chain",
+  "limits_and_what_it_would_take": "Needs an organizational registry, software bill of materials tooling, and real package ecosystems. A toy registry cannot show scale or incentive effects."
+ },
+ {
+  "id": "ASI05",
+  "name": "Unexpected Code Execution",
+  "owasp_llm_2025": "LLM05 Improper Output Handling",
+  "mitre_atlas": "To be mapped",
+  "status": "Stub",
+  "existing_work": "New work",
+  "folder": "asi05-code-execution",
+  "limits_and_what_it_would_take": "Needs production isolation (a micro-VM or user-space kernel) and a security review of the sandbox itself. A container on a workstation is a demonstration, not a boundary to trust."
+ },
+ {
+  "id": "ASI06",
+  "name": "Memory and Context Poisoning",
+  "owasp_llm_2025": "LLM04 Data and Model Poisoning; LLM08 Vector and Embedding Weaknesses",
+  "mitre_atlas": "AML.T0070 RAG Poisoning",
+  "status": "Measured elsewhere",
+  "existing_work": "Palimpsest and Aegis Vector",
+  "folder": "asi06-memory-context-poisoning",
+  "limits_and_what_it_would_take": "Registered facts only; an unregistered fact is admitted. Untested: the memory write path, slow drift, many agreeing forgeries, a poisoned verified corpus. Needs: larger models, an adaptive attacker who knows the gate, and a production-size corpus."
+ },
+ {
+  "id": "ASI07",
+  "name": "Insecure Inter-Agent Communication",
+  "owasp_llm_2025": "No direct match",
+  "mitre_atlas": "To be mapped",
+  "status": "Stub",
+  "existing_work": "New work",
+  "folder": "asi07-inter-agent-communication",
+  "limits_and_what_it_would_take": "Needs agents on separate hosts or runtimes and a real key management service. A single-process crew cannot show network-level attacks."
+ },
+ {
+  "id": "ASI08",
+  "name": "Cascading Failures",
+  "owasp_llm_2025": "LLM10 Unbounded Consumption (partial)",
+  "mitre_atlas": "To be mapped",
+  "status": "Stub",
+  "existing_work": "New work",
+  "folder": "asi08-cascading-failures",
+  "limits_and_what_it_would_take": "Needs production-scale topologies with many agents and real dependencies. A five-agent crew shows the mechanism, not the amplification factor."
+ },
+ {
+  "id": "ASI09",
+  "name": "Human-Agent Trust Exploitation",
+  "owasp_llm_2025": "LLM09 Misinformation (partial)",
+  "mitre_atlas": "To be mapped",
+  "status": "Designed elsewhere",
+  "existing_work": "Agent Theater Framework",
+  "folder": "asi09-human-agent-trust",
+  "limits_and_what_it_would_take": "Needs a human-subject study with real reviewers. Simulated reviewers cannot show how people actually fail."
+ },
+ {
+  "id": "ASI10",
+  "name": "Rogue Agents",
+  "owasp_llm_2025": "LLM06 Excessive Agency",
+  "mitre_atlas": "To be mapped",
+  "status": "Designed elsewhere",
+  "existing_work": "Agent Theater Framework and Void-Marauders",
+  "folder": "asi10-rogue-agents",
+  "limits_and_what_it_would_take": "Needs long-horizon runs and real deployments to see slow drift. Short simulations underrepresent it."
+ }
+]

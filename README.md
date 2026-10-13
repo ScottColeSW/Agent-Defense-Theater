@@ -2,7 +2,7 @@
 
 A governed range for testing AI agent defenses: Agent Theater's earned-trust tiers and human oversight, plus an adversarial arena that attacks each OWASP Top 10 for Agentic Applications risk. Measured results, honest gaps, and what it would take to close them.
 
-> **Status: foundation.** This repository is the structure and the plan. One risk (ASI06) has measured results in two sibling repositories, one has partial evidence, and the rest are stubs with a written attack, defense, and measurement plan. Nothing here is a security product.
+> **Status: early.** This repository is the structure, a working harness, and one preregistered live run (ASI03, on a simulated desk with author-written attacks). ASI06 has measured results in two sibling repositories, ASI01 has partial evidence, two items are designed, and five are stubs with a written plan. Nothing here is a security product.
 
 ## What this is
 
@@ -25,7 +25,7 @@ A shared harness (`common/`) scores every run the same way: attack success again
 | --- | --- | --- | --- | --- | --- |
 | [ASI01](asi01-goal-hijack/) | Agent Goal Hijack | LLM01 Prompt Injection | AML.T0051 (.000 direct, .001 indirect) | Partial evidence elsewhere | Aegis Vector (injection and spotlighting results) |
 | [ASI02](asi02-tool-misuse/) | Tool Misuse and Exploitation | LLM06 Excessive Agency | AML.T0053 AI Agent Tool Invocation | Stub | New work |
-| [ASI03](asi03-identity-privilege/) | Identity and Privilege Abuse | LLM06 Excessive Agency | To be mapped | Stub | New work |
+| [ASI03](asi03-identity-privilege/) | Identity and Privilege Abuse | LLM06 Excessive Agency | To be mapped | Measured | [Preregistered run](asi03-identity-privilege/PREREGISTRATION.md): scoped credentials, 0 of 90 beyond tier |
 | [ASI04](asi04-supply-chain/) | Agentic Supply Chain Vulnerabilities | LLM03 Supply Chain | To be mapped | Stub | New work |
 | [ASI05](asi05-code-execution/) | Unexpected Code Execution | LLM05 Improper Output Handling | To be mapped | Stub | New work |
 | [ASI06](asi06-memory-context-poisoning/) | Memory and Context Poisoning | LLM04 Data and Model Poisoning; LLM08 Vector and Embedding Weaknesses | AML.T0070 RAG Poisoning | Measured elsewhere | Palimpsest and Aegis Vector |
@@ -35,6 +35,23 @@ A shared harness (`common/`) scores every run the same way: attack success again
 | [ASI10](asi10-rogue-agents/) | Rogue Agents | LLM06 Excessive Agency | To be mapped | Designed elsewhere | Agent Theater Framework and Void-Marauders |
 
 Status labels: **Stub** (plan written, nothing built), **Designed** (the design exists, nothing measured), **Built** (runs, not yet measured), **Measured** (saved results with a prior prediction), **Adversarially tested** (measured against an attacker who knows the defense). "Elsewhere" means the work lives in another repository and is linked, not copied. The same data is in [`crosswalk/coverage.csv`](crosswalk/coverage.csv). Every item also has a "limits and what it would take" entry, collected in [`docs/LIMITS-AND-ANSWERS.md`](docs/LIMITS-AND-ANSWERS.md).
+
+## Quick start
+
+Python 3.10 or newer, standard library only. [Ollama](https://ollama.com) is needed only to run live.
+
+```bash
+python adt.py status            # coverage and which items are runnable
+python adt.py demo              # scripted ASI03 run, then verify its decision log
+python adt.py serve --open      # the site at http://localhost:8765
+python adt.py models            # local models Ollama can see
+python adt.py run asi03 --models llama3.1:8b,qwen2.5:7b,phi4-mini:3.8b
+python adt.py summary asi03 --by defense,model
+python adt.py verify            # check every decision-log hash chain
+python -m pytest -q
+```
+
+A live run is refused unless the item's prediction is committed first. See [`common/README.md`](common/README.md).
 
 ## How it fits together
 
@@ -54,13 +71,14 @@ Status labels: **Stub** (plan written, nothing built), **Designed** (the design 
 | --- | --- |
 | `theater/` | Trust tiers, earned trust, and the three oversight speeds |
 | `greenroom/` | The adversarial arena and the episode format |
-| `common/` | Shared harness, results schema, and the tamper-evident decision log |
+| `common/` | The shared harness (`adt` command line), results schema, and the tamper-evident decision log |
 | `asi01-...` to `asi10-...` | One folder per OWASP agentic risk, same template each |
 | `crosswalk/` | Coverage data and the OWASP and ATLAS mapping |
 | `docs/` | Threat model, methodology, preregistration template, limits register, roadmap, demo script |
 | `integrations/` | Links to Palimpsest, Aegis Vector, Void-Marauders, and RealEstateTools |
 | `demo/` | The walkthrough and what is scripted versus live |
 | `site/` | The static site: status, coverage matrix, ASI06 plots, About and Books. Run with `python -m http.server -d site` |
+| `adt.py` | Command line launcher, no install needed |
 | `tools/` | `build_data.py` generates the site data and converts saved runs to the results schema |
 
 ## Build order

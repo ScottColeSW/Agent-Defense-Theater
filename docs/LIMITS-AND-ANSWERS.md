@@ -29,9 +29,9 @@ Needs a real tool catalog with realistic argument variety and an enterprise poli
 
 ### ASI03: Identity and Privilege Abuse
 
-Status: Stub.
+Status: Measured (first preregistered run, simulated desk).
 
-Needs a real identity provider (for example Entra ID or Okta) and workload identity. A local simulation shows the logic, not production behavior.
+One simulated agent step, author-written attacks and an author-written credential gate, three models up to 8B. Zero escapes from a deterministic gate is close to true by construction. Untested: credential lifetimes, mid-task revocation, the delegation-chain check, credentials in shared context, an escalation path for legitimate above-tier work (0 of 9 such tasks completed under scoped credentials). Needs: a real identity provider (for example Entra ID or Okta) and workload identity, a multi-step agent, and an attacker who is not the author. A local simulation shows the logic, not production behavior.
 
 ### ASI04: Agentic Supply Chain Vulnerabilities
 

@@ -20,8 +20,9 @@ Then open <http://localhost:8765/>.
 | `about.html`, `books.html` | About the author and Books. Linked from the top nav and the footer |
 | `data/coverage.json` | The coverage matrix. Generated from [`../crosswalk/coverage.csv`](../crosswalk/coverage.csv) |
 | `data/asi06-defenses.json` | Plot data for ASI06. Recomputed from the saved per-answer records |
+| `data/asi03.json` | Plot data for ASI03, from the preregistered runs, with the committed predictions beside the results |
 
-The two JSON files are generated. Do not edit them by hand.
+The JSON files are generated. Do not edit them by hand.
 
 ## Rebuild the data
 

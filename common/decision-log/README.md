@@ -1,6 +1,6 @@
 # Decision log
 
-Status: Stub. This is the detection-and-response backbone: every defense decision is written here in a form that shows tampering.
+Status: Built. This is the detection-and-response backbone: every defense decision is written here in a form that shows tampering.
 
 ## Requirements
 
@@ -9,14 +9,15 @@ Status: Stub. This is the detection-and-response backbone: every defense decisio
 - A verifier walks the chain and reports the first broken link.
 - Entries record the agent's trust tier and the delegation chain (used by ASI03 and ASI10).
 
-## Known limits to write up when built
+## Known limits
 
 - A hash chain shows tampering after the fact. It does not prevent it, and a writer with full control can rebuild the chain.
 - Stronger assurance needs an external anchor, such as a separate write-once store or a signed checkpoint held by another party.
 
-## Planned files
+## Files
 
 | File | Purpose |
 | --- | --- |
-| `FORMAT.md` | Entry fields and hash rule |
-| `VERIFY.md` | How verification works and what it proves |
+| [`FORMAT.md`](FORMAT.md) | Entry fields and hash rule |
+| [`VERIFY.md`](VERIFY.md) | How verification works and what it proves |
+| [`../adt/decisionlog.py`](../adt/decisionlog.py) | The writer and the verifier |

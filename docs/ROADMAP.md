@@ -15,3 +15,8 @@ The order follows the gaps that matter most for agent containment. Each step has
 | 9 | Adaptive tier for every measured item | An attacker who knows the defense has tried and the result is reported |
 
 Items 8 and 9 depend on resources noted in [`LIMITS-AND-ANSWERS.md`](LIMITS-AND-ANSWERS.md).
+
+## Progress
+
+- **Step 1 done (2026-10-13).** `python adt.py demo` writes valid result records and a log entry that verifies.
+- **Step 2 done (2026-10-13).** Preregistration committed, scoped-credential prototype blocked every call beyond tier 1 (0 of 90) with utility reported. The sensitivity of the utility check is limited, and in-scope abuse still gets through. Details in the ASI03 addendum.

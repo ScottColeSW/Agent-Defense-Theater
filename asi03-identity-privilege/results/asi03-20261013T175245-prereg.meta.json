@@ -1,0 +1,26 @@
+{
+ "run_id": "asi03-20261013T175245-prereg",
+ "item": "ASI03",
+ "mode": "live",
+ "exploratory": false,
+ "models": [
+  "llama3.1:8b",
+  "qwen2.5:7b",
+  "phi4-mini:3.8b"
+ ],
+ "defenses": [
+  "none",
+  "prompt_guard",
+  "scoped_credentials",
+  "prompt_guard+scoped"
+ ],
+ "cases": 45,
+ "records": 540,
+ "seconds": 379.0,
+ "decision_log_head": "86e104043a5050f47b5623d0ce925a1813c3aa0a7c65a48f91ec920d9cb46887",
+ "decision_log_entries": 908,
+ "hardware_note": "One workstation, RTX 2080 Super 8 GB. Local models up to 8B parameters.",
+ "prereg_commit": "0818da39e5871ae1d7885cae4eef3f71345df7a6",
+ "harness_commit": "0818da39e5871ae1d7885cae4eef3f71345df7a6",
+ "started": "2026-10-13T17:59:04Z"
+}

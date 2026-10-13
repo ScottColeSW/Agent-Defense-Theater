@@ -5,7 +5,10 @@ Inputs
   crosswalk/coverage.csv                    source of truth for the coverage matrix
   <PAV>/results/defenses/defenses.json      saved Aegis Vector defenses battery (optional)
 
+  asi03-identity-privilege/results/*-prereg.jsonl   preregistered live runs (read automatically when present)
+
 Outputs
+  site/data/asi03.json                      ASI03 results with the committed predictions beside them
   site/data/coverage.json                   coverage matrix for the page
   site/data/asi06-defenses.json             aggregates for the plots (recomputed from records)
   asi06-memory-context-poisoning/results/pav-defenses.jsonl
@@ -39,6 +42,46 @@ def build_coverage():
     out.mkdir(parents=True, exist_ok=True)
     (out / "coverage.json").write_text(json.dumps(rows, indent=1, ensure_ascii=False), encoding="utf-8")
     print(f"coverage.json: {len(rows)} items")
+
+
+# Mirrors the Prediction table in asi03-identity-privilege/PREREGISTRATION.md (committed before the run).
+ASI03_PREDICTION = {
+    "none": {"attack": .45, "lo": .25, "hi": .65, "utility": .90, "above_tier": .80, "exceeds_tier": .40},
+    "prompt_guard": {"attack": .20, "lo": .08, "hi": .40, "utility": .85, "above_tier": .75, "exceeds_tier": .17},
+    "scoped_credentials": {"attack": .08, "lo": .03, "hi": .15, "utility": .90, "above_tier": 0.0, "exceeds_tier": 0.0},
+    "prompt_guard+scoped": {"attack": .03, "lo": 0.0, "hi": .08, "utility": .85, "above_tier": 0.0, "exceeds_tier": 0.0},
+}
+
+
+def build_asi03():
+    sys.path.insert(0, str(ROOT / "common"))
+    from adt import scorer
+    res = ROOT / "asi03-identity-privilege" / "results"
+    files = sorted(res.glob("*-prereg.jsonl"))
+    if not files:
+        print("asi03: no preregistered runs yet, skipped")
+        return
+    metas = [json.loads(f.with_name(f.name.replace(".jsonl", ".meta.json")).read_text(encoding="utf-8")) for f in files]
+    recs = scorer.load_records(files, live_only=True)
+
+    def table(by):
+        rows = scorer.summarize(recs, by)
+        for r in rows:
+            for k in ("success", "exceeds_tier", "utility", "above_tier", "attempted"):
+                r[k]["ci"] = list(r[k]["ci"])
+        return rows
+
+    out = {"item": "ASI03", "runs": [m["run_id"] for m in metas], "models": sorted({r["model"] for r in recs}),
+           "prereg_commit": metas[-1].get("prereg_commit"), "harness_commit": metas[-1].get("harness_commit"),
+           "hardware_note": metas[-1]["hardware_note"], "records": len(recs),
+           "prediction": ASI03_PREDICTION,
+           "defenses": table(("defense",)), "by_tier": table(("defense", "tier")),
+           "by_attack": table(("defense", "attack")), "by_attack_model": table(("defense", "attack", "model")),
+           "by_model": table(("defense", "model")),
+           "attack_tiers": [{"name": n, "tier": tr} for n, tr in sorted({(r["attack"], r["tier"]) for r in recs if r["attack"] != "none"},
+                                                                          key=lambda x: ["loud", "quiet", "adaptive"].index(x[1]))]}
+    (ROOT / "site" / "data" / "asi03.json").write_text(json.dumps(out, indent=1), encoding="utf-8")
+    print(f"asi03.json: {len(recs)} records from {len(files)} run(s)")
 
 
 def build_pav(pav: Path):
@@ -128,5 +171,6 @@ if __name__ == "__main__":
     ap.add_argument("--pav", type=Path, help="path to a Project-Aegis-Vector checkout")
     a = ap.parse_args()
     build_coverage()
+    build_asi03()
     if a.pav:
         build_pav(a.pav)

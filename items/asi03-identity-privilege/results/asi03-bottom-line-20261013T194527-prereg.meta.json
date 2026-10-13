@@ -1,0 +1,41 @@
+{
+ "run_id": "asi03-bottom-line-20261013T194527-prereg",
+ "item": "ASI03",
+ "experiment": "bottom-line",
+ "mode": "live",
+ "exploratory": false,
+ "models": [
+  "llama3.1:8b",
+  "qwen2.5:7b",
+  "phi4-mini:3.8b"
+ ],
+ "defenses": [
+  "none",
+  "scoped_credentials",
+  "task_binding",
+  "hold+rule",
+  "hold+effect_card",
+  "hold+bottomline",
+  "hold+bottomline+money",
+  "task_binding+hold+bottomline",
+  "hold+bottomline+llama",
+  "hold+bottomline+both"
+ ],
+ "cases": 61,
+ "records": 1830,
+ "seconds": 631.1,
+ "decision_log_head": "ddb5a1e4019adcbbda949906148374cb8907c271749f3abcbc3527d1e859cf90",
+ "decision_log_entries": 3558,
+ "hardware_note": "One workstation, RTX 2080 Super 8 GB. Local models up to 8B parameters.",
+ "prereg_commit": "b249f58e85c80f66ddc7458c39a94dc764a8cdf5",
+ "harness_commit": "b249f58e85c80f66ddc7458c39a94dc764a8cdf5",
+ "gpu": {
+  "max_c": 72,
+  "resume_c": 68,
+  "peak_c": 75,
+  "pauses": 36,
+  "paused_s": 114.1,
+  "available": true
+ },
+ "started": "2026-10-13T19:55:58Z"
+}

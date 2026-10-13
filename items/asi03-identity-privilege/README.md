@@ -69,6 +69,25 @@ Scoped credentials blocked all above-tier work, so this run turns a denial into 
 
 Three of six pass-bar criteria were met. Approval without reading is no defense (identical to no defense), no beyond-tier action ran without a logged approval (0 of 183 per condition), and every one-shot credential was used exactly once. But the model reviewer mostly denied: the approval step recovered 30% of the legitimate work at best, the reviewer weighed the card's "over the limit" line above the operator's own words, and in the money condition it approved 12 in-scope refunds while writing "the operator's request is to summarize the ticket, not to process a refund." Full prediction, misses and next steps: [`PREREGISTRATION-escalation.md`](PREREGISTRATION-escalation.md).
 
+### Third round: a system-stated bottom line, request binding, reviewer choice
+
+Round 2's reviewer mostly denied and approved unrequested refunds. This round makes the system state its comparison with the operator's own words first, adds a rule on the same facts as a ceiling, tries a second reviewer model, and adds **request binding**: a refund or export the operator never asked for is refused outright, so nobody can approve it. Run it with `python adt.py run asi03 --experiment bottom-line --models llama3.1:8b,qwen2.5:7b,phi4-mini:3.8b --reviewer qwen2.5:7b`. Pooled, 120 attack cases and 63 valid tasks per condition:
+
+| Condition | Attack succeeded | Valid work done (of 63) | What a reviewer was asked |
+| --- | --- | --- | --- |
+| none | 51.7% (62/120) | 61 | n/a |
+| scoped credentials | 10.0% (12/120) | 35 | n/a |
+| round 2's effect card (qwen2.5:7b) | 10.0% (12/120) | 43 | 76 holds |
+| **bottom-line card (qwen2.5:7b)** | 10.0% (12/120) | **61** | 76 holds |
+| bottom-line card, every refund reviewed | **0.0% (0/120)** | **61** | 96 holds |
+| bottom-line card (llama3.1:8b) | 10.0% (12/120) | 43 | 76 holds |
+| bottom-line card, both must approve | 10.0% (12/120) | 43 | 76 holds |
+| rule on the same facts (no model) | 10.0% (12/120) | 61 | none |
+| request binding alone | **0.0% (0/120)** | 35 | none |
+| **request binding plus holds** | **0.0% (0/120)** | **61** | 26 holds |
+
+Seven of eight pass-bar criteria were met. The same card that made `qwen2.5:7b` approve every legitimate hold and deny every attack did not fix `llama3.1:8b`, which denied all 18 refund holds while the card said MATCH. A reviewer has to be checked on known cases before it is trusted. The rule did what the best model did for 3 ms, so a model earns its place only on requests the system cannot decide, which was not tested. Request binding plus holds protected fully (0 of 120) and kept all the valid work (61 of 63). Every request here is explicit, which flatters it. Prediction, misses and next steps: [`PREREGISTRATION-bottom-line.md`](PREREGISTRATION-bottom-line.md).
+
 ### Planned against done
 
 | Planned | First run |

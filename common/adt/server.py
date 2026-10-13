@@ -28,6 +28,8 @@ from .loader import ROOT
 from .registry import list_tests
 
 SITE = ROOT / "site"
+MAX_BODY = 1_000_000           # a request body bigger than this is refused
+MAX_JSON = 65_536              # and a JSON document bigger than this is not parsed
 
 
 class GpuMonitor:
@@ -117,8 +119,29 @@ def make_handler(port: int, monitor: GpuMonitor):
                 return self._json({"error": f"{type(e).__name__}: {e}"}, 500)
             self._json({"error": "not found"}, 404)
 
+        def _take_body(self):
+            """Read the whole request body off the socket before answering anything. Replying and closing with unread bytes
+            still in the socket can make the client see a connection reset (WinError 10053) instead of the answer."""
+            try:
+                n = int(self.headers.get("Content-Length") or 0)
+            except ValueError:
+                return None, 400
+            if n < 0 or n > MAX_BODY:
+                return None, 413
+            raw, left = [], n
+            while left > 0:
+                chunk = self.rfile.read(min(65536, left))
+                if not chunk:
+                    break
+                raw.append(chunk)
+                left -= len(chunk)
+            return b"".join(raw), 200
+
         def do_POST(self):
+            raw, code = self._take_body()                  # first, always, so every refusal below is delivered cleanly
             path = urlparse(self.path).path
+            if code != 200:
+                return self._json({"error": "bad Content-Length" if code == 400 else "request too large"}, code)
             if not path.startswith("/api/") or not self._local():
                 return self._json({"error": "not found"}, 404)
             origin = self.headers.get("Origin")
@@ -126,9 +149,10 @@ def make_handler(port: int, monitor: GpuMonitor):
                 return self._json({"error": "cross-site requests are refused"}, 403)
             if "application/json" not in self.headers.get("Content-Type", ""):
                 return self._json({"error": "send application/json"}, 415)
+            if len(raw) > MAX_JSON:
+                return self._json({"error": "request too large"}, 413)
             try:
-                n = int(self.headers.get("Content-Length") or 0)
-                body = json.loads(self.rfile.read(min(n, 65536)) or b"{}")
+                body = json.loads(raw or b"{}")
             except (ValueError, json.JSONDecodeError):
                 return self._json({"error": "invalid JSON"}, 400)
             try:

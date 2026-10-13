@@ -235,3 +235,14 @@ def test_a_model_a_test_does_not_accept_is_refused_with_the_reason(monkeypatch):
 def test_every_test_carries_its_model_rules():
     for t in registry.list_tests(refresh=True):
         assert "completion" in t["model_rules"]["requires"] and "embedding" in t["model_rules"]["excludes"]
+
+
+def test_refusals_arrive_cleanly_even_when_the_request_carries_a_body(api):
+    """Regression: replying and closing with the body unread made some clients see a connection reset instead of the 403."""
+    big = {"tests": ["asi03/first-run"], "mode": "scripted", "pad": "x" * 50_000}
+    for _ in range(40):
+        assert api("POST", "/api/jobs", big, {"Origin": "http://evil.example"})[0] == 403
+        assert api("POST", "/api/jobs", big, {"Content-Type": "text/plain"})[0] == 415
+        assert api("POST", "/api/jobs", big, {"Host": "evil.example"})[0] == 403
+    s, d = api("POST", "/api/jobs", {"pad": "x" * 100_000})                    # over the JSON limit, under the body limit
+    assert s == 413 and "too large" in d["error"]

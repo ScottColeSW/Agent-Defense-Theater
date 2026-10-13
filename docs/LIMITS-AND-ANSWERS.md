@@ -35,6 +35,8 @@ One simulated agent step, author-written attacks and an author-written credentia
 
 The escalation experiment adds its own limits. The approver is one small local model, not a person, so it shows what a request card lets a careful reader catch and where a model reviewer is swayed or contradicts itself, not how people behave, tire or rubber-stamp. There is no queue, no timeout and no approval fatigue. The card's checks are author-written over the operator's own words. The agent's output format moved attack-following by up to 80 points per model, so a defense measured on one prompt may not hold on another. Needs: human reviewers (a study with real approvers), stronger reviewer models, and agents that are not tuned to one prompt.
 
+The third round adds: every operator request in it states its amount and destination plainly and is compared by simple text matching, so request binding and the bottom-line card look better than they would against vague requests. The rule, the card and the binding share one comparison, so the round tests whether models follow it and what the design costs, not whether the comparison is right. One reviewer model followed the card and another did not, which means a reviewer's result does not transfer between models. No attack was written against the binding or the bottom line. Needs: vague and partial requests, adaptive attacks on the binding, reviewer calibration sets, and reviewers other than two 7 to 8B local models.
+
 ### ASI04: Agentic Supply Chain Vulnerabilities
 
 Status: Stub.

@@ -58,3 +58,22 @@ def test_cooler_busy_time_counts_checks_and_pauses_so_callers_can_subtract_it():
     finally:
         gpucooler.uninstall()
     assert gpucooler.busy_ms() == 0
+
+
+def test_the_run_record_carries_ollamas_description_of_each_model(tmp_path):
+    from adt.models import Reply
+
+    class Described:
+        name = "fake-model"
+
+        def generate(self, system, user, hint=None):
+            return Reply(hint or "{}", 1, 1, 1)
+
+        def describe(self):
+            return {"name": "fake-model", "digest": "abc123", "capabilities": ["completion", "tools"], "context": 8192}
+
+    sc = load_scenario("asi03")
+    meta = harness.run(sc, [Described()], tmp_path, mode="live", exploratory=True, progress=None, defenses=[sc.defenses[0]])
+    assert meta["model_info"]["fake-model"]["digest"] == "abc123" and "tools" in meta["model_info"]["fake-model"]["capabilities"]
+    scripted = harness.run(sc, [models.ScriptedRunner()], tmp_path, mode="scripted", progress=None, defenses=[sc.defenses[0]])
+    assert scripted["model_info"] == {}                                        # a scripted run has no model to describe

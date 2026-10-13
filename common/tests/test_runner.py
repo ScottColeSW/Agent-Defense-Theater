@@ -60,6 +60,7 @@ def test_live_result_is_refused_without_a_committed_prediction(monkeypatch):
     monkeypatch.setattr(jobs_mod.models, "ollama_models", lambda: [("m", "1B")])
     monkeypatch.setattr(jobs_mod.harness, "check_prereg", lambda *a: (False, "PREREGISTRATION.md is not committed.", {}))
     monkeypatch.setattr(jobs_mod.modelmgr, "preflight", lambda names, host=None: (True, "ok"))
+    monkeypatch.setattr(jobs_mod.modelmgr, "check_eligible", lambda *a, **k: (True, "ok"))
     with pytest.raises(ValueError, match="is refused: .*not committed"):
         JobManager().submit({"tests": ["asi03/first-run"], "mode": "live", "models": ["m"]})
     # an exploratory run does not need one, and says so by name
@@ -168,6 +169,7 @@ def _live_ready(monkeypatch, installed=("a",)):
     monkeypatch.setattr(jobs_mod.JobManager, "_ollama_up", staticmethod(lambda: True))
     monkeypatch.setattr(jobs_mod.models, "ollama_models", lambda: [(n, "1B") for n in installed])
     monkeypatch.setattr(jobs_mod.modelmgr, "preflight", lambda names, host=None: (True, "ok"))
+    monkeypatch.setattr(jobs_mod.modelmgr, "check_eligible", lambda *a, **k: (True, "ok"))
 
 
 def test_a_model_that_will_not_fit_is_refused_before_anything_starts(monkeypatch):
@@ -220,3 +222,16 @@ def test_api_models_says_so_when_ollama_is_down(api, monkeypatch):
     monkeypatch.setattr(server.modelmgr, "catalog", down)
     s, d = api("GET", "/api/models")
     assert s == 503 and "not reachable" in d["error"]
+
+
+def test_a_model_a_test_does_not_accept_is_refused_with_the_reason(monkeypatch):
+    _live_ready(monkeypatch, ("qwen3:4b",))
+    monkeypatch.setattr(jobs_mod.modelmgr, "check_eligible",
+                        lambda test_id, rules, names, host=None: (False, f"qwen3:4b cannot run {test_id}: A thinking model reasons before it answers. It needs its own test."))
+    with pytest.raises(ValueError, match="qwen3:4b cannot run asi03/first-run: A thinking model"):
+        JobManager().submit({"tests": ["asi03/first-run"], "mode": "exploratory", "models": ["qwen3:4b"]})
+
+
+def test_every_test_carries_its_model_rules():
+    for t in registry.list_tests(refresh=True):
+        assert "completion" in t["model_rules"]["requires"] and "embedding" in t["model_rules"]["excludes"]

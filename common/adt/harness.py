@@ -49,6 +49,24 @@ class CaseResult:
     gate_ms: int = 0
 
 
+def _model_info(runners, scenario) -> dict:
+    """Ollama's own description of every model a run used (agents and any reviewers): capabilities, size, quantization,
+    context and digest. A scripted run has no model, so it records nothing."""
+    from .models import OllamaRunner
+    out = {}
+    for r in runners:
+        try:
+            out[r.name] = r.describe()
+        except Exception:
+            pass
+    for name in getattr(scenario, "extra_models", lambda: [])():
+        try:
+            out[name] = OllamaRunner(name).describe()
+        except Exception:
+            pass
+    return out
+
+
 def _git(*args) -> str:
     return subprocess.run(["git", "-C", str(ROOT), *args], capture_output=True, text=True).stdout.strip()
 
@@ -125,7 +143,7 @@ def run(scenario, runners: list, out_dir: Path, mode: str = "live", exploratory:
     meta = {"run_id": run_id, "item": scenario.item, "experiment": exp, "mode": mode, "exploratory": exploratory, "models": [r.name for r in runners],
             "defenses": [d.name for d in defs], "cases": len(cases), "records": n, "seconds": round(time.time() - t_start, 1),
             "decision_log_head": log.head, "decision_log_entries": log.seq, "hardware_note": HARDWARE_NOTE, **info,
-            "gpu": gpucooler.active.stats() if gpucooler.active else None,
+            "gpu": gpucooler.active.stats() if gpucooler.active else None, "model_info": _model_info(runners, scenario),
             "started": now()}
     if gpucooler.active:
         (out_dir / f"{run_id}.gpu.json").write_text(json.dumps(gpucooler.active.timeline()), encoding="utf-8")

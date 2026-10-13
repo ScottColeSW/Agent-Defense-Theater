@@ -92,6 +92,20 @@ let catalog = null, picked = new Set(), planTimer = null, preselected = false;
 const GBs = b => (b / 1073741824).toFixed(1);
 const selectedModels = () => [...picked];
 const reviewerList = () => [$("reviewer").value, $("secondWrap").hidden ? null : $("reviewer2").value].filter(Boolean);
+function eligible(caps, rules) {
+  caps = new Set(caps || []); rules = rules || {};
+  const miss = (rules.requires || []).filter(c => !caps.has(c));
+  if (miss.length) return [false, "missing capability: " + miss.join(", ")];
+  for (const c of rules.excludes || []) if (caps.has(c)) return [false, `a ${c} model, which cannot be tested this way`];
+  for (const [c, why] of Object.entries(rules.separate || {})) if (caps.has(c)) return [false, why];
+  return [true, "ok"];
+}
+function eligibility(m) {                       // which of the listed tests accept this model
+  const res = tests.map(t => [t, ...eligible(m.capabilities, t.model_rules)]);
+  const no = res.filter(r => !r[1]);
+  return {all: no.length === 0, none: no.length === res.length && res.length > 0, ok: res.length - no.length, total: res.length, why: (no[0] || [])[2] || ""};
+}
+const CAP_CHIP = {thinking: "violet", vision: "info", tools: "dim", embedding: "bad"};
 const FIT = {gpu: ["ok", "fits the GPU"], partial: ["warn", "spills to RAM, slow"], no: ["bad", "will not fit"]};
 function flash(msg) { const f = $("flash"); f.hidden = !msg; f.innerHTML = msg ? `<b>Not started.</b> ${esc(msg)}` : ""; if (msg) f.scrollIntoView({block: "nearest"}); }
 
@@ -131,12 +145,14 @@ function renderModels() {
       <div class="bar ${v.used / v.total > .9 ? "red" : v.used / v.total > .7 ? "amber" : "green"}" style="margin-top:4px"><i style="width:${v.used / v.total * 100}%"></i></div>
       <div class="small muted" style="margin-top:4px">${res.length ? "Loaded now: " + res.map(m => `${esc(m.name)} (${GBs(m.size)} GB)`).join(", ") : "No model is loaded."}</div>` :
       `<div class="small muted">No GPU memory reading available${r ? `; system RAM ${GBs(r.free)} GB free` : ""}.</div>`);
-  $("modelTable").innerHTML = `<thead><tr><th></th><th>Model</th><th>Size</th><th>Needs in memory</th><th>Fit</th><th>In memory now</th></tr></thead><tbody>` + catalog.models.map(m => {
-    const f = FIT[m.class], dis = m.class === "no";
+  $("modelTable").innerHTML = `<thead><tr><th></th><th>Model</th><th>Can do</th><th>Size</th><th>Needs in memory</th><th>Fit</th><th>Tests accept it</th><th>In memory now</th></tr></thead><tbody>` + catalog.models.map(m => {
+    const e = eligibility(m), f = FIT[m.class], dis = m.class === "no" || e.none;
+    const chips = (m.capabilities || []).filter(c => c !== "completion").map(c => `<span class="chip ${CAP_CHIP[c] || "dim"}">${esc(c)}</span>`).join(" ");
+    const acc = e.all ? `<span class="chip ok">all ${e.total}</span>` : e.none ? `<span class="chip bad" data-tip="${esc(e.why)}">none</span>` : `<span class="chip warn" data-tip="${esc(e.why)}">${e.ok} of ${e.total}</span>`;
     return `<tr><td><input type="checkbox" class="pick" data-n="${esc(m.name)}" ${picked.has(m.name) && !dis ? "checked" : ""} ${dis ? "disabled" : ""}></td>
-      <td>${esc(m.name)} <span class="muted">${esc(m.params || "")} ${esc(m.quant || "")}</span></td><td>${GBs(m.disk)} GB</td>
+      <td>${esc(m.name)} <span class="muted">${esc(m.params || "")} ${esc(m.quant || "")}</span><br><span class="muted small">${m.context ? Math.round(m.context / 1000) + "k context" : ""}</span></td><td>${chips || '<span class="muted">text only</span>'}</td><td>${GBs(m.disk)} GB</td>
       <td data-tip="${esc(m.basis === "observed" ? "Measured: the size Ollama reported when it loaded this model." : "Estimate: size on disk times 1.3 for the context and runtime. It is replaced by a measurement once the model has been loaded.")}">${GBs(m.need)} GB <span class="muted">${esc(m.basis)}</span></td>
-      <td><span class="chip ${f[0]}" data-tip="${esc(m.why)}">${f[1]}</span></td>
+      <td><span class="chip ${f[0]}" data-tip="${esc(m.why)}">${f[1]}</span></td><td>${acc}</td>
       <td>${m.resident ? `<span class="chip info">loaded, ${GBs(m.resident_vram)} GB on GPU</span> <button class="btn ghost unl" data-n="${esc(m.name)}" type="button" style="padding:2px 8px;font-size:11px">Unload</button>` : `<span class="muted">not loaded</span>`}</td></tr>`;
   }).join("") + "</tbody>";
   const names = catalog.models.map(m => m.name), keep = id => $(id).value;

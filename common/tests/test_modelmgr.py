@@ -17,7 +17,8 @@ def tag(name, gb, params="7B", caps=None):
     return d
 
 
-TAGS = [tag("phi4-mini:3.8b", 2.5, "3.8B"), tag("llama3.1:8b", 4.9, "8B"), tag("qwen2.5:7b", 4.7), tag("big:14b", 9.0, "14B"), tag("huge:70b", 40, "70B"),
+SHOW = {"nomic-embed-text:latest": ["embedding"]}                          # what /api/show says where /api/tags says nothing
+TAGS = [tag("qwen3:4b", 2.6, "4B", caps=["completion", "tools", "thinking"]), tag("phi4-mini:3.8b", 2.5, "3.8B"), tag("llama3.1:8b", 4.9, "8B"), tag("qwen2.5:7b", 4.7), tag("big:14b", 9.0, "14B"), tag("huge:70b", 40, "70B"),
         tag("nomic-embed-text:latest", 0.27, "137M"), tag("tagged-embedder", 0.5, caps=["embedding"]), tag("tagged-chat", 1.0, caps=["completion", "tools"])]
 
 
@@ -29,7 +30,15 @@ def fake(monkeypatch):
         return {"models": TAGS} if path == "/api/tags" else {"models": state["ps"]}
 
     monkeypatch.setattr(mm, "_get", get)
-    monkeypatch.setattr(mm, "_post", lambda path, body, host=mm.HOST, timeout=30: state["posts"].append((path, body)) or {})
+    def post(path, body, host=mm.HOST, timeout=30):
+        state["posts"].append((path, body))
+        if path == "/api/show":
+            return {"capabilities": SHOW.get(body["model"], ["completion"]), "details": {"family": "x", "parameter_size": "7B", "quantization_level": "Q4_K_M"},
+                    "model_info": {"llama.context_length": 32768}}
+        return {}
+
+    monkeypatch.setattr(mm, "_post", post)
+    monkeypatch.setattr(mm, "_desc", {})
     monkeypatch.setattr(mm, "vram", lambda: state["vram"])
     monkeypatch.setattr(mm, "ram", lambda: state["ram"])
     monkeypatch.setattr(mm, "_seen", {})
@@ -109,3 +118,36 @@ def test_unload_all_reports_what_went_and_what_did_not(fake, monkeypatch):
     monkeypatch.setattr(mm, "loaded", lambda host=mm.HOST: state["a"])
     monkeypatch.setattr(mm, "unload", lambda name, host=mm.HOST, **k: name == "a")
     assert mm.unload_all() == {"unloaded": ["a"], "still_loaded": ["b"]}
+
+
+# ---------------- what Ollama says a model is ----------------
+def test_the_description_is_noted_once_per_model_version(fake):
+    d = mm.describe("llama3.1:8b", "sha-1")
+    assert d["context"] == 32768 and "completion" in d["capabilities"] and d["params"] == "7B" and d["digest"] == "sha-1"
+    n = len(fake["posts"])
+    mm.describe("llama3.1:8b", "sha-1")
+    assert len(fake["posts"]) == n                                            # cached
+    mm.describe("llama3.1:8b", "sha-2")
+    assert len(fake["posts"]) == n + 1                                        # a new digest is a new version of the model
+
+
+def test_installed_models_carry_their_capabilities_and_context(fake):
+    rows = {m["name"]: m for m in mm.installed()}
+    assert "thinking" in rows["qwen3:4b"]["capabilities"] and rows["qwen3:4b"]["context"] == 32768
+    assert "nomic-embed-text:latest" not in rows                              # /api/show says embedding, though /api/tags was silent
+
+
+def test_eligibility_rules():
+    assert mm.eligibility(["completion", "tools"]) == (True, "ok")
+    assert mm.eligibility(["completion", "vision"]) == (True, "ok")           # a vision model still answers text
+    ok, why = mm.eligibility(["completion", "tools", "thinking"])
+    assert not ok and "own test" in why                                       # thinking models are kept for their own tests
+    assert not mm.eligibility(["embedding"])[0] and "missing capability" in mm.eligibility(["tools"])[1]
+    thinking_only = {"requires": ["completion", "thinking"], "excludes": ["embedding"]}
+    assert mm.eligibility(["completion", "thinking"], thinking_only)[0] and not mm.eligibility(["completion"], thinking_only)[0]
+
+
+def test_check_eligible_names_the_model_and_the_test(fake):
+    ok, msg = mm.check_eligible("asi03/first-run", mm.DEFAULT_RULES, ["llama3.1:8b", "qwen3:4b"])
+    assert not ok and "qwen3:4b cannot run asi03/first-run" in msg
+    assert mm.check_eligible("asi03/first-run", mm.DEFAULT_RULES, ["llama3.1:8b"]) == (True, "ok")

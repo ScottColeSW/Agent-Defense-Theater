@@ -25,6 +25,16 @@ FOOTPRINT_FACTOR = 1.3          # on-disk size understates the resident footprin
 VRAM_USABLE = 0.95              # leave headroom on the card for the display and the driver
 SECONDS_PER_GB_COLD = 7.0       # observed on this workstation: a cold load took about 7 s per GB of model
 _seen = {}                      # model -> resident bytes, learned from /api/ps in this process
+_desc = {}                      # digest (or name) -> description from /api/show, cached because it does not change
+
+# Which models a test accepts. A test may override this with a `model_rules` attribute.
+#   requires  capabilities a model must have          excludes  capabilities that rule a model out
+#   separate  capability -> why such a model needs its own test, and is not offered here
+DEFAULT_RULES = {
+    "requires": ["completion"],
+    "excludes": ["embedding"],
+    "separate": {"thinking": "A thinking model reasons before it answers, which changes its cost and its behavior. It needs its own test."},
+}
 
 
 # ---------------- memory ----------------
@@ -77,15 +87,51 @@ def _post(path, body, host=HOST, timeout=30):
         return json.load(r)
 
 
+def describe(name: str, digest: str = None, host=HOST) -> dict:
+    """What Ollama says a model is: capabilities (completion, tools, thinking, vision, embedding), family, size, quantization and
+    context length. Noted once per model version, so a run can say exactly what it tested."""
+    key = digest or name
+    if key not in _desc:
+        try:
+            s = _post("/api/show", {"model": name}, host, timeout=15)
+        except (urllib.error.URLError, OSError, ValueError):
+            return {"name": name, "digest": digest, "capabilities": [], "family": None, "params": None, "quant": None, "context": None}
+        info, d = s.get("model_info", {}), s.get("details", {})
+        _desc[key] = {"name": name, "digest": digest, "capabilities": s.get("capabilities") or [], "family": d.get("family"),
+                      "params": d.get("parameter_size"), "quant": d.get("quantization_level"),
+                      "context": next((v for k, v in info.items() if k.endswith(".context_length")), None)}
+    return _desc[key]
+
+
+def eligibility(capabilities, rules: dict = None) -> tuple:
+    """(ok, reason) for a model with these capabilities under a test's rules."""
+    rules, caps = rules or DEFAULT_RULES, set(capabilities or [])
+    missing = [c for c in rules.get("requires", []) if c not in caps]
+    if missing:
+        return False, "missing capability: " + ", ".join(missing)
+    for c in rules.get("excludes", []):
+        if c in caps:
+            return False, f"a {c} model, which cannot be tested this way"
+    for c, why in rules.get("separate", {}).items():
+        if c in caps:
+            return False, why
+    return True, "ok"
+
+
 def installed(host=HOST) -> list:
-    """Installed models that can generate text (embedding-only models are left out), smallest first."""
+    """Installed models that can generate text (embedding-only models are left out), smallest first, each with its description."""
     out = []
     for m in _get("/api/tags", host).get("models", []):
-        caps, name = m.get("capabilities"), m.get("name")
-        can = "completion" in caps if caps else "embed" not in (name or "")       # older builds report no capabilities
-        d = m.get("details", {})
-        if name and can and isinstance(m.get("size"), (int, float)):
-            out.append({"name": name, "disk": int(m["size"]), "params": d.get("parameter_size"), "quant": d.get("quantization_level"), "family": d.get("family")})
+        name = m.get("name")
+        if not name or not isinstance(m.get("size"), (int, float)):
+            continue
+        d = describe(name, m.get("digest"), host)
+        caps = m.get("capabilities") or d["capabilities"]
+        can = "completion" in caps if caps else "embed" not in name                 # older builds report no capabilities
+        det = m.get("details", {})
+        if can:
+            out.append({"name": name, "disk": int(m["size"]), "params": det.get("parameter_size") or d["params"], "quant": det.get("quantization_level") or d["quant"],
+                        "family": det.get("family") or d["family"], "capabilities": list(caps), "context": d["context"], "digest": m.get("digest")})
     return sorted(out, key=lambda x: x["disk"])
 
 
@@ -221,4 +267,14 @@ def preflight(names: list, host=HOST) -> tuple:
             return False, f"{n} is not installed or cannot generate text"
         if by[n]["class"] == "no":
             return False, f"{n} needs about {by[n]['need'] / GB:.1f} GB and would not fit in memory"
+    return True, "ok"
+
+
+def check_eligible(test_id: str, rules: dict, names: list, host=HOST) -> tuple:
+    """(ok, message): every chosen model has to be one this test accepts."""
+    by = {m["name"]: m for m in installed(host)}
+    for n in names:
+        ok, why = eligibility(by[n]["capabilities"] if n in by else [], rules)
+        if not ok:
+            return False, f"{n} cannot run {test_id}: {why}"
     return True, "ok"

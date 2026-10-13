@@ -30,6 +30,14 @@ function header() {
     <p class="muted small" style="margin:12px 0 0"><code>${esc(R.run_id)}</code> · ${when(m.started)} · took ${dur(m.seconds)} · models ${esc((m.models || []).join(", "))}</p></header>`;
 }
 
+function modelTable() {
+  const mi = (R.meta || {}).model_info || {}, names = Object.keys(mi);
+  if (!names.length) return "";
+  return `<div class="tblwrap" style="margin-top:14px"><table class="tbl"><thead><tr><th>Model used</th><th>Digest</th><th>Parameters</th><th>Quantization</th><th>Context</th><th>Ollama says it can</th></tr></thead><tbody>` +
+    names.map(n => { const d = mi[n]; return `<tr><td>${esc(n)}</td><td><code>${esc((d.digest || "").slice(0, 12))}</code></td><td>${esc(d.params || "")}</td><td>${esc(d.quant || "")}</td><td>${d.context ? Math.round(d.context / 1000) + "k" : ""}</td><td>${esc((d.capabilities || []).join(", "))}</td></tr>`; }).join("") +
+    `</tbody></table></div><p class="muted small" style="margin:8px 0 0">The digest identifies the exact model version. A model that is pulled again can change, and so can its results.</p>`;
+}
+
 function integrity() {
   const i = R.integrity;
   if (!i) return sec("Integrity", `<p class="muted" style="margin:0">No decision log was saved for this run.</p>`);
@@ -39,7 +47,7 @@ function integrity() {
     : `<b>Chain is intact but the final hash differs from the one recorded at the end of the run.</b> Entries may have been removed from the end.`;
   const m = R.meta || {};
   return sec("Integrity and provenance", `<div class="notice ${cls}">${text}</div>
-    <p class="small muted" style="margin:12px 0 0">Prediction committed at ${commit(m.prereg_commit)} · harness at ${commit(m.harness_commit)} · ${esc(R.hardware_note || "")}</p>`,
+    <p class="small muted" style="margin:12px 0 0">Prediction committed at ${commit(m.prereg_commit)} · harness at ${commit(m.harness_commit)} · ${esc(R.hardware_note || "")}</p>${modelTable()}`,
     "The log is a hash chain: it shows later edits or deletions, but it cannot stop someone who controls the file from rebuilding it. The run's result commit is the outside anchor.");
 }
 

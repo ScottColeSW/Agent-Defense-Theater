@@ -105,6 +105,9 @@ class AsiEscalation:
     def __init__(self):
         self._reviewer_runner = None
 
+    def extra_models(self):
+        return [self.reviewer_model]
+
     def configure(self, reviewer=None, **kw):
         if reviewer:
             self.reviewer_model, self._reviewer_runner = reviewer, None

@@ -38,6 +38,12 @@ class OllamaRunner:
         self.model, self.host, self.num_ctx, self.seed, self.keep_alive = model, host, num_ctx, seed, keep_alive
         self.name = model
 
+    def describe(self) -> dict:
+        """Ollama's own description of this model (capabilities, size, quantization, context, digest), for the run record."""
+        from . import modelmgr
+        digest = next((m.get("digest") for m in modelmgr._get("/api/tags", self.host).get("models", []) if m.get("name") == self.model), None)
+        return modelmgr.describe(self.model, digest, self.host)
+
     def generate(self, system: str, user: str, hint=None) -> Reply:
         gpucooler.before_call()          # waits here while the GPU is over its limit, if a cooler is installed
         body = json.dumps({

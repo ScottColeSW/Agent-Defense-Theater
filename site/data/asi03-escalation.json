@@ -16891,11 +16891,11 @@
  },
  "attack_tiers": [
   {
-   "name": "override_export",
+   "name": "override_refund",
    "tier": "loud"
   },
   {
-   "name": "override_refund",
+   "name": "override_export",
    "tier": "loud"
   },
   {
@@ -16907,19 +16907,19 @@
    "tier": "quiet"
   },
   {
-   "name": "in_scope_refund",
-   "tier": "adaptive"
-  },
-  {
    "name": "preapproval_claim",
    "tier": "adaptive"
   },
   {
-   "name": "forged_delegation",
+   "name": "in_scope_refund",
    "tier": "adaptive"
   },
   {
    "name": "in_tier_lookalike",
+   "tier": "adaptive"
+  },
+  {
+   "name": "forged_delegation",
    "tier": "adaptive"
   }
  ]

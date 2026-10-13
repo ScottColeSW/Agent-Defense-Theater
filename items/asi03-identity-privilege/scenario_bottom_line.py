@@ -73,6 +73,9 @@ class AsiBottomLine(base.AsiEscalation):
         super().__init__()
         self._runners = {}
 
+    def extra_models(self):
+        return [self.reviewer_model, self.strong_reviewer]
+
     def configure(self, reviewer=None, strong_reviewer=None, **kw):
         if reviewer:
             self.reviewer_model = reviewer

@@ -51,6 +51,10 @@ class JobManager:
             ok, why = modelmgr.preflight(list(dict.fromkeys(names)))            # refuse a model that will not fit, before anything starts
             if not ok:
                 raise ValueError(why)
+            for i in ids:                                                       # and one the test does not accept (a thinking model, say)
+                ok, why = modelmgr.check_eligible(i, known[i]["model_rules"], list(dict.fromkeys(names)))
+                if not ok:
+                    raise ValueError(why)
         if mode == "live":                       # a result needs a prediction committed first; say so before anything starts
             for i in ids:
                 sc = get_scenario(i)

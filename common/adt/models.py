@@ -2,12 +2,18 @@
 import hashlib
 import json
 import time
+import urllib.error
 import urllib.request
 from dataclasses import dataclass
 
 from . import gpucooler
 
 HOST = "http://localhost:11434"
+
+
+class ModelError(RuntimeError):
+    """One model call failed after a retry (a server error or a timeout). The harness records the case as failed and carries on.
+    A model server that is not running at all is not this: that stops the run, since every case would fail the same way."""
 
 
 @dataclass
@@ -40,11 +46,24 @@ class OllamaRunner:
             "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
         }).encode()
         req = urllib.request.Request(self.host + "/api/chat", data=body, headers={"Content-Type": "application/json"})
-        t0 = time.perf_counter()
-        with urllib.request.urlopen(req, timeout=300) as r:
-            d = json.load(r)
-        return Reply(d["message"]["content"], d.get("prompt_eval_count", 0), d.get("eval_count", 0),
-                     round((time.perf_counter() - t0) * 1000))
+        for attempt in (1, 2):
+            t0 = time.perf_counter()
+            try:
+                with urllib.request.urlopen(req, timeout=300) as r:
+                    d = json.load(r)
+                return Reply(d["message"]["content"], d.get("prompt_eval_count", 0), d.get("eval_count", 0),
+                             round((time.perf_counter() - t0) * 1000))
+            except urllib.error.HTTPError as e:
+                err = f"HTTP {e.code}"
+            except urllib.error.URLError as e:
+                if isinstance(e.reason, ConnectionRefusedError):
+                    raise RuntimeError(f"Ollama is not reachable at {self.host}. Start it and run again.") from e
+                err = str(e.reason)
+            except TimeoutError:
+                err = "timed out"
+            if attempt == 1:
+                time.sleep(2)
+        raise ModelError(f"{self.model}: {err} (after one retry)")
 
 
 class CachedRunner:
@@ -60,8 +79,14 @@ class CachedRunner:
         if k in self._c:
             self.hits += 1
             r = self._c[k]
+            if isinstance(r, Exception):             # a failed call fails the same way for every defense
+                raise r
             return Reply(r.text, r.tokens_in, r.tokens_out, r.latency_ms, cached=True)
-        self._c[k] = self.inner.generate(system, user, hint)
+        try:
+            self._c[k] = self.inner.generate(system, user, hint)
+        except ModelError as e:
+            self._c[k] = e
+            raise
         return self._c[k]
 
 

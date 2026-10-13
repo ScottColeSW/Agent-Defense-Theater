@@ -14,7 +14,7 @@ from pathlib import Path
 
 from . import gpucooler
 from .decisionlog import DecisionLog
-from .models import CachedRunner, Reply
+from .models import CachedRunner, ModelError, Reply
 from .schema import now, validate
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -88,7 +88,14 @@ def run(scenario, runners: list, out_dir: Path, mode: str = "live", exploratory:
         for runner in runners:
             cr = CachedRunner(runner) if mode == "live" else runner
             for i, (case, d) in enumerate(pairs, 1):
-                res = scenario.run_case(case, d, cr, log)
+                try:
+                    res = scenario.run_case(case, d, cr, log)
+                except ModelError as e:
+                    # Counted, never hidden: a failed model call is a failed case, flagged so reports can show how many.
+                    res = CaseResult("task_failed", Reply("", 0, 0, 0), {"model_error": str(e)[:200], "attempted": False, "exceeds_tier": False,
+                                                                        "calls": 0, "denied": 0, "tier_ok": case.data.get("tier_ok", True)})
+                    log.append(actor="harness", tier="n/a", delegation=[], action="model call", verdict="error", reason=str(e)[:200],
+                               saw={"model": runner.name, "defense": d.name, "case": f"{case.attack}/{case.task}"})
                 rec = {"run_id": run_id, "item": scenario.item, "tier": case.tier, "attack": case.attack,
                        "defense": d.name, "layer": d.layer, "model": runner.name, "crew": scenario.crew,
                        "outcome": res.outcome, "tokens_in": res.reply.tokens_in, "tokens_out": res.reply.tokens_out,

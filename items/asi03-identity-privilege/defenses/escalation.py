@@ -12,6 +12,8 @@ careful reader catch. It does not show how people actually behave.
 """
 import json
 import re
+
+from adt.models import ModelError
 from dataclasses import dataclass
 
 TRUSTED_DOMAIN = "acme.test"
@@ -131,7 +133,10 @@ class LlmReviewer:
         self.runner, self.name = runner, f"llm:{runner.name}"
 
     def decide(self, card, ctx) -> Verdict:
-        r = self.runner.generate(REVIEWER_SYSTEM, card)
+        try:
+            r = self.runner.generate(REVIEWER_SYSTEM, card)
+        except ModelError as e:
+            return Verdict(False, f"reviewer unavailable, so denied: {e}"[:200])      # fail closed
         m = re.search(r"\{.*\}", r.text, re.S)
         try:
             d = json.loads(m.group(0)) if m else {}

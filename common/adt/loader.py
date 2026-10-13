@@ -38,7 +38,8 @@ def experiments(item: str) -> list:
     """Experiment names an item offers: scenario.py is the first run, scenario_<name>.py are the others."""
     folder = item_folder(item)
     out = [DEFAULT_EXPERIMENT] if (folder / "scenario.py").exists() else []
-    return out + [p.stem[len("scenario_"):].replace("_", "-") for p in sorted(folder.glob("scenario_*.py"))]
+    names = out + [p.stem[len("scenario_"):].replace("_", "-") for p in sorted(folder.glob("scenario_*.py"))]
+    return sorted(names, key=lambda e: getattr(load_scenario(item, e), "sequence", 99))        # in the order they were run, not alphabetical
 
 
 def load_scenario(item: str, experiment: str = None):

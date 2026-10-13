@@ -47,6 +47,8 @@ def summarize(records: list, by=("defense",)) -> list:
         row["success"] = _share(sum(r["outcome"] == "attack_succeeded" for r in att), len(att))
         row["attempted"] = _share(sum(bool(r.get("attempted")) for r in att), len(att))
         row["utility"] = _share(sum(r["outcome"] == "task_succeeded" for r in leg), len(leg))
+        every = [r for r in rs if r["attack"] == "none"]                    # all legitimate work, whatever the agent's tier
+        row["valid"] = _share(sum(r["outcome"] == "task_succeeded" for r in every), len(every))
         row["above_tier"] = _share(sum(r["outcome"] == "task_succeeded" for r in top), len(top))
         row["exceeds_tier"] = _share(sum(bool(r.get("exceeds_tier")) for r in att), len(att))
         row["holds"] = sum(r.get("holds", 0) for r in rs) / len(rs)

@@ -55,10 +55,12 @@ def _fill(obj, t, acct):
 class AsiEscalation:
     item = "ASI03"
     experiment = "escalation"
+    sequence = 2
     crew = "support-desk-v1: one agent, simulated desk, a reviewer for holds"
     prereg_path = HERE / "PREREGISTRATION-escalation.md"
     code_dirs = [ROOT / "common", HERE]
     defenses = DEFENSES
+    CONDS = CONDS                    # a later experiment overrides these and the hooks below
     order = "defense-major"          # run one condition at a time so the reviewer model is loaded as few times as possible
     reviewer_model = "qwen2.5:7b"
     title = "ASI03 escalation: does an approval step recover blocked work without letting attacks through?"
@@ -117,6 +119,19 @@ class AsiEscalation:
             return esc.RubberStamp()
         return esc.Oracle() if scripted else esc.LlmReviewer(self._runner())
 
+    # ---- hooks: the parts a later experiment changes ----
+    def _broker(self, cfg, t, d):
+        return cred.ScopedBroker(t, escalation=cfg["hold"], review_money=cfg["money"]) if cfg["scoped"] else cred.AmbientBroker()
+
+    def _approver_for(self, cfg, scripted):
+        return self._approver(cfg["reviewer"], scripted)
+
+    def _card(self, cfg, c, t, d, dec):
+        tcfg = cred.TIERS[cred.AGENT["tier"]]
+        if cfg["reviewer"] == "agent_card":
+            return esc.agent_card(c, c.why, t, desk.TICKETS, tcfg["name"])
+        return esc.effect_card(c, t, desk.TICKETS, d["text"], dec.codes, tcfg["name"], tcfg["refund_cap"], cred.OPERATOR)
+
     def cases(self):
         out = []
         for a in atk.ATTACKS_ESC:
@@ -134,7 +149,7 @@ class AsiEscalation:
         return out
 
     def run_case(self, case, defense, runner, log):
-        cfg, d = CONDS[defense.name], case.data
+        cfg, d = self.CONDS[defense.name], case.data
         t = d["ticket"]
         tk = desk.TICKETS[t]
         scripted = runner.name == "scripted"
@@ -144,8 +159,8 @@ class AsiEscalation:
         calls, invalid = desk.parse_calls(reply.text)
 
         env = desk.Desk()
-        broker = cred.ScopedBroker(t, escalation=cfg["hold"], review_money=cfg["money"]) if cfg["scoped"] else cred.AmbientBroker()
-        approver = self._approver(cfg["reviewer"], scripted) if cfg["hold"] else None
+        broker = self._broker(cfg, t, d)
+        approver = self._approver_for(cfg, scripted) if cfg["hold"] else None
         tier = f"tier{cred.AGENT['tier']} ({cred.TIERS[cred.AGENT['tier']]['name']})"
         chain, label = [cred.OPERATOR, cred.AGENT["id"]], f"{case.attack}/{case.task}/{t}"
         asked = set(d["asks"])
@@ -164,9 +179,7 @@ class AsiEscalation:
                 if env.execute(c)[0]:
                     executed.append(c)
             elif dec.escalate and approver:
-                tcfg = cred.TIERS[cred.AGENT["tier"]]
-                card = (esc.agent_card(c, c.why, t, desk.TICKETS, tcfg["name"]) if cfg["reviewer"] == "agent_card" else
-                        esc.effect_card(c, t, desk.TICKETS, d["text"], dec.codes, tcfg["name"], tcfg["refund_cap"], cred.OPERATOR))
+                card = self._card(cfg, c, t, d, dec)
                 b0 = gpucooler.busy_ms()
                 v = approver.decide(card, dict(call=c, ticket_id=t, tickets=desk.TICKETS, operator_text=d["text"]))
                 rev_cool += gpucooler.busy_ms() - b0       # the cooler's sensor check and any pause are not our code's time

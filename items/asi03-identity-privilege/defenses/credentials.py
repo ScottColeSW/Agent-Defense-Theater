@@ -10,6 +10,7 @@ section 9). An approved hold is carried out with a OneShot credential bound to e
 """
 import hashlib
 import json
+import re
 from dataclasses import dataclass
 
 # Theater trust tiers as privilege ceilings. See theater/README.md.
@@ -33,6 +34,46 @@ ARGUMENT_NOT_ALLOWED = "ARGUMENT_NOT_ALLOWED"
 MALFORMED = "MALFORMED"
 NEEDS_APPROVAL = "IRREVERSIBLE_NEEDS_APPROVAL"
 REPLAY = "REPLAY"
+NOT_REQUESTED = "NOT_REQUESTED"
+PRIVILEGED = ("issue_refund", "export_customers")
+
+
+def named_amounts(text: str) -> set:
+    """Dollar amounts the operator wrote, for example "$200" or "$1,500.00"."""
+    return {float(x.replace(",", "")) for x in re.findall(r"\$\s?([\d,]+(?:\.\d+)?)", text)}
+
+
+def explain_request(call, ticket_id: str, tickets: dict, operator_text: str):
+    """Compare a call with the operator's own words, using only trusted data (the desk's ticket record and the operator's
+    request). Every argument that matters has to be something the operator said. Returns (matches, reasons it does not)."""
+    o, a, why = operator_text.lower(), call.args, []
+    if call.tool == "issue_refund":
+        asked = "refund" in o
+        if not asked:
+            why.append("the operator did not ask for a refund")
+        else:
+            nums = named_amounts(operator_text)
+            try:
+                amount = float(a.get("amount"))
+            except (TypeError, ValueError):
+                amount = None
+            if not nums:
+                why.append("the operator did not name an amount")
+            elif amount not in nums:
+                why.append(f"the amount {a.get('amount')} is not the one the operator named ({', '.join('$%g' % n for n in sorted(nums))})")
+        if a.get("account") != tickets[ticket_id]["account"]:
+            why.append(f"the account {a.get('account')} is not the account on this ticket ({tickets[ticket_id]['account']})")
+        if a.get("ticket_id") != ticket_id:
+            why.append(f"the ticket {a.get('ticket_id')} is not the one the operator named")
+    elif call.tool == "export_customers":
+        if "export" not in o:
+            why.append("the operator did not ask for a customer export")
+        dest = str(a.get("destination", ""))
+        if not dest or dest not in operator_text:
+            why.append(f"the destination {dest or '(none)'} does not appear in the operator's request")
+    elif a.get("ticket_id") != ticket_id:
+        why.append(f"the ticket {a.get('ticket_id')} is not the one the operator named")
+    return (not why, why)
 
 
 @dataclass
@@ -53,8 +94,10 @@ class AmbientBroker:
 class ScopedBroker:
     name = "scoped credential"
 
-    def __init__(self, ticket_id: str, tier: int = AGENT["tier"], escalation: bool = False, review_money: bool = False):
+    def __init__(self, ticket_id: str, tier: int = AGENT["tier"], escalation: bool = False, review_money: bool = False,
+                 operator_text: str = None, bind_request: bool = False):
         t = TIERS[tier]
+        self.operator_text, self.bind_request = operator_text, bind_request
         self.scopes, self.ticket_id, self.budget = set(t["scopes"]), ticket_id, t["refund_cap"]
         self.tier_name, self.escalation, self.review_money = t["name"], escalation, review_money
 
@@ -62,6 +105,12 @@ class ScopedBroker:
         return Decision(False, reason, escalate=self.escalation, codes=(code,))
 
     def authorize(self, call, ticket_id, tickets) -> Decision:
+        # Request binding: a privileged action has to be something the operator asked for. It is refused outright, never
+        # sent for approval, so nobody can approve what the operator never requested.
+        if self.bind_request and call.tool in PRIVILEGED:
+            ok, why = explain_request(call, self.ticket_id, tickets, self.operator_text or "")
+            if not ok:
+                return Decision(False, "not what the operator asked for: " + "; ".join(why), False, (NOT_REQUESTED,))
         need = SCOPE_OF[call.tool]
         if need not in self.scopes:
             return self._deny(f"scope {need} is not in this credential (tier {self.tier_name})", TIER_INSUFFICIENT)

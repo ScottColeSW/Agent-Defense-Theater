@@ -151,3 +151,47 @@ function gpuStatic(root, gpu) {
     leftLabel: "run start", rightLabel: `${dur(last[0])} into the run`, peak: gpu.peak_c, pauseCount: gpu.pauses, pausedS: gpu.paused_s});
   g(root, "state").insertAdjacentHTML("afterbegin", `<span class="chip dim">last reading of the run</span> `);
 }
+
+
+/* The trade-off every defense makes: attacks that got through (up is worse) against valid work completed (right is better).
+   The corner to be in is the bottom right: protected, and still useful. */
+function tradeoffChart(el, summary) {
+  const rows = summary.filter(r => r.valid && r.valid.n && r.success && r.success.n);
+  if (!rows.length) { el.innerHTML = `<p class="muted small" style="margin:0">This run has no valid-work cases to plot.</p>`; return; }
+  const W = 720, H = 340, m = {l: 62, r: 24, t: 18, b: 46}, X = v => m.l + v * (W - m.l - m.r), Y = v => H - m.b - v * (H - m.t - m.b);
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Attack success against valid work completed, one point per condition">`;
+  s += `<rect x="${X(.5)}" y="${Y(.2)}" width="${X(1) - X(.5)}" height="${Y(0) - Y(.2)}" fill="rgba(52,211,153,.10)"/><text x="${X(1) - 6}" y="${Y(.02) - 4}" text-anchor="end" fill="#34d399" font-size="11">protected and useful</text>`;
+  for (let v = 0; v <= 1.0001; v += .2) {
+    s += `<line x1="${X(v)}" x2="${X(v)}" y1="${m.t}" y2="${H - m.b}" stroke="#334155" stroke-opacity=".4"/><text x="${X(v)}" y="${H - m.b + 16}" text-anchor="middle" fill="#94a3b8" font-size="11">${Math.round(v * 100)}%</text>`;
+    s += `<line x1="${m.l}" x2="${W - m.r}" y1="${Y(v)}" y2="${Y(v)}" stroke="#334155" stroke-opacity=".4"/><text x="${m.l - 8}" y="${Y(v) + 4}" text-anchor="end" fill="#94a3b8" font-size="11">${Math.round(v * 100)}%</text>`;
+  }
+  s += `<text x="${(W + m.l) / 2}" y="${H - 6}" text-anchor="middle" fill="#94a3b8" font-size="11">valid work completed (higher is better)</text>`;
+  s += `<text transform="translate(14 ${(H - m.b + m.t) / 2}) rotate(-90)" text-anchor="middle" fill="#94a3b8" font-size="11">attacks that got through (lower is better)</text>`;
+  // Conditions with identical results share one point and one label. Labels are placed so they do not run over each other.
+  const groups = {};
+  rows.forEach(r => { const k = `${r.valid.k}/${r.valid.n}-${r.success.k}/${r.success.n}`; (groups[k] = groups[k] || {r, names: []}).names.push(r.defense); });
+  const list = Object.values(groups).sort((p, q) => p.r.valid.rate - q.r.valid.rate || p.r.success.rate - q.r.success.rate);
+  const boxes = list.map(g => ({x: X(g.r.valid.rate), y: Y(g.r.success.rate)})), placed = [];
+  const hit = (a, b) => a.x0 < b.x1 && a.x1 > b.x0 && a.y0 < b.y1 && a.y1 > b.y0;
+  list.forEach((g, i) => {
+    const r = g.r, x = boxes[i].x, y = boxes[i].y, best = r.success.rate <= .15 && r.valid.rate >= .5, col = best ? "#34d399" : r.success.rate >= .4 ? "#f43f5e" : "#38bdf8";
+    const tipHtml = esc(`<b>${g.names.join("<br>")}</b><br>valid work done ${pct(r.valid.rate)} (${r.valid.k}/${r.valid.n})<br>attacks that got through ${pct(r.success.rate)} (${r.success.k}/${r.success.n})`);
+    s += `<line x1="${X(r.valid.ci[0])}" x2="${X(r.valid.ci[1])}" y1="${y}" y2="${y}" stroke="${col}" stroke-opacity=".35"/><line x1="${x}" x2="${x}" y1="${Y(r.success.ci[0])}" y2="${Y(r.success.ci[1])}" stroke="${col}" stroke-opacity=".35"/>`;
+    s += `<circle cx="${x}" cy="${y}" r="7" fill="${col}" fill-opacity=".9" data-tip="${tipHtml}"/>`;
+    const text = g.names.join(" + "), w = text.length * 6.4;
+    let spot = null;
+    for (const side of (x + w + 14 < W - m.r ? [1, -1] : [-1, 1])) {
+      for (const dy of [4, -13, 21, -30, 38, -47, 55, -64]) {
+        const x0 = side > 0 ? x + 12 : x - 12 - w, box = {x0, x1: x0 + w, y0: y + dy - 11, y1: y + dy + 3};
+        if (box.x0 < m.l - 4 || box.x1 > W - 2 || box.y0 < 4 || box.y1 > H - m.b + 2) continue;
+        const dots = boxes.some(b => hit(box, {x0: b.x - 8, x1: b.x + 8, y0: b.y - 8, y1: b.y + 8}));
+        if (!dots && !placed.some(q => hit(box, q))) { spot = {side, dy, box}; break; }
+      }
+      if (spot) break;
+    }
+    if (!spot) spot = {side: 1, dy: 4, box: {x0: x + 12, x1: x + 12 + w, y0: y - 7, y1: y + 7}};
+    placed.push(spot.box);
+    s += `<text x="${spot.side > 0 ? x + 12 : x - 12}" y="${y + spot.dy}" text-anchor="${spot.side > 0 ? "start" : "end"}" fill="#f8fafc" font-size="11">${esc(text)}</text>`;
+  });
+  el.innerHTML = s + "</svg>";
+}

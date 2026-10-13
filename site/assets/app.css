@@ -98,7 +98,7 @@ table.tbl tr.hl td { background: rgba(52,211,153,.06); }
 .test .facts b { color: var(--text); }
 .runrow { border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; margin-top: 10px; }
 .runrow .top { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; flex-wrap: wrap; margin-bottom: 8px; }
-.tally { display: grid; grid-template-columns: 170px 1fr 60px; gap: 4px 10px; align-items: center; font-size: 11px; margin-top: 10px; }
+.tally { display: grid; grid-template-columns: 190px 1fr 100px 1fr 90px; gap: 4px 10px; align-items: center; font-size: 11px; margin-top: 10px; }
 .log { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; font-size: 11px; max-height: 150px; overflow: auto; color: var(--muted); white-space: pre-wrap; }
 .stacked { display: flex; height: 18px; border-radius: 4px; overflow: hidden; background: rgba(51,65,85,.4); }
 .stacked i { display: block; height: 100%; min-width: 0; }

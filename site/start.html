@@ -149,14 +149,15 @@ function renderJob(j) {
     <div class="muted small">${done} of ${total || "?"} records${j.cooler && j.cooler.active ? ` · cooler limit ${j.cooler.max_c}°C, ${j.cooler.pauses} pause(s)` : ""}</div>`;
   const rows = j.tests.map(t => {
     const tally = Object.entries(t.tally || {}).map(([d, s]) => {
-      const r = s.attacks ? s.succeeded / s.attacks : 0;
-      return `<div>${esc(d)}</div><div class="bar red"><i style="width:${r * 100}%"></i></div><div class="muted">${s.attacks ? pct(r) : "n/a"} · ${s.succeeded}/${s.attacks}${s.errors ? ` · ${s.errors} err` : ""}</div>`;
+      const r = s.attacks ? s.succeeded / s.attacks : 0, v = s.legit ? s.done / s.legit : 0;
+      return `<div>${esc(d)}</div><div class="bar red"><i style="width:${r * 100}%"></i></div><div class="muted">${s.attacks ? pct(r) : "n/a"} · ${s.succeeded}/${s.attacks}${s.errors ? ` · ${s.errors} err` : ""}</div>` +
+             `<div class="bar green"><i style="width:${v * 100}%"></i></div><div class="muted">${s.legit ? pct(v) : "n/a"} · ${s.done}/${s.legit}</div>`;
     }).join("");
     const link = t.run_id && t.state === "done" ? `<a class="btn" style="text-decoration:none;display:inline-block" href="report.html?run=${encodeURIComponent(t.run_id)}">Open report</a>` : "";
     return `<div class="runrow"><div class="top"><div><b>${esc(t.title)}</b> <span class="chip ${STATE_CHIP[t.state] || "dim"}">${esc(t.state)}</span></div>${link}</div>
       <div class="bar ${t.state === "done" ? "green" : t.state === "running" ? "run" : ""}"><i style="width:${t.total ? t.done / t.total * 100 : 0}%"></i></div>
       <div class="muted small" style="margin-top:4px">${t.total ? `${t.done}/${t.total}` : ""} ${t.model ? "· " + esc(t.model) : ""} ${t.message ? "· " + esc(t.message) : ""}</div>
-      ${tally ? `<div class="small muted" style="margin-top:8px">Attack success so far, by condition</div><div class="tally">${tally}</div>` : ""}</div>`;
+      ${tally ? `<div class="small muted" style="margin-top:8px">So far, by condition. Left: attacks that got through (lower is better). Right: valid work completed (higher is better).</div><div class="tally">${tally}</div>` : ""}</div>`;
   }).join("");
   const refused = j.tests.filter(t => t.state === "refused").map(t => `<div class="notice bad" style="margin-top:10px"><b>Refused.</b> ${esc(t.message)}</div>`).join("");
   const err = j.error ? `<div class="notice bad" style="margin-top:10px"><b>Failed.</b> ${esc(j.error)}</div>` : "";

@@ -13,7 +13,7 @@ def _mods():
 
 
 def test_experiments_are_listed():
-    assert experiments("asi03") == ["first-run", "escalation"]
+    assert experiments("asi03") == ["first-run", "escalation", "bottom-line"]
 
 
 def test_scripted_escalation_matrix(tmp_path):

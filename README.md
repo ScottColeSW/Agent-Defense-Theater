@@ -43,7 +43,7 @@ Python 3.10 or newer, standard library only. [Ollama](https://ollama.com) is nee
 ```bash
 python adt.py status            # coverage and which items are runnable
 python adt.py demo              # scripted ASI03 run, then verify its decision log
-python adt.py serve --open      # the site at http://localhost:8765
+python adt.py serve --open      # the site and the test runner at http://localhost:8765/start.html
 python adt.py models            # local models Ollama can see
 python adt.py gpu               # GPU temperature; live runs pause above 72 C
 python adt.py run asi03 --models llama3.1:8b,qwen2.5:7b,phi4-mini:3.8b

@@ -146,6 +146,26 @@ def build_asi03_escalation():
     print(f"asi03-escalation.json: {len(recs)} records from {len(files)} run(s)")
 
 
+def build_runner_data():
+    """Static copies of the committed results and the test list, so the report page works on a host with no runner."""
+    sys.path.insert(0, str(ROOT / "common"))
+    from adt import registry, report
+    out = ROOT / "site" / "data" / "reports"
+    out.mkdir(parents=True, exist_ok=True)
+    index = []
+    for r in report.list_reports():
+        if r["kind"] != "result":                 # scripted and exploratory runs are throwaway and stay local
+            continue
+        (out / f"{r['run_id']}.json").write_text(json.dumps(report.build_report(r["run_id"])), encoding="utf-8")
+        index.append(r)
+    (out / "index.json").write_text(json.dumps({"reports": index}), encoding="utf-8")
+    tests = registry.list_tests(refresh=True)
+    for t in tests:                               # readiness is checked live by the runner, so a snapshot must not claim it
+        t["prereg"] = {"path": t["prereg"]["path"], "ready": None, "message": "checked when run locally"}
+    (ROOT / "site" / "data" / "tests.json").write_text(json.dumps({"tests": tests}), encoding="utf-8")
+    print(f"reports: {len(index)} committed result(s); tests.json: {len(tests)} test(s)")
+
+
 def build_pav(pav: Path):
     src = pav / "results" / "defenses" / "defenses.json"
     d = json.loads(src.read_text(encoding="utf-8"))
@@ -235,5 +255,6 @@ if __name__ == "__main__":
     build_coverage()
     build_asi03()
     build_asi03_escalation()
+    build_runner_data()
     if a.pav:
         build_pav(a.pav)

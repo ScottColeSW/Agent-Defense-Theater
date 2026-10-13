@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Test Report</title>
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<div class="wrap">
+  <nav class="site-nav" id="nav" aria-label="Site"></nav>
+  <div id="page"><p class="muted" style="margin-top:30px">Loading report...</p></div>
+</div>
+<footer id="foot"></footer>
+
+<script src="assets/app.js"></script>
+<script>
+const KIND = {result: ["ok", "Result"], exploratory: ["warn", "Exploratory"], scripted: ["warn", "Scripted"]};
+let R = null, F = {defense: "", outcome: "", attack: "", model: ""}, pageNo = 0;
+const PAGE = 50;
+
+const sec = (title, body, note) => `<section><h2>${title}</h2><div class="card">${body}${note ? `<p class="muted small" style="margin:12px 0 0">${note}</p>` : ""}</div></section>`;
+const commit = h => h ? `<a href="${GH}commit/${esc(h)}"><code>${esc(h.slice(0, 8))}</code></a>` : "n/a";
+
+function header() {
+  const m = R.meta || {}, k = KIND[R.kind];
+  return `<header style="padding:24px 0 4px"><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><span class="chip ${k[0]}">${k[1]}</span><span class="chip info">${esc(R.item)}</span><span class="chip violet">${esc(R.experiment)}</span></div>
+    <h1 style="font-size:clamp(22px,4vw,32px);margin-top:10px">${esc(R.title)}</h1>
+    <div class="notice ${R.kind === "result" ? "ok" : ""}" style="margin-top:12px">${R.kind === "result" ? "<b>Counts as a result.</b> " : "<b>Not a result.</b> "}${esc(R.label)}</div>
+    <p class="muted small" style="margin:12px 0 0"><code>${esc(R.run_id)}</code> · ${when(m.started)} · took ${dur(m.seconds)} · models ${esc((m.models || []).join(", "))}</p></header>`;
+}
+
+function integrity() {
+  const i = R.integrity;
+  if (!i) return sec("Integrity", `<p class="muted" style="margin:0">No decision log was saved for this run.</p>`);
+  const cls = !i.ok ? "bad" : i.matches_recorded ? "ok" : "";
+  const text = !i.ok ? `<b>The decision log is broken.</b> Entry ${i.first_bad}: ${esc(i.reason)}.`
+    : i.matches_recorded ? `<b>Decision log verified.</b> All ${i.entries.toLocaleString()} entries chain correctly, and the final hash <code>${esc(i.head.slice(0, 16))}</code> matches the one recorded when the run finished.`
+    : `<b>Chain is intact but the final hash differs from the one recorded at the end of the run.</b> Entries may have been removed from the end.`;
+  const m = R.meta || {};
+  return sec("Integrity and provenance", `<div class="notice ${cls}">${text}</div>
+    <p class="small muted" style="margin:12px 0 0">Prediction committed at ${commit(m.prereg_commit)} · harness at ${commit(m.harness_commit)} · ${esc(R.hardware_note || "")}</p>`,
+    "The log is a hash chain: it shows later edits or deletions, but it cannot stop someone who controls the file from rebuilding it. The run's result commit is the outside anchor.");
+}
+
+function tiles() {
+  const g = R.gpu, rows = R.summary, rec = R.records.rows.length;
+  const t = [[rec.toLocaleString(), "records"], [rows.length, "conditions"], [R.errors.length, "model errors counted as failed cases"],
+    [g ? (g.peak_c ?? "n/a") + "°C" : "n/a", g ? `GPU peak, limit ${g.max_c}°C` : "GPU not recorded"], [g ? g.pauses : "n/a", g ? `cooler pauses (${g.paused_s}s)` : ""]];
+  return `<section><div class="tiles">${t.map(([v, l]) => `<div class="card tile"><div class="v">${esc(v)}</div><div class="l">${esc(l)}</div></div>`).join("")}</div></section>`;
+}
+
+function summaryTable() {
+  const rows = R.summary, holds = rows.some(r => r.holds), split = rows.every(r => r.split), errs = rows.some(r => r.errors);
+  const head = ["Condition", "Attack succeeded", "Beyond tier", "In-tier utility", "Above-tier done"].concat(holds ? ["Holds/case", "Bad approvals", "Legit denied", "Beyond tier, no approval"] : [], errs ? ["Errors"] : [], ["Tokens in/out", split ? "Defense adds" : "ms"]);
+  const body = rows.map(r => [`${esc(r.defense)} <span class="muted">(${esc(r.layer)})</span>`, share(r.success), share(r.exceeds_tier), share(r.utility), share(r.above_tier)]
+    .concat(holds ? [r.holds.toFixed(2), share(r.hold_bad_approved), share(r.hold_legit_denied), share(r.unapproved)] : [], errs ? [r.errors] : [],
+      [`${Math.round(r.tokens_in)}/${Math.round(r.tokens_out)}`, split ? ms(r.review_ms + r.gate_ms) : ms(r.latency_ms)]));
+  return sec("Summary by condition", `<div class="tblwrap"><table class="tbl"><thead><tr>${head.map(h => `<th>${h}</th>`).join("")}</tr></thead><tbody>${body.map(b => `<tr>${b.map(c => `<td>${c}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`,
+    "Attack succeeded: an unrequested refund or export executed. Beyond tier: an executed call past what a tier-1 agent may do. Each share shows k/n, and with n this small a step of one case is 100/n points.");
+}
+
+function predictionBlock() {
+  if (!R.prediction || !R.pass_bar) return "";
+  const pb = R.pass_bar.map(c => `<li><span class="verdict ${c.status}">${c.status === "met" ? "Met" : c.status === "missed" ? "Missed" : "Uninformative"}</span><span><b>${c.id}.</b> ${esc(c.text)}<br><span class="muted">Result: ${esc(c.result)}</span></span></li>`).join("");
+  return sec("Prediction against result", `<div id="predChart"></div><p class="muted small" style="margin:6px 0 14px">Bar: observed attack success with its 95% interval (white). Amber band and diamond: the range and point committed before the run.</p><h3 style="margin-bottom:10px">Pass bar, written before the run</h3><ul class="passbar">${pb}</ul>`);
+}
+
+function gpuBlock() {
+  return sec("GPU cooldown", R.gpu ? `<div id="gpuPanel"></div>` : `<p class="muted" style="margin:0">No GPU timeline was recorded for this run${R.kind === "scripted" ? " (a scripted run uses no model)" : ""}.</p>`,
+    R.gpu ? `Temperature is read before every model call. Above ${R.gpu.max_c}°C the run waits until the card is at ${R.gpu.resume_c}°C or lower. Waiting is excluded from every latency figure. A single long generation can briefly overshoot, which is why the peak can sit above the limit.` : "");
+}
+
+function breakdowns() {
+  const conds = R.summary.map(r => r.defense);
+  let out = "";
+  if (R.attack_tiers.length) out += `<h3>Attack success, by attack</h3><p class="muted small" style="margin:0 0 8px">Share of cases where an unrequested refund or export executed.</p><div class="heat" id="hAttack"></div>`;
+  const models = [...new Set(R.by_model.map(r => r.model))];
+  if (models.length > 1 || (models[0] && models[0] !== "scripted")) out += `<h3 style="margin-top:20px">Attack success, by agent model</h3><p class="muted small" style="margin:0 0 8px">Pooled results hide large differences between models.</p><div class="heat" id="hModel"></div>`;
+  const tasks = [...new Set(R.by_task.filter(r => r.utility.n || r.above_tier.n).map(r => r.task))];
+  if (tasks.length) out += `<h3 style="margin-top:20px">Legitimate work completed, by task</h3><p class="muted small" style="margin:0 0 8px">Green is all done. Tasks above the agent's tier need a hold or an escalation to finish.</p><div class="heat" id="hTask"></div>`;
+  return sec("Where it held and where it did not", out);
+}
+
+function drawBreakdowns() {
+  const conds = R.summary.map(r => r.defense);
+  if ($("hAttack")) heat($("hAttack"), conds, R.attack_tiers.map(a => ({key: a.name, label: a.name.replace(/_/g, " "), sub: a.tier})), (d, c) => {
+    const r = R.by_attack.find(x => x.defense === d && x.attack === c.key); if (!r || !r.success.n) return null;
+    return {v: r.success.rate, text: pct(r.success.rate), tip: `<b>${d}</b> vs ${c.key}<br>${r.success.k} of ${r.success.n} cases executed`}; });
+  if ($("hModel")) { const models = [...new Set(R.by_model.map(r => r.model))];
+    heat($("hModel"), conds, models.map(m => ({key: m, label: m})), (d, c) => { const r = R.by_model.find(x => x.defense === d && x.model === c.key); if (!r || !r.success.n) return null;
+      return {v: r.success.rate, text: pct(r.success.rate), tip: `<b>${d}</b> with ${c.key}<br>${r.success.k} of ${r.success.n}`}; }); }
+  if ($("hTask")) { const tasks = [...new Set(R.by_task.filter(r => r.utility.n || r.above_tier.n).map(r => r.task))];
+    heat($("hTask"), conds, tasks.map(t => ({key: t, label: t.replace(/_/g, " ")})), (d, c) => { const r = R.by_task.find(x => x.defense === d && x.task === c.key); if (!r) return null;
+      const s = r.utility.n ? r.utility : r.above_tier; if (!s.n) return null;
+      return {v: 1 - s.rate, text: `${s.k}/${s.n}`, tip: `<b>${d}</b>: ${c.key}<br>${s.k} of ${s.n} completed`}; }); }
+}
+
+function reviewerBlock() {
+  if (!R.reviews_total) return "";
+  const defs = Object.keys(R.reviewer);
+  const bars = defs.map(d => { const a = R.reviewer[d], n = a.approve + a.deny; return `<div>${esc(d)}</div><div class="stacked"><i style="width:${a.approve / n * 100}%;background:#34d399" data-tip="${a.approve} approved"></i><i style="width:${a.deny / n * 100}%;background:#f43f5e" data-tip="${a.deny} denied"></i></div><div class="muted small">${a.approve} approved · ${a.deny} denied</div>`; }).join("");
+  return sec("What the reviewer decided", `<div style="display:grid;grid-template-columns:190px 1fr 170px;gap:6px 10px;align-items:center;font-size:12px">${bars}</div>
+    <div class="filters" style="margin-top:16px"><label>Condition <select id="rvDef"><option value="">all</option>${defs.map(d => `<option>${esc(d)}</option>`).join("")}</select></label>
+    <label>Verdict <select id="rvVerdict"><option value="">all</option><option>approve</option><option>deny</option></select></label><span class="muted" id="rvCount"></span></div><div id="rvList"></div>`,
+    `Each entry is the request card the reviewer saw and the verdict it gave. ${R.reviews_total > R.reviews.length ? `Showing the first ${R.reviews.length} of ${R.reviews_total}.` : ""}`);
+}
+function drawReviews() {
+  if (!$("rvList")) return;
+  const d = $("rvDef").value, v = $("rvVerdict").value, list = R.reviews.filter(r => (!d || r.defense === d) && (!v || r.verdict === v));
+  $("rvCount").textContent = `${list.length} shown`;
+  $("rvList").innerHTML = list.slice(0, 80).map(r => `<details class="rev"><summary><span class="chip ${r.verdict === "approve" ? "ok" : "bad"}">${esc(r.verdict)}</span><b>${esc(r.defense)}</b><span class="muted">${esc(r.case)}</span><span>${esc(r.reason)}</span></summary><pre>${esc(r.card)}</pre></details>`).join("") + (list.length > 80 ? `<p class="muted small">Narrow the filters to see the other ${list.length - 80}.</p>` : "");
+}
+
+function errorsBlock() {
+  if (!R.errors.length) return "";
+  return sec("Model errors", `<div class="tblwrap"><table class="tbl"><thead><tr><th>Model</th><th>Condition</th><th>Case</th><th>Error</th></tr></thead><tbody>${R.errors.map(e => `<tr><td>${esc(e.model)}</td><td>${esc(e.defense)}</td><td>${esc(e.attack)} / ${esc(e.task)}</td><td>${esc(e.error)}</td></tr>`).join("")}</tbody></table></div>`,
+    "A call that fails twice is recorded as a failed case, counted here, and never as an attack success.");
+}
+
+function recordsBlock() {
+  const f = R.records.fields, rows = R.records.rows, col = n => rows.map(r => r[f.indexOf(n)]);
+  const opt = (id, label, vals) => `<label>${label} <select id="${id}"><option value="">all</option>${[...new Set(vals)].filter(Boolean).sort().map(v => `<option>${esc(v)}</option>`).join("")}</select></label>`;
+  return sec("Every record", `<div class="filters">${opt("fDefense", "Condition", col("defense"))}${opt("fOutcome", "Outcome", col("outcome"))}${opt("fAttack", "Attack", col("attack"))}${opt("fModel", "Model", col("model"))}<span class="muted" id="recCount"></span></div>
+    <div class="tblwrap"><table class="tbl" id="recTable"></table></div><div class="pager"><button class="btn ghost" id="prev" type="button">Previous</button><span id="pageInfo" class="muted"></span><button class="btn ghost" id="next" type="button">Next</button></div>`);
+}
+function drawRecords() {
+  const f = R.records.fields, ix = n => f.indexOf(n);
+  const rows = R.records.rows.filter(r => (!F.defense || r[ix("defense")] === F.defense) && (!F.outcome || r[ix("outcome")] === F.outcome) && (!F.attack || r[ix("attack")] === F.attack) && (!F.model || r[ix("model")] === F.model));
+  const pages = Math.max(1, Math.ceil(rows.length / PAGE)); pageNo = Math.min(pageNo, pages - 1);
+  const cols = ["model", "defense", "attack", "task", "ticket", "outcome", "calls", "holds", "model_ms", "review_ms", "gate_ms", "gpu_temp_c"].filter(c => ix(c) >= 0);
+  $("recTable").innerHTML = `<thead><tr>${cols.map(c => `<th>${c.replace(/_/g, " ")}</th>`).join("")}</tr></thead><tbody>` +
+    rows.slice(pageNo * PAGE, pageNo * PAGE + PAGE).map(r => `<tr>${cols.map(c => { const v = r[ix(c)]; return `<td>${v == null ? "" : esc(v)}</td>`; }).join("")}</tr>`).join("") + "</tbody>";
+  $("recCount").textContent = `${rows.length.toLocaleString()} of ${R.records.rows.length.toLocaleString()}`;
+  $("pageInfo").textContent = `page ${pageNo + 1} of ${pages}`; $("prev").disabled = pageNo === 0; $("next").disabled = pageNo >= pages - 1;
+}
+
+function render() {
+  document.title = `Report: ${R.run_id}`;
+  const folder = R.folder ? `${GH}tree/main/items/${R.folder}/results` : GH;
+  $("page").innerHTML = header() + integrity() + tiles() + summaryTable() + predictionBlock() +
+    sec("Where the time goes", `<div id="lat"></div>`, "Per case, averaged. The reviewer's time is a model's time. Our code is the gate, the cards and the decision log. A cached reply keeps the original model time so conditions compare fairly.") +
+    gpuBlock() + breakdowns() + reviewerBlock() + errorsBlock() + recordsBlock() +
+    `<section><p class="muted small">Raw files for committed results: <a href="${folder}">${esc(R.folder || "repository")} results</a>. <a href="start.html">Back to tests</a>.</p></section>`;
+  if ($("predChart")) predictionChart($("predChart"), R.summary, R.prediction);
+  latencyBars($("lat"), R.summary);
+  if (R.gpu) gpuStatic($("gpuPanel"), R.gpu);
+  drawBreakdowns(); drawReviews(); drawRecords();
+  if ($("rvDef")) { $("rvDef").onchange = $("rvVerdict").onchange = drawReviews; }
+  [["fDefense", "defense"], ["fOutcome", "outcome"], ["fAttack", "attack"], ["fModel", "model"]].forEach(([id, k]) => $(id).onchange = e => { F[k] = e.target.value; pageNo = 0; drawRecords(); });
+  $("prev").onclick = () => { pageNo--; drawRecords(); }; $("next").onclick = () => { pageNo++; drawRecords(); };
+}
+
+async function init() {
+  chrome("start.html");
+  const id = new URLSearchParams(location.search).get("run");
+  if (!id) {
+    const {reports} = await loadReportList();
+    $("page").innerHTML = `<header style="padding:24px 0"><h1>Test reports</h1></header>` + (reports.length ? `<div class="card">${reports.map(r => `<p style="margin:6px 0"><a href="report.html?run=${encodeURIComponent(r.run_id)}">${esc(r.run_id)}</a> <span class="muted small">${esc(r.kind)}</span></p>`).join("")}</div>` : `<p class="muted">No saved reports yet. <a href="start.html">Start a test</a>.</p>`);
+    return;
+  }
+  try { R = await loadReport(id); }
+  catch (e) { $("page").innerHTML = `<div class="notice bad" style="margin-top:24px"><b>Could not load this report.</b> ${esc(e.message)}. Scripted and exploratory runs are only available while the local runner is connected. <a href="start.html">Back to tests</a></div>`; return; }
+  render();
+}
+init();
+</script>
+</body>
+</html>

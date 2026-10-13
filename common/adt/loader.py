@@ -1,10 +1,19 @@
 """Find and load an item's scenario. Item folders are named asiNN-slug, which is not importable, so load by path."""
 import importlib.util
 import sys
+import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 ITEMS = ROOT / "items"
+
+
+def results_dir(item: str, sub: str = "") -> Path:
+    """Preregistered live runs are results and live in the repository. Scripted and exploratory runs are throwaway test
+    output under the system temp folder, which follows TMP/TEMP, so a testing area set there is honored."""
+    if sub in ("scripted", "exploratory"):
+        return Path(tempfile.gettempdir()) / "adt" / item_folder(item).name / sub
+    return item_folder(item) / "results" / sub
 
 
 def load_file(path, name: str):

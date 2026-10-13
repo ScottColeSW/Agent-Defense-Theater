@@ -37,6 +37,19 @@ python -m pytest -q
 
 - **A hot GPU waits.** Live runs install the GPU cooler ([`adt/gpucooler.py`](adt/gpucooler.py)): before each model call it reads the GPU temperature and, above 72 C (`--max-temp`, 0 turns it off), pauses until the card is at 68 C or lower. It gives up after 30 minutes rather than stall. Every result record carries `gpu_temp_c` and `thermal_wait_ms`, and the run's `meta.json` records the peak, the number of pauses and the seconds paused, so latency can be read with the waits taken out. It checks between calls, so one long generation can still overshoot, which is why a background sampler tracks the true peak. It reads temperature only and does not touch fans, clocks or power.
 
+## The runner and its API
+
+`python adt.py serve --open` serves the site and a JSON API from [`adt/server.py`](adt/server.py), bound to localhost only. The pages that use it are described in [`../site/README.md`](../site/README.md).
+
+| Endpoint | Purpose |
+| --- | --- |
+| `GET /api/tests` | Every runnable test, whether its prediction is committed, its last result |
+| `GET /api/status`, `GET /api/gpu` | Runner, Ollama and GPU readiness; temperature, history, limits and cooler state |
+| `POST /api/jobs`, `GET /api/jobs/<id>`, `POST /api/jobs/<id>/cancel` | Start, follow and cancel a run of one or more tests, one job at a time because there is one GPU |
+| `GET /api/reports`, `GET /api/reports/<run_id>` | Saved runs and the detailed report for one ([`adt/report.py`](adt/report.py)) |
+
+Each experiment registers itself as a test ([`adt/registry.py`](adt/registry.py)) by providing a title, a summary, its conditions, its committed predictions and its pass bar. A new experiment appears in the runner without changes to it. Protections: only local host names are served, a POST must be JSON and any browser `Origin` must be the server's own (so a page on another site cannot start runs here), and model names must be ones Ollama actually has.
+
 ## Where results go
 
 | Folder under `items/asiNN-*/results/` | Contents |

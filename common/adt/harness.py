@@ -21,6 +21,10 @@ ROOT = Path(__file__).resolve().parents[2]
 HARDWARE_NOTE = "One workstation, RTX 2080 Super 8 GB. Local models up to 8B parameters."
 
 
+class RunCancelled(Exception):
+    """Raised between records when the caller asks the run to stop."""
+
+
 @dataclass
 class Defense:
     name: str
@@ -65,13 +69,15 @@ def check_prereg(prereg: Path, code_dirs: list) -> tuple:
 
 
 def run(scenario, runners: list, out_dir: Path, mode: str = "live", exploratory: bool = False,
-        defenses: list = None, progress=print) -> dict:
+        defenses: list = None, progress=print, on_start=None, on_progress=None, should_stop=None) -> dict:
     """Run every case against every defense and model. Writes <run_id>.jsonl, a decision log and <run_id>.meta.json."""
     out_dir = Path(out_dir)
     tag = "scripted" if mode == "scripted" else ("exploratory" if exploratory else "prereg")
     exp = getattr(scenario, "experiment", "first-run")
     run_id = f"{scenario.item.lower()}-{exp}-{time.strftime('%Y%m%dT%H%M%S', time.gmtime())}-{tag}"
     out_dir.mkdir(parents=True, exist_ok=True)
+    if on_start:
+        on_start(run_id, out_dir)
     rec_path, log = out_dir / f"{run_id}.jsonl", DecisionLog(out_dir / f"{run_id}.decisions.jsonl")
     cases, defs = scenario.cases(), defenses or scenario.defenses
     info = {}
@@ -110,6 +116,10 @@ def run(scenario, runners: list, out_dir: Path, mode: str = "live", exploratory:
                 f.write(json.dumps(rec, ensure_ascii=False) + "\n")
                 f.flush()
                 n += 1
+                if on_progress:
+                    on_progress(n, total, runner.name, rec)
+                if should_stop and should_stop():
+                    raise RunCancelled()
                 if progress and (i % 25 == 0 or i == len(pairs)):
                     progress(f"  {runner.name}: {i}/{len(pairs)} ({n}/{total} records)")
     meta = {"run_id": run_id, "item": scenario.item, "experiment": exp, "mode": mode, "exploratory": exploratory, "models": [r.name for r in runners],

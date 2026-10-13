@@ -46,7 +46,9 @@ class GpuCooler:
         self.available = None
         self.last = self.peak = None
         self.pauses, self.paused_s, self._taken_s, self.busy_s = 0, 0.0, 0.0, 0.0
+        self.paused = False                          # True while a call is being held for the GPU to cool
         self.t0 = clock()
+        self.wall0 = time.time()                        # wall-clock start, so a live chart can place pauses on its own time axis
         self.samples, self.pause_events = [], []     # [seconds since start, C], and one dict per pause
         self._stop = threading.Event()
         self._lock = threading.Lock()
@@ -84,16 +86,20 @@ class GpuCooler:
         first = t
         start = self._clock()
         self._say(f"GPU cooler: {t}C is over {self.max_c}C. Pausing until {self.resume_c}C or lower.")
-        while t > self.resume_c:
-            if self._clock() - start > self.give_up_s:
-                raise RuntimeError(f"GPU cooler: still {t}C after {self.give_up_s}s of waiting (target {self.resume_c}C). "
-                                   "Check cooling or raise the limit. Stopping rather than waiting forever.")
-            self._sleep(self.poll_s)
-            nt = self._read()
-            if nt is None:
-                break                                   # sensor lost: stop holding the run
-            t = nt
-            self._see(t)
+        self.paused = True
+        try:
+            while t > self.resume_c:
+                if self._clock() - start > self.give_up_s:
+                    raise RuntimeError(f"GPU cooler: still {t}C after {self.give_up_s}s of waiting (target {self.resume_c}C). "
+                                       "Check cooling or raise the limit. Stopping rather than waiting forever.")
+                self._sleep(self.poll_s)
+                nt = self._read()
+                if nt is None:
+                    break                               # sensor lost: stop holding the run
+                t = nt
+                self._see(t)
+        finally:
+            self.paused = False
         waited = self._clock() - start
         self.paused_s += waited
         self.pause_events.append({"start_s": round(start - self.t0, 1), "seconds": round(waited, 1), "from_c": first, "to_c": t})

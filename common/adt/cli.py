@@ -13,17 +13,12 @@ import webbrowser
 from pathlib import Path
 
 from . import decisionlog, gpucooler, harness, models, scorer
-from .loader import ITEMS, ROOT, experiments, item_folder, load_scenario
+from .loader import ITEMS, ROOT, experiments, item_folder, load_scenario, results_dir
 
 TAG = {"prereg": "prereg", "exploratory": "exploratory", "scripted": "scripted"}
 
 
-def _results_dir(item: str, sub: str = "") -> Path:
-    """Preregistered live runs are results and live in the repository. Scripted and exploratory runs are throwaway
-    test output: they go under the system temp folder, which follows TMP/TEMP, so a testing area set there is honored."""
-    if sub in ("scripted", "exploratory"):
-        return Path(tempfile.gettempdir()) / "adt" / item_folder(item).name / sub
-    return item_folder(item) / "results" / sub
+_results_dir = results_dir
 
 
 def _where(p: Path) -> str:
@@ -62,19 +57,8 @@ def cmd_status(a):
 
 
 def cmd_serve(a):
-    site = ROOT / "site"
-    handler = functools.partial(http.server.SimpleHTTPRequestHandler, directory=str(site))
-    handler.log_message = lambda *args: None
-    socketserver.TCPServer.allow_reuse_address = True
-    with socketserver.TCPServer(("127.0.0.1", a.port), handler) as srv:
-        url = f"http://localhost:{a.port}/"
-        print(f"Serving {site} at {url}  (Ctrl+C to stop)")
-        if a.open:
-            webbrowser.open(url)
-        try:
-            srv.serve_forever()
-        except KeyboardInterrupt:
-            print("\nstopped")
+    from .server import serve
+    serve(a.port, a.open)
 
 
 def cmd_build(a):

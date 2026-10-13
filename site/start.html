@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Start Tests</title>
+<meta name="description" content="Run the Agent Defense Theater tests, all at once or one by one, and read a detailed report afterward.">
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<div class="wrap">
+  <nav class="site-nav" id="nav" aria-label="Site"></nav>
+
+  <header style="padding: 26px 0 4px">
+    <h1>Start <span style="color:var(--blue)">tests</span></h1>
+    <p class="muted" style="max-width:780px;margin:0">Run every test in the range, or just one. Each run ends with a detailed report: what held, what did not, what it cost, how hot the GPU got, and whether the record of every decision still verifies.</p>
+    <div id="chips" style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap"></div>
+  </header>
+
+  <div id="offline" class="notice" hidden>
+    <b>The local runner is not connected.</b> Tests run on your machine, so this page cannot start them from a static host. Start the runner and open this page again:
+    <p style="margin:8px 0 0"><code>python adt.py serve --open</code></p>
+    <p class="muted small" style="margin:8px 0 0">Saved reports below still open.</p>
+  </div>
+  <div id="flash" class="notice bad" hidden></div>
+
+  <section id="controls">
+    <div class="card">
+      <h2>1. Choose how to run</h2>
+      <div class="segmented" id="mode" role="group" aria-label="Run mode">
+        <button type="button" data-m="scripted" aria-pressed="true">Scripted demo</button>
+        <button type="button" data-m="live" aria-pressed="false">Live, preregistered</button>
+        <button type="button" data-m="exploratory" aria-pressed="false">Live, exploratory</button>
+      </div>
+      <p class="muted small" id="modeText" style="margin:10px 0 0"></p>
+      <div id="live" hidden style="margin-top:14px">
+        <div class="small muted" style="margin-bottom:6px">Agent models (installed in Ollama)</div>
+        <div id="models"></div>
+        <div style="display:flex;gap:22px;flex-wrap:wrap;margin-top:12px;align-items:center">
+          <label class="small muted">Reviewer model <select id="reviewer"></select></label>
+          <label class="small muted" title="Model calls pause while the GPU is above this. 0 turns the cooler off.">Pause above <input type="number" id="maxTemp" min="0" max="95" value="72" style="width:70px"> &deg;C</label>
+        </div>
+      </div>
+      <div style="margin-top:18px;display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+        <button class="btn big" id="runAll" type="button" disabled>Run all tests</button>
+        <span class="muted small" id="runAllNote"></span>
+      </div>
+    </div>
+  </section>
+
+  <section id="gpuSection" hidden>
+    <h2>GPU cooldown</h2>
+    <div class="card" id="gpu"></div>
+  </section>
+
+  <section id="runview" hidden>
+    <h2>Run in progress</h2>
+    <div class="card" id="job"></div>
+  </section>
+
+  <section>
+    <h2>2. Or pick one test</h2>
+    <div class="tests" id="tests"><p class="muted">Loading tests...</p></div>
+  </section>
+
+  <section>
+    <h2>Saved reports</h2>
+    <div class="card"><div class="tblwrap" id="saved"><p class="muted small" style="margin:0">Loading...</p></div></div>
+  </section>
+</div>
+<footer id="foot"></footer>
+
+<script src="assets/app.js"></script>
+<script>
+const MODE_TEXT = {
+  scripted: "Instant. Human-written replies show how each defense works. It is labeled scripted and is never counted as a result. No model or GPU is needed.",
+  live: "Real local models answer. It counts as a result only because its prediction was committed first, and the runner refuses to start without one. It takes minutes and uses the GPU, which the cooler keeps below the limit.",
+  exploratory: "Real local models, no committed prediction. It is labeled exploratory, kept outside the repository, and is never a result."
+};
+const STATE_CHIP = {queued: "dim", running: "info pulse", done: "ok", cancelled: "warn", refused: "bad", failed: "bad"};
+let mode = "scripted", status = null, tests = [], jobId = null, pollTimer = null, gpu = null, busy = false;
+
+const selectedModels = () => [...document.querySelectorAll("#models input:checked")].map(i => i.value);
+function flash(msg) { const f = $("flash"); f.hidden = !msg; f.innerHTML = msg ? `<b>Not started.</b> ${esc(msg)}` : ""; if (msg) f.scrollIntoView({block: "nearest"}); }
+
+function renderChips() {
+  const c = [];
+  c.push(status ? `<span class="chip ok">runner connected</span>` : `<span class="chip bad">runner offline</span>`);
+  if (status) {
+    c.push(status.ollama ? `<span class="chip ok">Ollama: ${status.models.length} models</span>` : `<span class="chip warn">Ollama not running (live runs unavailable)</span>`);
+    c.push(status.gpu ? `<span class="chip info">GPU readable</span>` : `<span class="chip dim">no GPU reading</span>`);
+  }
+  $("chips").innerHTML = c.join("");
+}
+
+function renderControls() {
+  $("mode").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", b.dataset.m === mode));
+  $("modeText").textContent = MODE_TEXT[mode];
+  $("live").hidden = mode === "scripted" || !status;
+  const liveBlocked = mode !== "scripted" && status && !status.ollama;
+  $("runAll").disabled = !status || busy || liveBlocked;
+  $("runAllNote").textContent = !status ? "" : liveBlocked ? "Start Ollama to run live." : `${tests.length} tests, run one after another.`;
+  document.querySelectorAll(".runOne").forEach(b => b.disabled = $("runAll").disabled);
+}
+
+function renderModels() {
+  if (!status) return;
+  const used = new Set(tests.flatMap(t => (t.last_result && t.last_result.models) || []));
+  const names = status.models.map(m => m.name);
+  $("models").innerHTML = names.length ? names.map(n => `<label class="check"><input type="checkbox" value="${esc(n)}" ${used.has(n) ? "checked" : ""}>${esc(n)}</label>`).join("") :
+    `<span class="muted small">No models found. Pull one with <code>ollama pull</code>.</span>`;
+  const def = (tests.find(t => t.reviewer_default) || {}).reviewer_default;
+  $("reviewer").innerHTML = names.map(n => `<option ${n === def ? "selected" : ""}>${esc(n)}</option>`).join("");
+  $("maxTemp").value = status.max_temp_default;
+}
+
+function renderTests() {
+  $("tests").innerHTML = tests.map(t => {
+    const prereg = t.prereg.ready === null ? `<span class="chip dim">prediction status is checked when run locally</span>` : t.prereg.ready ? `<span class="chip ok" data-tip="${esc("Prediction committed before any run: " + t.prereg.path)}">prediction committed</span>`
+      : `<span class="chip bad" data-tip="${esc(t.prereg.message)}">not ready for a live result</span>`;
+    const last = t.last_result ? `Last result: <b>${t.last_result.records}</b> records, ${dur(t.last_result.seconds)}, ${when(t.last_result.started)} · <a href="report.html?run=${encodeURIComponent(t.last_result.run_id)}">open report</a>` : "No result saved yet.";
+    return `<article class="card test"><div style="display:flex;gap:8px;flex-wrap:wrap"><span class="chip info">${esc(t.item)}</span><span class="chip violet">${esc(t.experiment)}</span>${prereg}</div>
+      <h3>${esc(t.title)}</h3><p class="muted small" style="margin:0">${esc(t.summary)}</p>
+      <div class="facts"><span><b>${t.cases}</b> cases</span><span><b>${t.defenses.length}</b> conditions</span><span>live ≈ <b>${t.live_seconds_estimate ? dur(t.live_seconds_estimate) : "unknown"}</b> per model set</span></div>
+      <details class="small muted"><summary style="cursor:pointer;color:var(--blue)">Conditions</summary><ul style="margin:6px 0 0;padding-left:18px">${t.defenses.map(d => `<li><b>${esc(d.name)}</b> (${esc(d.layer)}): ${esc(d.description)}</li>`).join("")}</ul></details>
+      <p class="small muted" style="margin:10px 0">${last}</p>
+      <button class="btn runOne" type="button" data-id="${esc(t.id)}" disabled>Run this test</button></article>`;
+  }).join("");
+  document.querySelectorAll(".runOne").forEach(b => b.addEventListener("click", () => start([b.dataset.id])));
+}
+
+async function start(ids) {
+  flash("");
+  const spec = {tests: ids, mode, models: selectedModels(), reviewer: $("reviewer").value || null, max_temp: +$("maxTemp").value};
+  try {
+    const j = await post("/api/jobs", spec);
+    jobId = j.id; busy = true; renderControls(); $("runview").hidden = false; $("runview").scrollIntoView({block: "start"}); poll();
+  } catch (e) { flash(e.message); }
+}
+
+function renderJob(j) {
+  const total = j.tests.reduce((a, t) => a + (t.total || 0), 0), done = j.tests.reduce((a, t) => a + (t.done || 0), 0);
+  const running = j.state === "queued" || j.state === "running";
+  const elapsed = ((j.finished || Date.now() / 1000) - (j.started || j.created));
+  const head = `<div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center">
+      <div><span class="chip ${STATE_CHIP[j.state] || "dim"}">${esc(j.state)}</span> <span class="muted small">${esc(j.spec.mode)} · ${dur(elapsed)}</span></div>
+      ${running ? `<button class="btn danger" id="cancel" type="button">Cancel</button>` : ""}</div>
+    <div class="bar ${running ? "run" : j.state === "done" ? "green" : "amber"}" style="margin:12px 0 4px"><i style="width:${total ? done / total * 100 : 0}%"></i></div>
+    <div class="muted small">${done} of ${total || "?"} records${j.cooler && j.cooler.active ? ` · cooler limit ${j.cooler.max_c}°C, ${j.cooler.pauses} pause(s)` : ""}</div>`;
+  const rows = j.tests.map(t => {
+    const tally = Object.entries(t.tally || {}).map(([d, s]) => {
+      const r = s.attacks ? s.succeeded / s.attacks : 0;
+      return `<div>${esc(d)}</div><div class="bar red"><i style="width:${r * 100}%"></i></div><div class="muted">${s.attacks ? pct(r) : "n/a"} · ${s.succeeded}/${s.attacks}${s.errors ? ` · ${s.errors} err` : ""}</div>`;
+    }).join("");
+    const link = t.run_id && t.state === "done" ? `<a class="btn" style="text-decoration:none;display:inline-block" href="report.html?run=${encodeURIComponent(t.run_id)}">Open report</a>` : "";
+    return `<div class="runrow"><div class="top"><div><b>${esc(t.title)}</b> <span class="chip ${STATE_CHIP[t.state] || "dim"}">${esc(t.state)}</span></div>${link}</div>
+      <div class="bar ${t.state === "done" ? "green" : t.state === "running" ? "run" : ""}"><i style="width:${t.total ? t.done / t.total * 100 : 0}%"></i></div>
+      <div class="muted small" style="margin-top:4px">${t.total ? `${t.done}/${t.total}` : ""} ${t.model ? "· " + esc(t.model) : ""} ${t.message ? "· " + esc(t.message) : ""}</div>
+      ${tally ? `<div class="small muted" style="margin-top:8px">Attack success so far, by condition</div><div class="tally">${tally}</div>` : ""}</div>`;
+  }).join("");
+  const refused = j.tests.filter(t => t.state === "refused").map(t => `<div class="notice bad" style="margin-top:10px"><b>Refused.</b> ${esc(t.message)}</div>`).join("");
+  const err = j.error ? `<div class="notice bad" style="margin-top:10px"><b>Failed.</b> ${esc(j.error)}</div>` : "";
+  $("job").innerHTML = head + rows + refused + err + `<div class="small muted" style="margin:14px 0 4px">Log</div><div class="log">${esc((j.log || []).join("\n")) || "&nbsp;"}</div>`;
+  const c = $("cancel"); if (c) c.addEventListener("click", () => post(`/api/jobs/${jobId}/cancel`).catch(e => flash(e.message)));
+}
+
+async function poll() {
+  clearTimeout(pollTimer);
+  try {
+    const j = await api(`/api/jobs/${jobId}`);
+    renderJob(j);
+    if (j.state === "queued" || j.state === "running") { pollTimer = setTimeout(poll, 1000); return; }
+    busy = false; renderControls(); loadSaved();
+  } catch (e) { pollTimer = setTimeout(poll, 2500); }
+}
+
+async function loadSaved() {
+  const {live, reports} = await loadReportList();
+  const kind = {result: ["ok", "result"], exploratory: ["warn", "exploratory"], scripted: ["dim", "scripted"]};
+  $("saved").innerHTML = reports.length ? `<table class="tbl"><thead><tr><th>Run</th><th>Kind</th><th>Test</th><th>Models</th><th>Records</th><th>Took</th><th>GPU peak</th><th>When</th></tr></thead><tbody>` +
+    reports.map(r => `<tr><td><a href="report.html?run=${encodeURIComponent(r.run_id)}">${esc(r.run_id)}</a></td><td><span class="chip ${kind[r.kind][0]}">${kind[r.kind][1]}</span></td>
+      <td>${esc(r.item)} ${esc(r.experiment)}</td><td>${esc((r.models || []).join(", "))}</td><td>${r.records ?? ""}</td><td>${dur(r.seconds)}</td>
+      <td>${r.gpu && r.gpu.peak_c ? r.gpu.peak_c + "°C" : "n/a"}</td><td>${when(r.started)}</td></tr>`).join("") + "</tbody></table>" +
+    (live ? "" : `<p class="muted small" style="margin:10px 0 0">Showing the committed results. Scripted and exploratory runs appear here when the local runner is connected.</p>`)
+    : `<p class="muted small" style="margin:0">No saved reports yet.</p>`;
+}
+
+async function init() {
+  chrome("start.html");
+  status = await runnerUp();
+  renderChips();
+  $("offline").hidden = !!status;
+  if (status) {
+    tests = (await api("/api/tests")).tests;
+    $("gpuSection").hidden = false; gpu = gpuLive($("gpu"));
+    renderModels();
+  } else {
+    try { tests = (await (await fetch("data/tests.json")).json()).tests; } catch (e) { tests = []; }
+  }
+  renderTests(); renderControls(); loadSaved();
+  $("mode").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; mode = b.dataset.m; flash(""); renderControls(); });
+  $("runAll").addEventListener("click", () => start(tests.map(t => t.id)));
+  if (status) {                                   // pick up a run that is already going
+    const {jobs} = await api("/api/jobs");
+    const live = jobs.find(j => j.state === "queued" || j.state === "running");
+    if (live) { jobId = live.id; busy = true; $("runview").hidden = false; renderControls(); poll(); }
+  }
+}
+init();
+</script>
+</body>
+</html>

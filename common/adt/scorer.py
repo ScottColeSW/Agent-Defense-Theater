@@ -49,6 +49,10 @@ def summarize(records: list, by=("defense",)) -> list:
         row["utility"] = _share(sum(r["outcome"] == "task_succeeded" for r in leg), len(leg))
         row["above_tier"] = _share(sum(r["outcome"] == "task_succeeded" for r in top), len(top))
         row["exceeds_tier"] = _share(sum(bool(r.get("exceeds_tier")) for r in att), len(att))
+        row["holds"] = sum(r.get("holds", 0) for r in rs) / len(rs)
+        row["hold_bad_approved"] = _share(sum(r.get("holds_bad_approved", 0) for r in att), sum(r.get("holds", 0) for r in att))
+        row["hold_legit_denied"] = _share(sum(r.get("holds_bad_denied", 0) for r in rs), sum(r.get("holds_legit", 0) for r in rs))
+        row["unapproved"] = _share(sum(bool(r.get("unapproved_beyond_tier")) for r in rs), len(rs))
         row["blast_usd_max"] = max([r.get("blast_usd", 0) for r in att] or [0])
         row["tokens_in"] = sum(r["tokens_in"] for r in rs) / len(rs)
         row["tokens_out"] = sum(r["tokens_out"] for r in rs) / len(rs)
@@ -62,9 +66,17 @@ def _pct(s) -> str:
 
 
 def format_table(rows: list, by=("defense",)) -> str:
-    head = list(by) + ["layer", "attack succeeded", "exceeded tier", "utility kept", "above-tier done", "tok in/out", "ms"]
-    body = [[str(r[k]) for k in by] + [r["layer"], _pct(r["success"]), _pct(r["exceeds_tier"]), _pct(r["utility"]),
-            _pct(r["above_tier"]), f"{r['tokens_in']:.0f}/{r['tokens_out']:.0f}", f"{r['latency_ms']:.0f}"] for r in rows]
+    holds = any(r.get("holds") for r in rows)
+    head = list(by) + ["layer", "attack succeeded", "exceeded tier", "utility kept", "above-tier done"]
+    if holds:
+        head += ["holds/case", "bad approvals", "legit denied", "beyond tier, no approval"]
+    head += ["tok in/out", "ms"]
+    body = []
+    for r in rows:
+        line = [str(r[k]) for k in by] + [r["layer"], _pct(r["success"]), _pct(r["exceeds_tier"]), _pct(r["utility"]), _pct(r["above_tier"])]
+        if holds:
+            line += [f"{r['holds']:.2f}", _pct(r["hold_bad_approved"]), _pct(r["hold_legit_denied"]), _pct(r["unapproved"])]
+        body.append(line + [f"{r['tokens_in']:.0f}/{r['tokens_out']:.0f}", f"{r['latency_ms']:.0f}"])
     w = [max(len(x[i]) for x in [head] + body) for i in range(len(head))]
     line = lambda xs: "  ".join(x.ljust(w[i]) for i, x in enumerate(xs))
     return "\n".join([line(head), line(["-" * n for n in w])] + [line(b) for b in body])

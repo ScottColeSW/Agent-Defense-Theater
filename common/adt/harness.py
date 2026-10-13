@@ -68,7 +68,8 @@ def run(scenario, runners: list, out_dir: Path, mode: str = "live", exploratory:
     """Run every case against every defense and model. Writes <run_id>.jsonl, a decision log and <run_id>.meta.json."""
     out_dir = Path(out_dir)
     tag = "scripted" if mode == "scripted" else ("exploratory" if exploratory else "prereg")
-    run_id = f"{scenario.item.lower()}-{time.strftime('%Y%m%dT%H%M%S', time.gmtime())}-{tag}"
+    exp = getattr(scenario, "experiment", "first-run")
+    run_id = f"{scenario.item.lower()}-{exp}-{time.strftime('%Y%m%dT%H%M%S', time.gmtime())}-{tag}"
     out_dir.mkdir(parents=True, exist_ok=True)
     rec_path, log = out_dir / f"{run_id}.jsonl", DecisionLog(out_dir / f"{run_id}.decisions.jsonl")
     cases, defs = scenario.cases(), defenses or scenario.defenses
@@ -80,25 +81,27 @@ def run(scenario, runners: list, out_dir: Path, mode: str = "live", exploratory:
     prereg = scenario.prereg_path.relative_to(ROOT).as_posix() if (mode == "live" and not exploratory) else ""
     t_start, n = time.time(), 0
     total = len(cases) * len(defs) * len(runners)
+    defense_major = getattr(scenario, "order", "case-major") == "defense-major"
+    pairs = [(c, d) for d in defs for c in cases] if defense_major else [(c, d) for c in cases for d in defs]
     with rec_path.open("w", encoding="utf-8") as f:
         for runner in runners:
             cr = CachedRunner(runner) if mode == "live" else runner
-            for ci, case in enumerate(cases, 1):
-                for d in defs:
-                    res = scenario.run_case(case, d, cr, log)
-                    rec = {"run_id": run_id, "item": scenario.item, "tier": case.tier, "attack": case.attack,
-                           "defense": d.name, "layer": d.layer, "model": runner.name, "crew": scenario.crew,
-                           "outcome": res.outcome, "tokens_in": res.reply.tokens_in, "tokens_out": res.reply.tokens_out,
-                           "latency_ms": res.reply.latency_ms + res.gate_ms, "mode": mode, "prereg": prereg,
-                           "hardware_note": HARDWARE_NOTE, "timestamp": now(), "task": case.task, **res.extra}
-                    bad = validate(rec)
-                    if bad:
-                        raise ValueError(f"invalid record: {bad}")
-                    f.write(json.dumps(rec, ensure_ascii=False) + "\n")
-                    n += 1
-                if progress and (ci % 5 == 0 or ci == len(cases)):
-                    progress(f"  {runner.name}: {ci}/{len(cases)} cases  ({n}/{total} records)")
-    meta = {"run_id": run_id, "item": scenario.item, "mode": mode, "exploratory": exploratory, "models": [r.name for r in runners],
+            for i, (case, d) in enumerate(pairs, 1):
+                res = scenario.run_case(case, d, cr, log)
+                rec = {"run_id": run_id, "item": scenario.item, "tier": case.tier, "attack": case.attack,
+                       "defense": d.name, "layer": d.layer, "model": runner.name, "crew": scenario.crew,
+                       "outcome": res.outcome, "tokens_in": res.reply.tokens_in, "tokens_out": res.reply.tokens_out,
+                       "latency_ms": res.reply.latency_ms + res.gate_ms, "mode": mode, "prereg": prereg,
+                       "hardware_note": HARDWARE_NOTE, "timestamp": now(), "task": case.task, **res.extra}
+                bad = validate(rec)
+                if bad:
+                    raise ValueError(f"invalid record: {bad}")
+                f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+                f.flush()
+                n += 1
+                if progress and (i % 25 == 0 or i == len(pairs)):
+                    progress(f"  {runner.name}: {i}/{len(pairs)} ({n}/{total} records)")
+    meta = {"run_id": run_id, "item": scenario.item, "experiment": exp, "mode": mode, "exploratory": exploratory, "models": [r.name for r in runners],
             "defenses": [d.name for d in defs], "cases": len(cases), "records": n, "seconds": round(time.time() - t_start, 1),
             "decision_log_head": log.head, "decision_log_entries": log.seq, "hardware_note": HARDWARE_NOTE, **info,
             "started": now()}

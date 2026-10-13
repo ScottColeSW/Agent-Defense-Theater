@@ -22,10 +22,23 @@ def item_folder(item: str) -> Path:
     return hits[0]
 
 
-def load_scenario(item: str):
+DEFAULT_EXPERIMENT = "first-run"
+
+
+def experiments(item: str) -> list:
+    """Experiment names an item offers: scenario.py is the first run, scenario_<name>.py are the others."""
     folder = item_folder(item)
-    path = folder / "scenario.py"
+    out = [DEFAULT_EXPERIMENT] if (folder / "scenario.py").exists() else []
+    return out + [p.stem[len("scenario_"):].replace("_", "-") for p in sorted(folder.glob("scenario_*.py"))]
+
+
+def load_scenario(item: str, experiment: str = None):
+    folder = item_folder(item)
+    exp = experiment or DEFAULT_EXPERIMENT
+    path = folder / ("scenario.py" if exp == DEFAULT_EXPERIMENT else f"scenario_{exp.replace('-', '_')}.py")
     if not path.exists():
-        raise SystemExit(f"{folder.name} has no scenario.py yet (status: stub). Built items: " +
-                         ", ".join(p.parent.name for p in sorted(ITEMS.glob("asi*-*/scenario.py"))))
-    return load_file(path, f"adt_scenario_{item.lower()}").SCENARIO
+        have = experiments(item)
+        raise SystemExit(f"{folder.name} has no experiment {exp!r}. " + (f"Available: {', '.join(have)}" if have else
+                         "No scenario yet (status: stub). Built items: " +
+                         ", ".join(p.parent.name for p in sorted(ITEMS.glob("asi*-*/scenario.py")))))
+    return load_file(path, f"adt_scenario_{item.lower()}_{exp.replace('-', '_')}").SCENARIO

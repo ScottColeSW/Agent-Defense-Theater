@@ -34,6 +34,7 @@ def _fill(obj, t, acct):
 
 class Asi03:
     item = "ASI03"
+    experiment = "first-run"
     crew = "support-desk-v1: one agent, simulated desk"
     prereg_path = HERE / "PREREGISTRATION.md"
     code_dirs = [ROOT / "common", HERE]

@@ -31,6 +31,7 @@ PRIVILEGED = ("issue_refund", "export_customers")
 class Call:
     tool: str
     args: dict
+    why: str = ""
 
 
 def parse_calls(text: str, cap: int = 4):
@@ -44,7 +45,7 @@ def parse_calls(text: str, cap: int = 4):
     out = []
     for c in (data.get("calls") or [])[:cap]:
         if isinstance(c, dict) and c.get("tool") in SCOPE_OF and isinstance(c.get("args", {}), dict):
-            out.append(Call(c["tool"], c.get("args", {})))
+            out.append(Call(c["tool"], c.get("args", {}), str(c.get("why", ""))[:300]))
         else:
             problems += 1
     return out, problems

@@ -12,6 +12,7 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from . import gpucooler
 from .decisionlog import DecisionLog
 from .models import CachedRunner, Reply
 from .schema import now, validate
@@ -92,7 +93,7 @@ def run(scenario, runners: list, out_dir: Path, mode: str = "live", exploratory:
                        "defense": d.name, "layer": d.layer, "model": runner.name, "crew": scenario.crew,
                        "outcome": res.outcome, "tokens_in": res.reply.tokens_in, "tokens_out": res.reply.tokens_out,
                        "latency_ms": res.reply.latency_ms + res.gate_ms, "mode": mode, "prereg": prereg,
-                       "hardware_note": HARDWARE_NOTE, "timestamp": now(), "task": case.task, **res.extra}
+                       "hardware_note": HARDWARE_NOTE, "timestamp": now(), "task": case.task, **res.extra, **gpucooler.snapshot()}
                 bad = validate(rec)
                 if bad:
                     raise ValueError(f"invalid record: {bad}")
@@ -104,6 +105,7 @@ def run(scenario, runners: list, out_dir: Path, mode: str = "live", exploratory:
     meta = {"run_id": run_id, "item": scenario.item, "experiment": exp, "mode": mode, "exploratory": exploratory, "models": [r.name for r in runners],
             "defenses": [d.name for d in defs], "cases": len(cases), "records": n, "seconds": round(time.time() - t_start, 1),
             "decision_log_head": log.head, "decision_log_entries": log.seq, "hardware_note": HARDWARE_NOTE, **info,
+            "gpu": gpucooler.active.stats() if gpucooler.active else None,
             "started": now()}
     (out_dir / f"{run_id}.meta.json").write_text(json.dumps(meta, indent=1), encoding="utf-8")
     return meta

@@ -5,6 +5,8 @@ import time
 import urllib.request
 from dataclasses import dataclass
 
+from . import gpucooler
+
 HOST = "http://localhost:11434"
 
 
@@ -31,6 +33,7 @@ class OllamaRunner:
         self.name = model
 
     def generate(self, system: str, user: str, hint=None) -> Reply:
+        gpucooler.before_call()          # waits here while the GPU is over its limit, if a cooler is installed
         body = json.dumps({
             "model": self.model, "stream": False, "format": "json", "keep_alive": "10m",
             "options": {"temperature": 0, "seed": self.seed, "num_ctx": self.num_ctx},

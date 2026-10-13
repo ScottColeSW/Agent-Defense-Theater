@@ -8,6 +8,7 @@ Code is in [`adt/`](adt/) (standard library only, no install needed) and tests i
 python adt.py status        # coverage table, and which items are runnable
 python adt.py demo          # scripted ASI03 run, then verify its log
 python adt.py models        # local Ollama models
+python adt.py gpu           # GPU temperature against the cooler limit
 python adt.py prereg asi03  # is the prediction committed and the code clean?
 python adt.py run asi03 --models llama3.1:8b,qwen2.5:7b
 python adt.py summary asi03 --by defense,model
@@ -30,17 +31,18 @@ python -m pytest -q
 
 ## Rules the harness enforces
 
-- **No prediction, no result.** A live run is refused unless the item's `PREREGISTRATION.md` is committed and unedited, and the harness and item code match a commit. The commits are recorded in the run's `meta.json`. `--exploratory` runs anyway and writes to `results/exploratory/`.
-- **Scripted is never a result.** Scripted runs go to `results/scripted/` (ignored by git) and the scorer drops them.
+- **No prediction, no result.** A live run is refused unless the item's `PREREGISTRATION.md` is committed and unedited, and the harness and item code match a commit. The commits are recorded in the run's `meta.json`. `--exploratory` runs anyway, labeled as such, and writes to the temp folder, not the repository.
+- **Scripted is never a result.** Scripted runs go to the temp folder, not the repository, and the scorer drops them.
 - **Cost and utility travel with attack success.** Every table shows all three, and the count behind each percentage.
+
+- **A hot GPU waits.** Live runs install the GPU cooler ([`adt/gpucooler.py`](adt/gpucooler.py)): before each model call it reads the GPU temperature and, above 72 C (`--max-temp`, 0 turns it off), pauses until the card is at 68 C or lower. It gives up after 30 minutes rather than stall. Every result record carries `gpu_temp_c` and `thermal_wait_ms`, and the run's `meta.json` records the peak, the number of pauses and the seconds paused, so latency can be read with the waits taken out. It checks between calls, so one long generation can still overshoot, which is why a background sampler tracks the true peak. It reads temperature only and does not touch fans, clocks or power.
 
 ## Where results go
 
 | Folder under `items/asiNN-*/results/` | Contents |
 | --- | --- |
 | `*.jsonl`, `*.decisions.jsonl`, `*.meta.json` | A preregistered live run: records, decision log, run metadata |
-| `exploratory/` | Live runs without a committed prediction |
-| `scripted/` | Mechanism demos, not committed |
+| `exploratory/`, `scripted/` | Not in the repository. Throwaway test output goes under the system temp folder (`<temp>/adt/<item>/exploratory|scripted/`), which follows `TMP`/`TEMP`/`TMPDIR`. Set those to your testing area before running |
 
 ## Constraints
 

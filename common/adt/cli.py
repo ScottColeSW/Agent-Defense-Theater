@@ -11,7 +11,7 @@ import webbrowser
 from pathlib import Path
 
 from . import decisionlog, harness, models, scorer
-from .loader import ROOT, item_folder, load_scenario
+from .loader import ITEMS, ROOT, item_folder, load_scenario
 
 TAG = {"prereg": "prereg", "exploratory": "exploratory", "scripted": "scripted"}
 
@@ -31,7 +31,7 @@ def cmd_models(a):
 def cmd_status(a):
     with open(ROOT / "crosswalk" / "coverage.csv", newline="", encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
-    built = {p.parent.name.split("-")[0].upper() for p in ROOT.glob("asi*-*/scenario.py")}
+    built = {p.parent.name.split("-")[0].upper() for p in ITEMS.glob("asi*-*/scenario.py")}
     for r in rows:
         print(f"{r['id']}  {r['status']:<22} {r['name']}" + ("   [runnable: adt run " + r["id"].lower() + "]" if r["id"] in built else ""))
 
@@ -104,7 +104,7 @@ def cmd_summary(a):
 
 
 def cmd_verify(a):
-    paths = [Path(a.log)] if a.log else sorted(ROOT.glob("asi*-*/results/**/*.decisions.jsonl"))
+    paths = [Path(a.log)] if a.log else sorted(ITEMS.glob("asi*-*/results/**/*.decisions.jsonl"))
     if not paths:
         sys.exit("No decision logs found.")
     bad = 0

@@ -5,13 +5,13 @@ Inputs
   crosswalk/coverage.csv                    source of truth for the coverage matrix
   <PAV>/results/defenses/defenses.json      saved Aegis Vector defenses battery (optional)
 
-  asi03-identity-privilege/results/*-prereg.jsonl   preregistered live runs (read automatically when present)
+  items/asi03-identity-privilege/results/*-prereg.jsonl   preregistered live runs (read automatically when present)
 
 Outputs
   site/data/asi03.json                      ASI03 results with the committed predictions beside them
   site/data/coverage.json                   coverage matrix for the page
   site/data/asi06-defenses.json             aggregates for the plots (recomputed from records)
-  asi06-memory-context-poisoning/results/pav-defenses.jsonl
+  items/asi06-memory-context-poisoning/results/pav-defenses.jsonl
                                             one record per answer, in common/RESULTS-SCHEMA.md
 
 Usage
@@ -24,7 +24,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 
-# Author's classification, not measured. Documented in asi06-memory-context-poisoning/results/README.md.
+# Author's classification, not measured. Documented in items/asi06-memory-context-poisoning/results/README.md.
 TIER = {"blunt_override": "loud", "instruction_injection": "loud", "inside_job": "adaptive"}  # all others: quiet
 LAYER = {"none": "none", "ppl_filter": "detect", "provenance_labels": "prevent", "provenance_spoofed": "prevent",
          "spotlighting": "prevent", "grounding_check": "contain", "conflict_note": "detect", "layered": "prevent",
@@ -44,7 +44,7 @@ def build_coverage():
     print(f"coverage.json: {len(rows)} items")
 
 
-# Mirrors the Prediction table in asi03-identity-privilege/PREREGISTRATION.md (committed before the run).
+# Mirrors the Prediction table in items/asi03-identity-privilege/PREREGISTRATION.md (committed before the run).
 ASI03_PREDICTION = {
     "none": {"attack": .45, "lo": .25, "hi": .65, "utility": .90, "above_tier": .80, "exceeds_tier": .40},
     "prompt_guard": {"attack": .20, "lo": .08, "hi": .40, "utility": .85, "above_tier": .75, "exceeds_tier": .17},
@@ -56,7 +56,7 @@ ASI03_PREDICTION = {
 def build_asi03():
     sys.path.insert(0, str(ROOT / "common"))
     from adt import scorer
-    res = ROOT / "asi03-identity-privilege" / "results"
+    res = ROOT / "items/asi03-identity-privilege" / "results"
     files = sorted(res.glob("*-prereg.jsonl"))
     if not files:
         print("asi03: no preregistered runs yet, skipped")
@@ -96,7 +96,7 @@ def build_pav(pav: Path):
     recs = d["records"]
 
     # 1. Schema-format records (answer text is left in the source repo)
-    res_dir = ROOT / "asi06-memory-context-poisoning" / "results"
+    res_dir = ROOT / "items/asi06-memory-context-poisoning" / "results"
     res_dir.mkdir(parents=True, exist_ok=True)
     with open(res_dir / "pav-defenses.jsonl", "w", encoding="utf-8") as f:
         for r in recs:

@@ -23,16 +23,16 @@ A shared harness (`common/`) scores every run the same way: attack success again
 
 | ID | Risk | OWASP LLM 2025 | MITRE ATLAS | Status | Existing work |
 | --- | --- | --- | --- | --- | --- |
-| [ASI01](asi01-goal-hijack/) | Agent Goal Hijack | LLM01 Prompt Injection | AML.T0051 (.000 direct, .001 indirect) | Partial evidence elsewhere | Aegis Vector (injection and spotlighting results) |
-| [ASI02](asi02-tool-misuse/) | Tool Misuse and Exploitation | LLM06 Excessive Agency | AML.T0053 AI Agent Tool Invocation | Stub | New work |
-| [ASI03](asi03-identity-privilege/) | Identity and Privilege Abuse | LLM06 Excessive Agency | To be mapped | Measured | [Preregistered run](asi03-identity-privilege/PREREGISTRATION.md): scoped credentials, 0 of 90 beyond tier |
-| [ASI04](asi04-supply-chain/) | Agentic Supply Chain Vulnerabilities | LLM03 Supply Chain | To be mapped | Stub | New work |
-| [ASI05](asi05-code-execution/) | Unexpected Code Execution | LLM05 Improper Output Handling | To be mapped | Stub | New work |
-| [ASI06](asi06-memory-context-poisoning/) | Memory and Context Poisoning | LLM04 Data and Model Poisoning; LLM08 Vector and Embedding Weaknesses | AML.T0070 RAG Poisoning | Measured elsewhere | Palimpsest and Aegis Vector |
-| [ASI07](asi07-inter-agent-communication/) | Insecure Inter-Agent Communication | No direct match | To be mapped | Stub | New work |
-| [ASI08](asi08-cascading-failures/) | Cascading Failures | LLM10 Unbounded Consumption (partial) | To be mapped | Stub | New work |
-| [ASI09](asi09-human-agent-trust/) | Human-Agent Trust Exploitation | LLM09 Misinformation (partial) | To be mapped | Designed elsewhere | Agent Theater Framework |
-| [ASI10](asi10-rogue-agents/) | Rogue Agents | LLM06 Excessive Agency | To be mapped | Designed elsewhere | Agent Theater Framework and Void-Marauders |
+| [ASI01](items/asi01-goal-hijack/) | Agent Goal Hijack | LLM01 Prompt Injection | AML.T0051 (.000 direct, .001 indirect) | Partial evidence elsewhere | Aegis Vector (injection and spotlighting results) |
+| [ASI02](items/asi02-tool-misuse/) | Tool Misuse and Exploitation | LLM06 Excessive Agency | AML.T0053 AI Agent Tool Invocation | Stub | New work |
+| [ASI03](items/asi03-identity-privilege/) | Identity and Privilege Abuse | LLM06 Excessive Agency | To be mapped | Measured | [Preregistered run](items/asi03-identity-privilege/PREREGISTRATION.md): scoped credentials, 0 of 90 beyond tier |
+| [ASI04](items/asi04-supply-chain/) | Agentic Supply Chain Vulnerabilities | LLM03 Supply Chain | To be mapped | Stub | New work |
+| [ASI05](items/asi05-code-execution/) | Unexpected Code Execution | LLM05 Improper Output Handling | To be mapped | Stub | New work |
+| [ASI06](items/asi06-memory-context-poisoning/) | Memory and Context Poisoning | LLM04 Data and Model Poisoning; LLM08 Vector and Embedding Weaknesses | AML.T0070 RAG Poisoning | Measured elsewhere | Palimpsest and Aegis Vector |
+| [ASI07](items/asi07-inter-agent-communication/) | Insecure Inter-Agent Communication | No direct match | To be mapped | Stub | New work |
+| [ASI08](items/asi08-cascading-failures/) | Cascading Failures | LLM10 Unbounded Consumption (partial) | To be mapped | Stub | New work |
+| [ASI09](items/asi09-human-agent-trust/) | Human-Agent Trust Exploitation | LLM09 Misinformation (partial) | To be mapped | Designed elsewhere | Agent Theater Framework |
+| [ASI10](items/asi10-rogue-agents/) | Rogue Agents | LLM06 Excessive Agency | To be mapped | Designed elsewhere | Agent Theater Framework and Void-Marauders |
 
 Status labels: **Stub** (plan written, nothing built), **Designed** (the design exists, nothing measured), **Built** (runs, not yet measured), **Measured** (saved results with a prior prediction), **Adversarially tested** (measured against an attacker who knows the defense). "Elsewhere" means the work lives in another repository and is linked, not copied. The same data is in [`crosswalk/coverage.csv`](crosswalk/coverage.csv). Every item also has a "limits and what it would take" entry, collected in [`docs/LIMITS-AND-ANSWERS.md`](docs/LIMITS-AND-ANSWERS.md).
 

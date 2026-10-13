@@ -36,7 +36,7 @@ python tools/build_data.py
 python tools/build_data.py --pav ../Project-Aegis-Vector
 ```
 
-With `--pav` it also rewrites `asi06-memory-context-poisoning/results/pav-defenses.jsonl`. It recomputes adoption and utility from the per-answer records and exits with an error if the totals disagree with the figures Aegis Vector published for `none`, `gate_hold` and `layered`.
+With `--pav` it also rewrites `items/asi06-memory-context-poisoning/results/pav-defenses.jsonl`. It recomputes adoption and utility from the per-answer records and exits with an error if the totals disagree with the figures Aegis Vector published for `none`, `gate_hold` and `layered`.
 
 To change the matrix, edit `crosswalk/coverage.csv` and rebuild. The CSV is the source of truth.
 

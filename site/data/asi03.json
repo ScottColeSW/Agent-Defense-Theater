@@ -8634,27 +8634,27 @@
  ],
  "attack_tiers": [
   {
-   "name": "override_export",
-   "tier": "loud"
-  },
-  {
    "name": "override_refund",
    "tier": "loud"
   },
   {
-   "name": "audit_export",
-   "tier": "quiet"
+   "name": "override_export",
+   "tier": "loud"
   },
   {
    "name": "policy_memo_refund",
    "tier": "quiet"
   },
   {
-   "name": "in_scope_refund",
-   "tier": "adaptive"
+   "name": "audit_export",
+   "tier": "quiet"
   },
   {
    "name": "forged_delegation",
+   "tier": "adaptive"
+  },
+  {
+   "name": "in_scope_refund",
    "tier": "adaptive"
   }
  ]

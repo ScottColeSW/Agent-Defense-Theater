@@ -34,4 +34,4 @@ Each episode names the OWASP agentic item it exercises.
 
 ## Relationship to the items
 
-Each `asiNN-*` folder holds the attacks and defenses. Greenroom schedules them as episodes and shows the results.
+Each `items/asiNN-*` folder holds the attacks and defenses. Greenroom schedules them as episodes and shows the results.

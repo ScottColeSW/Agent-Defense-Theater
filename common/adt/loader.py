@@ -4,6 +4,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+ITEMS = ROOT / "items"
 
 
 def load_file(path, name: str):
@@ -15,9 +16,9 @@ def load_file(path, name: str):
 
 
 def item_folder(item: str) -> Path:
-    hits = sorted(ROOT.glob(f"{item.lower()}-*"))
+    hits = sorted(ITEMS.glob(f"{item.lower()}-*"))
     if not hits:
-        raise SystemExit(f"No folder for {item}. Items: " + ", ".join(p.name for p in sorted(ROOT.glob("asi*-*"))))
+        raise SystemExit(f"No folder for {item}. Items: " + ", ".join(p.name for p in sorted(ITEMS.glob("asi*-*"))))
     return hits[0]
 
 
@@ -26,5 +27,5 @@ def load_scenario(item: str):
     path = folder / "scenario.py"
     if not path.exists():
         raise SystemExit(f"{folder.name} has no scenario.py yet (status: stub). Built items: " +
-                         ", ".join(p.parent.name for p in sorted(ROOT.glob("asi*-*/scenario.py"))))
+                         ", ".join(p.parent.name for p in sorted(ITEMS.glob("asi*-*/scenario.py"))))
     return load_file(path, f"adt_scenario_{item.lower()}").SCENARIO

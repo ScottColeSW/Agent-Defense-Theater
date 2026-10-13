@@ -36,7 +36,7 @@ python -m pytest -q
 
 ## Where results go
 
-| Folder under `asiNN-*/results/` | Contents |
+| Folder under `items/asiNN-*/results/` | Contents |
 | --- | --- |
 | `*.jsonl`, `*.decisions.jsonl`, `*.meta.json` | A preregistered live run: records, decision log, run metadata |
 | `exploratory/` | Live runs without a committed prediction |

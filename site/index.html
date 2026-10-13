@@ -432,7 +432,7 @@ function initPlots(d) {
   $("model-filter").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; model = b.dataset.m;
     $("model-filter").querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b)); renderBars(); });
   renderBars(); renderHeat(); renderScatter();
-  $("plot-src").innerHTML = `Saved live run ${esc(d.run.slice(0, 10))} from Aegis Vector (commit ${esc(d.source_commit.slice(0, 8))}), recomputed here from the per-answer records in <a href="${GH}asi06-memory-context-poisoning/results">asi06/results</a>. ${esc(d.hardware_note)} The ten forgeries were written by the author, and no one who knew how the gate works has attacked it.`;
+  $("plot-src").innerHTML = `Saved live run ${esc(d.run.slice(0, 10))} from Aegis Vector (commit ${esc(d.source_commit.slice(0, 8))}), recomputed here from the per-answer records in <a href="${GH}items/asi06-memory-context-poisoning/results">asi06/results</a>. ${esc(d.hardware_note)} The ten forgeries were written by the author, and no one who knew how the gate works has attacked it.`;
 }
 
 // ---------- ASI03 ----------
@@ -508,7 +508,7 @@ function initA3(d) {
   $("a3-model").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; a3model = b.dataset.m;
     $("a3-model").querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b)); renderA3(); });
   renderA3(); renderA3Pass();
-  $("a3-src").innerHTML = `Live run ${esc(d.runs.join(", "))}. Prediction committed in <a href="${GH}asi03-identity-privilege/PREREGISTRATION.md">PREREGISTRATION.md</a> at ${esc((d.prereg_commit || "").slice(0, 8))}, before the run; harness commit ${esc((d.harness_commit || "").slice(0, 8))}. ${esc(d.hardware_note)} The attacks and the credential gate were both written by the author, and the agent is a single simulated step. Check the decision log with <code>python adt.py verify</code>.`;
+  $("a3-src").innerHTML = `Live run ${esc(d.runs.join(", "))}. Prediction committed in <a href="${GH}items/asi03-identity-privilege/PREREGISTRATION.md">PREREGISTRATION.md</a> at ${esc((d.prereg_commit || "").slice(0, 8))}, before the run; harness commit ${esc((d.harness_commit || "").slice(0, 8))}. ${esc(d.hardware_note)} The attacks and the credential gate were both written by the author, and the agent is a single simulated step. Check the decision log with <code>python adt.py verify</code>.`;
 }
 
 

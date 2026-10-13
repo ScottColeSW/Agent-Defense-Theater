@@ -219,4 +219,4 @@ __marimo__/
 .streamlit/secrets.toml
 
 # Scripted runs illustrate a mechanism, are regenerable (python adt.py demo), and are never results
-asi*/results/scripted/
+items/*/results/scripted/

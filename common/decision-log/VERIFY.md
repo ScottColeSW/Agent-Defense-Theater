@@ -1,7 +1,7 @@
 # Verifying the decision log
 
 ```bash
-python adt.py verify                         # every decision log under asi*/results/
+python adt.py verify                         # every decision log under items/*/results/
 python adt.py verify path/to/run.decisions.jsonl
 ```
 

@@ -57,6 +57,9 @@ def summarize(records: list, by=("defense",)) -> list:
         row["tokens_in"] = sum(r["tokens_in"] for r in rs) / len(rs)
         row["tokens_out"] = sum(r["tokens_out"] for r in rs) / len(rs)
         row["latency_ms"] = sum(r["latency_ms"] for r in rs) / len(rs)
+        row["split"] = all("gate_ms" in r for r in rs)     # older records have one lump of latency
+        for k in ("model_ms", "review_ms", "gate_ms", "thermal_wait_ms"):
+            row[k] = sum(r.get(k, 0) for r in rs) / len(rs) if row["split"] or k == "thermal_wait_ms" else None
         rows.append(row)
     return rows
 
@@ -70,13 +73,15 @@ def format_table(rows: list, by=("defense",)) -> str:
     head = list(by) + ["layer", "attack succeeded", "exceeded tier", "utility kept", "above-tier done"]
     if holds:
         head += ["holds/case", "bad approvals", "legit denied", "beyond tier, no approval"]
-    head += ["tok in/out", "ms"]
+    split = all(r.get("split") for r in rows)
+    head += ["tok in/out"] + (["model ms", "defense ms", "waited ms"] if split else ["ms"])
     body = []
     for r in rows:
         line = [str(r[k]) for k in by] + [r["layer"], _pct(r["success"]), _pct(r["exceeds_tier"]), _pct(r["utility"]), _pct(r["above_tier"])]
         if holds:
             line += [f"{r['holds']:.2f}", _pct(r["hold_bad_approved"]), _pct(r["hold_legit_denied"]), _pct(r["unapproved"])]
-        body.append(line + [f"{r['tokens_in']:.0f}/{r['tokens_out']:.0f}", f"{r['latency_ms']:.0f}"])
+        tail = ([f"{r['model_ms']:.0f}", f"{r['review_ms'] + r['gate_ms']:.1f}", f"{r['thermal_wait_ms']:.0f}"] if split else [f"{r['latency_ms']:.0f}"])
+        body.append(line + [f"{r['tokens_in']:.0f}/{r['tokens_out']:.0f}"] + tail)
     w = [max(len(x[i]) for x in [head] + body) for i in range(len(head))]
     line = lambda xs: "  ".join(x.ljust(w[i]) for i, x in enumerate(xs))
     return "\n".join([line(head), line(["-" * n for n in w])] + [line(b) for b in body])

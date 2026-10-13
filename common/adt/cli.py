@@ -178,6 +178,24 @@ def cmd_experiments(a):
             print(f"{sc.item.lower()}  {e:<12} {len(sc.cases())} cases x {len(sc.defenses)} defenses   adt run {sc.item.lower()} --experiment {e}")
 
 
+def cmd_overhead(a):
+    """The latency our own code adds, measured with a scripted runner: model time is zero, so the whole time is ours."""
+    import statistics
+    sc = load_scenario(a.item, a.experiment)
+    rows = {}
+    out = Path(tempfile.gettempdir()) / "adt" / "overhead"
+    for _ in range(a.repeat):
+        meta = harness.run(sc, [models.ScriptedRunner()], out, mode="scripted", progress=None)
+        for r in scorer.load_records([out / f"{meta['run_id']}.jsonl"], live_only=False):
+            rows.setdefault(r["defense"], []).append(r["gate_ms"])
+    print(f"{sc.item} [{sc.experiment}]: our code's latency per case, {a.repeat} scripted passes over {len(sc.cases())} cases (no model involved)\n")
+    print(f"{'defense':<24}{'median ms':>10}{'p95 ms':>9}{'max ms':>9}{'n':>7}")
+    for d, v in rows.items():
+        v.sort()
+        print(f"{d:<24}{statistics.median(v):>10.2f}{v[int(len(v) * .95) - 1]:>9.2f}{v[-1]:>9.2f}{len(v):>7}")
+    print("\nA model reviewer's time is not here: it is the model's, recorded as review_ms in live runs.")
+
+
 def cmd_prereg(a):
     sc = load_scenario(a.item, a.experiment)
     ok, msg, info = harness.check_prereg(sc.prereg_path, sc.code_dirs)
@@ -206,6 +224,8 @@ def main(argv=None):
     s = sub.add_parser("demo", help="scripted ASI03 run, then verify its log"); s.add_argument("--experiment", **EXP); s.set_defaults(f=cmd_demo)
     s = sub.add_parser("prereg", help="check an item's prediction is committed"); s.add_argument("item"); s.add_argument("--experiment", **EXP); s.set_defaults(f=cmd_prereg)
     sub.add_parser("experiments", help="list runnable experiments").set_defaults(f=cmd_experiments)
+    s = sub.add_parser("overhead", help="latency our own code adds, measured without a model"); s.add_argument("item"); s.add_argument("--experiment", **EXP)
+    s.add_argument("--repeat", type=int, default=5); s.set_defaults(f=cmd_overhead)
     a = p.parse_args(argv)
     a.f(a)
 

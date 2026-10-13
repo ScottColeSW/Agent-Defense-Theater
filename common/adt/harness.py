@@ -93,7 +93,10 @@ def run(scenario, runners: list, out_dir: Path, mode: str = "live", exploratory:
                        "defense": d.name, "layer": d.layer, "model": runner.name, "crew": scenario.crew,
                        "outcome": res.outcome, "tokens_in": res.reply.tokens_in, "tokens_out": res.reply.tokens_out,
                        "latency_ms": res.reply.latency_ms + res.gate_ms, "mode": mode, "prereg": prereg,
-                       "hardware_note": HARDWARE_NOTE, "timestamp": now(), "task": case.task, **res.extra, **gpucooler.snapshot()}
+                       "hardware_note": HARDWARE_NOTE, "timestamp": now(), "task": case.task,
+                       # latency_ms = model_ms + review_ms + gate_ms. thermal_wait_ms is outside all three.
+                       "model_ms": res.reply.latency_ms - res.extra.get("review_ms", 0), "review_ms": res.extra.get("review_ms", 0),
+                       "gate_ms": res.gate_ms, **res.extra, **gpucooler.snapshot()}
                 bad = validate(rec)
                 if bad:
                     raise ValueError(f"invalid record: {bad}")
@@ -107,5 +110,7 @@ def run(scenario, runners: list, out_dir: Path, mode: str = "live", exploratory:
             "decision_log_head": log.head, "decision_log_entries": log.seq, "hardware_note": HARDWARE_NOTE, **info,
             "gpu": gpucooler.active.stats() if gpucooler.active else None,
             "started": now()}
+    if gpucooler.active:
+        (out_dir / f"{run_id}.gpu.json").write_text(json.dumps(gpucooler.active.timeline()), encoding="utf-8")
     (out_dir / f"{run_id}.meta.json").write_text(json.dumps(meta, indent=1), encoding="utf-8")
     return meta

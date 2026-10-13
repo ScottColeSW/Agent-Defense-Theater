@@ -46,6 +46,8 @@ class GpuCooler:
         self.available = None
         self.last = self.peak = None
         self.pauses, self.paused_s, self._taken_s = 0, 0.0, 0.0
+        self.t0 = clock()
+        self.samples, self.pause_events = [], []     # [seconds since start, C], and one dict per pause
         self._stop = threading.Event()
         self._lock = threading.Lock()
 
@@ -53,6 +55,9 @@ class GpuCooler:
         with self._lock:
             self.last = t
             self.peak = t if self.peak is None else max(self.peak, t)
+            self.samples.append([round(self._clock() - self.t0, 1), t])
+            if len(self.samples) > 20000:
+                del self.samples[::2]                  # thin evenly rather than grow without bound
 
     def wait(self):
         """Block while the GPU is above the limit. Returns the temperature that allowed the call, or None if unreadable."""
@@ -67,6 +72,7 @@ class GpuCooler:
         if t <= self.max_c:
             return t
         self.pauses += 1
+        first = t
         start = self._clock()
         self._say(f"GPU cooler: {t}C is over {self.max_c}C. Pausing until {self.resume_c}C or lower.")
         while t > self.resume_c:
@@ -81,6 +87,7 @@ class GpuCooler:
             self._see(t)
         waited = self._clock() - start
         self.paused_s += waited
+        self.pause_events.append({"start_s": round(start - self.t0, 1), "seconds": round(waited, 1), "from_c": first, "to_c": t})
         self._say(f"GPU cooler: resumed at {t}C after {waited:.0f}s.")
         return t
 
@@ -92,6 +99,10 @@ class GpuCooler:
     def stats(self) -> dict:
         return {"max_c": self.max_c, "resume_c": self.resume_c, "peak_c": self.peak, "pauses": self.pauses,
                 "paused_s": round(self.paused_s, 1), "available": bool(self.available)}
+
+    def timeline(self) -> dict:
+        """Everything the UI needs to draw the cooldown: temperature samples, the pauses, and the two limits."""
+        return {**self.stats(), "samples": list(self.samples), "pause_events": list(self.pause_events)}
 
     def start_sampler(self, every_s: float = 5.0):
         """Track the true peak between calls. Daemon thread, stops with the process or stop_sampler()."""

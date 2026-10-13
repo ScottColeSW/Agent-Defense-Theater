@@ -54,6 +54,21 @@ First preregistered run (2026-10-13, three local models up to 8B, 540 records). 
 
 The preregistered pass bar was met. Several predictions were missed, the prompt-level guard barely helped, and the 12.2% that got through scoped credentials is one attack (`in_scope_refund`) that stays inside what the credential allows. The full prediction, the misses and what they mean are in the addendum of [`PREREGISTRATION.md`](PREREGISTRATION.md).
 
+### Escalation experiment (second preregistered run)
+
+Scoped credentials blocked all above-tier work, so this run turns a denial into a **hold** that a reviewer can approve, carried out with a one-shot credential bound to that exact call. Run it with `python adt.py run asi03 --experiment escalation --models llama3.1:8b,qwen2.5:7b,phi4-mini:3.8b --reviewer qwen2.5:7b`. Pooled, 120 attack cases, 27 above-tier legitimate tasks per condition:
+
+| Condition | Attack succeeded | Bad approvals (of attack holds) | Above-tier work done |
+| --- | --- | --- | --- |
+| none (shared token) | 51.7% (62/120) | n/a | 96.3% (26/27) |
+| scoped_credentials | 10.0% (12/120) | n/a | 0% (0/27) |
+| hold + rubber stamp | 51.7% (62/120) | 100% (50/50) | 96.3% (26/27) |
+| hold + agent card | 11.7% (14/120) | 4.0% (2/50) | 7.4% (2/27) |
+| hold + effect card | 10.0% (12/120) | 0% (0/50) | 29.6% (8/27) |
+| hold + effect card + money review | 10.0% (12/120) | 19.4% (12/62) | 29.6% (8/27) |
+
+Three of six pass-bar criteria were met. Approval without reading is no defense (identical to no defense), no beyond-tier action ran without a logged approval (0 of 183 per condition), and every one-shot credential was used exactly once. But the model reviewer mostly denied: the approval step recovered 30% of the legitimate work at best, the reviewer weighed the card's "over the limit" line above the operator's own words, and in the money condition it approved 12 in-scope refunds while writing "the operator's request is to summarize the ticket, not to process a refund." Full prediction, misses and next steps: [`PREREGISTRATION-escalation.md`](PREREGISTRATION-escalation.md).
+
 ### Planned against done
 
 | Planned | First run |

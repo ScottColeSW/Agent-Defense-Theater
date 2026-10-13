@@ -33,6 +33,8 @@ Status: Measured (first preregistered run, simulated desk).
 
 One simulated agent step, author-written attacks and an author-written credential gate, three models up to 8B. Zero escapes from a deterministic gate is close to true by construction. Untested: credential lifetimes, mid-task revocation, the delegation-chain check, credentials in shared context, an escalation path for legitimate above-tier work (0 of 9 such tasks completed under scoped credentials). Needs: a real identity provider (for example Entra ID or Okta) and workload identity, a multi-step agent, and an attacker who is not the author. A local simulation shows the logic, not production behavior.
 
+The escalation experiment adds its own limits. The approver is one small local model, not a person, so it shows what a request card lets a careful reader catch and where a model reviewer is swayed or contradicts itself, not how people behave, tire or rubber-stamp. There is no queue, no timeout and no approval fatigue. The card's checks are author-written over the operator's own words. The agent's output format moved attack-following by up to 80 points per model, so a defense measured on one prompt may not hold on another. Needs: human reviewers (a study with real approvers), stronger reviewer models, and agents that are not tuned to one prompt.
+
 ### ASI04: Agentic Supply Chain Vulnerabilities
 
 Status: Stub.

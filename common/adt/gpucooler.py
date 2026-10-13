@@ -45,7 +45,7 @@ class GpuCooler:
         self._read, self._sleep, self._clock, self._say = read, sleep, clock, say
         self.available = None
         self.last = self.peak = None
-        self.pauses, self.paused_s, self._taken_s = 0, 0.0, 0.0
+        self.pauses, self.paused_s, self._taken_s, self.busy_s = 0, 0.0, 0.0, 0.0
         self.t0 = clock()
         self.samples, self.pause_events = [], []     # [seconds since start, C], and one dict per pause
         self._stop = threading.Event()
@@ -60,7 +60,16 @@ class GpuCooler:
                 del self.samples[::2]                  # thin evenly rather than grow without bound
 
     def wait(self):
-        """Block while the GPU is above the limit. Returns the temperature that allowed the call, or None if unreadable."""
+        """Block while the GPU is above the limit. Returns the temperature that allowed the call, or None if unreadable.
+        All the time spent in here (reading the sensor and any pause) is added to busy_s so callers can take it out of
+        their own timings."""
+        t_in = self._clock()
+        try:
+            return self._wait()
+        finally:
+            self.busy_s += self._clock() - t_in
+
+    def _wait(self):
         t = self._read()
         if t is None:
             if self.available is not False:
@@ -133,6 +142,11 @@ def uninstall():
     if active:
         active.stop_sampler()
     active = None
+
+
+def busy_ms() -> int:
+    """Total time the cooler has spent checking and pausing so far. Subtract the change across a section to keep it out of that section's timing."""
+    return round(active.busy_s * 1000) if active else 0
 
 
 def before_call():

@@ -7,6 +7,7 @@ import json
 import time
 from pathlib import Path
 
+from adt import gpucooler
 from adt.harness import ROOT, Case, CaseResult, Defense
 from adt.loader import load_file
 from adt.models import CachedRunner, OllamaRunner, Reply
@@ -112,7 +113,7 @@ class AsiEscalation:
         requested = lambda c: case.kind == "legit" and c.tool in asked
 
         executed, approved_ids, denied, holds = [], set(), [], []
-        rev_in = rev_out = rev_ms = 0
+        rev_in = rev_out = rev_ms = rev_cool = 0
         t0 = time.perf_counter()
         for c in calls:
             dec = broker.authorize(c, t, desk.TICKETS)
@@ -127,7 +128,9 @@ class AsiEscalation:
                 tcfg = cred.TIERS[cred.AGENT["tier"]]
                 card = (esc.agent_card(c, c.why, t, desk.TICKETS, tcfg["name"]) if cfg["reviewer"] == "agent_card" else
                         esc.effect_card(c, t, desk.TICKETS, d["text"], dec.codes, tcfg["name"], tcfg["refund_cap"], cred.OPERATOR))
+                b0 = gpucooler.busy_ms()
                 v = approver.decide(card, dict(call=c, ticket_id=t, tickets=desk.TICKETS, operator_text=d["text"]))
+                rev_cool += gpucooler.busy_ms() - b0       # the cooler's sensor check and any pause are not our code's time
                 rev_in, rev_out, rev_ms = rev_in + v.tokens_in, rev_out + v.tokens_out, rev_ms + v.latency_ms
                 log.append(actor=f"approver:{approver.name}", tier="approver", delegation=chain, action=f"decide {c.tool}",
                            saw={"card": card, "defense": defense.name, "case": label},
@@ -146,7 +149,7 @@ class AsiEscalation:
                     denied.append(c)
             else:
                 denied.append(c)
-        gate_ms = round((time.perf_counter() - t0) * 1000) - rev_ms
+        gate_ms = round((time.perf_counter() - t0) * 1000) - rev_ms - rev_cool
 
         unreq_exec = [c for c in executed if c.tool in desk.PRIVILEGED and c.tool not in asked]
         unreq_try = [c for c in calls if c.tool in desk.PRIVILEGED and c.tool not in asked]

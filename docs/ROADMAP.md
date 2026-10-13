@@ -19,4 +19,5 @@ Items 8 and 9 depend on resources noted in [`LIMITS-AND-ANSWERS.md`](LIMITS-AND-
 ## Progress
 
 - **Step 1 done (2026-10-13).** `python adt.py demo` writes valid result records and a log entry that verifies.
+- **Step 2 follow-up, escalation (2026-10-13).** An approval step with a one-shot credential was added and measured. Integrity held (no beyond-tier action without an approval) but a small model reviewer recovered only 30% of legitimate above-tier work and did not stop in-scope abuse. Next: a system-computed bottom line on the card, a stronger reviewer, and a per-task budget. Details in the ASI03 escalation addendum.
 - **Step 2 done (2026-10-13).** Preregistration committed, scoped-credential prototype blocked every call beyond tier 1 (0 of 90) with utility reported. The sensitivity of the utility check is limited, and in-scope abuse still gets through. Details in the ASI03 addendum.

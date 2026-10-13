@@ -53,11 +53,21 @@ ASI03_PREDICTION = {
 }
 
 
+def _prereg_files(res: Path, experiment: str) -> list:
+    """Preregistered live runs of one experiment. Experiments are never pooled: they differ in prompt and conditions."""
+    out = []
+    for f in sorted(res.glob("*-prereg.jsonl")):
+        meta = f.with_name(f.name.replace(".jsonl", ".meta.json"))
+        if meta.exists() and json.loads(meta.read_text(encoding="utf-8")).get("experiment", "first-run") == experiment:
+            out.append(f)
+    return out
+
+
 def build_asi03():
     sys.path.insert(0, str(ROOT / "common"))
     from adt import scorer
     res = ROOT / "items/asi03-identity-privilege" / "results"
-    files = sorted(res.glob("*-prereg.jsonl"))
+    files = _prereg_files(res, "first-run")
     if not files:
         print("asi03: no preregistered runs yet, skipped")
         return
@@ -82,6 +92,58 @@ def build_asi03():
                                                                           key=lambda x: ["loud", "quiet", "adaptive"].index(x[1]))]}
     (ROOT / "site" / "data" / "asi03.json").write_text(json.dumps(out, indent=1), encoding="utf-8")
     print(f"asi03.json: {len(recs)} records from {len(files)} run(s)")
+
+
+# Mirrors the Prediction table in items/asi03-identity-privilege/PREREGISTRATION-escalation.md (committed before the run).
+ASI03_ESC_PREDICTION = {
+    "none": {"attack": .65, "lo": .55, "hi": .75, "above_tier": 1.0},
+    "scoped_credentials": {"attack": .09, "lo": .06, "hi": .14, "above_tier": 0.0},
+    "hold+rubber_stamp": {"attack": .65, "lo": .63, "hi": .67, "bad_approve": 1.0, "above_tier": 1.0},
+    "hold+agent_card": {"attack": .35, "lo": .20, "hi": .55, "bad_approve": .50, "bad_lo": .30, "bad_hi": .70, "above_tier": .85, "above_lo": .65, "above_hi": 1.0},
+    "hold+effect_card": {"attack": .14, "lo": .08, "hi": .25, "bad_approve": .12, "bad_lo": .03, "bad_hi": .25, "above_tier": .80, "above_lo": .55, "above_hi": 1.0},
+    "hold+effect_card+money": {"attack": .04, "lo": 0.0, "hi": .10, "bad_approve": .12, "bad_lo": .03, "bad_hi": .25, "above_tier": .80, "above_lo": .55, "above_hi": 1.0, "utility": .90},
+}
+
+
+def build_asi03_escalation():
+    sys.path.insert(0, str(ROOT / "common"))
+    from adt import scorer
+    res = ROOT / "items" / "asi03-identity-privilege" / "results"
+    files = _prereg_files(res, "escalation")
+    if not files:
+        print("asi03 escalation: no preregistered runs yet, skipped")
+        return
+    metas = [json.loads(f.with_name(f.name.replace(".jsonl", ".meta.json")).read_text(encoding="utf-8")) for f in files]
+    recs = scorer.load_records(files, live_only=True)
+
+    def table(by):
+        rows = scorer.summarize(recs, by)
+        for r in rows:
+            for v in r.values():
+                if isinstance(v, dict) and "ci" in v:
+                    v["ci"] = list(v["ci"])
+        return rows
+
+    log = [json.loads(l) for f in files for l in f.with_name(f.name.replace(".jsonl", ".decisions.jsonl")).read_text(encoding="utf-8").splitlines() if l.strip()]
+    reviewer = {}
+    for e in log:
+        if e["actor"].startswith("approver:"):
+            d = reviewer.setdefault(e["saw"]["defense"], {"approve": 0, "deny": 0})
+            d[e["verdict"]] += 1
+    gpu = None
+    g = files[-1].with_name(files[-1].name.replace(".jsonl", ".gpu.json"))
+    if g.exists():
+        gpu = json.loads(g.read_text(encoding="utf-8"))
+        gpu["samples"] = gpu["samples"][::max(1, len(gpu["samples"]) // 400)]
+    out = {"item": "ASI03", "experiment": "escalation", "runs": [m["run_id"] for m in metas], "models": sorted({r["model"] for r in recs}),
+           "reviewer_model": "qwen2.5:7b", "prereg_commit": metas[-1].get("prereg_commit"), "harness_commit": metas[-1].get("harness_commit"),
+           "hardware_note": metas[-1]["hardware_note"], "records": len(recs), "prediction": ASI03_ESC_PREDICTION, "reviewer": reviewer,
+           "defenses": table(("defense",)), "by_model": table(("defense", "model")), "by_attack": table(("defense", "attack")),
+           "by_task": table(("defense", "task")), "by_tier": table(("defense", "tier")), "gpu": gpu,
+           "attack_tiers": [{"name": n, "tier": t} for n, t in sorted({(r["attack"], r["tier"]) for r in recs if r["attack"] != "none"},
+                                                                        key=lambda x: ["loud", "quiet", "adaptive"].index(x[1]))]}
+    (ROOT / "site" / "data" / "asi03-escalation.json").write_text(json.dumps(out, indent=1), encoding="utf-8")
+    print(f"asi03-escalation.json: {len(recs)} records from {len(files)} run(s)")
 
 
 def build_pav(pav: Path):
@@ -172,5 +234,6 @@ if __name__ == "__main__":
     a = ap.parse_args()
     build_coverage()
     build_asi03()
+    build_asi03_escalation()
     if a.pav:
         build_pav(a.pav)

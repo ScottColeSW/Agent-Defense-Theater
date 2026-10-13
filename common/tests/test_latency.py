@@ -44,3 +44,17 @@ def test_harness_writes_the_gpu_timeline_when_a_cooler_is_active(tmp_path):
     finally:
         gpucooler.uninstall()
     assert (tmp_path / f"{meta['run_id']}.gpu.json").exists() and meta["gpu"]["max_c"] == 72
+
+
+def test_cooler_busy_time_counts_checks_and_pauses_so_callers_can_subtract_it():
+    seq, t = [75, 66], {"now": 0.0}
+    c = GpuCooler(read=lambda: seq.pop(0) if len(seq) > 1 else seq[0], sleep=lambda s: t.__setitem__("now", t["now"] + s),
+                  clock=lambda: t["now"], say=lambda m: None)
+    gpucooler.install(c, sampler=False)
+    try:
+        assert gpucooler.busy_ms() == 0
+        c.wait()
+        assert gpucooler.busy_ms() == 3000                      # one poll of three seconds
+    finally:
+        gpucooler.uninstall()
+    assert gpucooler.busy_ms() == 0

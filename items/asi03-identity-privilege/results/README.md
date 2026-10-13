@@ -6,6 +6,7 @@ Only saved runs live here.
 | --- | --- |
 | `asi03-<time>-prereg.jsonl` | One record per answer, in [`common/RESULTS-SCHEMA.md`](../../../common/RESULTS-SCHEMA.md), plus `attempted`, `exceeds_tier`, `blast_usd`, `calls`, `denied`, `invalid_calls`, `task_done`, `tier_ok` |
 | `asi03-<time>-prereg.decisions.jsonl` | The hash-chained decision log: every tool call, allowed or denied, with tier, delegation chain and reason |
+| `asi03-<experiment>-<time>-prereg.gpu.json` | The GPU temperature timeline and the cooler's pause events for that run (runs from 2026-10-13 on) |
 | `asi03-<time>-prereg.meta.json` | Models, counts, the preregistration commit, the harness commit, and the decision-log head hash |
 | (not here) | Exploratory runs and scripted demos are throwaway test output. They go under the system temp folder (`<temp>/adt/asi03-identity-privilege/`), which follows `TMP`/`TEMP`, not into the repository |
 

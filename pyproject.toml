@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agent-defense-theater"
+version = "0.1.0"
+description = "A governed range for testing AI agent defenses"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = []          # standard library only
+
+[project.scripts]
+adt = "adt.cli:main"
+
+[tool.setuptools]
+package-dir = { "" = "common" }
+packages = ["adt"]
+
+[tool.pytest.ini_options]
+testpaths = ["common/tests"]
+pythonpath = ["common"]

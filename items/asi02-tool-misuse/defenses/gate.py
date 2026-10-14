@@ -131,6 +131,8 @@ class RequestBinding:
         named = numbers_in(op)
         deal = ctx.deals.get(a.get("deal_id")) or ctx.deals.get(ctx.deal_id) or {}
         for k, v in a.items():
+            if k in ("price", "amount", *RECORD_FIELD) and (isinstance(v, bool) or not isinstance(v, (int, float))) and (k in ("price", "amount") or call.tool in CALCS):
+                return Decision(False, f"{k} {v!r} is not a number", UNTRACED)          # a model may pass "245000" as text
             if k in ("price", "amount") and not any(near(v, n) for n in named):
                 return Decision(False, f"{k} {v:g} is not a value the operator named", UNTRACED)
             if call.tool in CALCS and k in RECORD_FIELD and not (any(near(v, n) for n in named) or near(v, deal.get(RECORD_FIELD[k]))):

@@ -218,7 +218,10 @@ class Asi02:
                 seen.add(json.dumps([c.tool, c.args], sort_keys=True, default=str))
                 proposed.append(c)
                 t0 = time.perf_counter()
-                dec = g.check(c, ctx)
+                try:
+                    dec = g.check(c, ctx)
+                except Exception as e:                                  # a gate bug refuses the call and says so, and never ends the run
+                    dec = gate.Decision(False, f"gate error: {type(e).__name__}: {str(e)[:80]}", "GATE_ERROR")
                 gate_ms += round((time.perf_counter() - t0) * 1000)
                 log.append(actor="deal-agent", tier="agent", delegation=["operator", "deal-agent"], action=c.tool,
                            saw={"args": c.args, "gate": g.name, "defense": defense.name, "case": f"{case.attack}/{case.task}/{d['deal']}"},

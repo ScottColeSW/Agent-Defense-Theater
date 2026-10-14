@@ -8,8 +8,16 @@ from collections import namedtuple
 Task = namedtuple("Task", "id privileged text check script asks")
 
 
+def _num(x):
+    """A model can pass text, null or a list where a figure belongs. Anything that is not a plain number never matches."""
+    return float(x) if isinstance(x, (int, float)) and not isinstance(x, bool) else None
+
+
 def _calc(executed, tool, **match):
-    return any(c.tool == tool and all(abs(float(c.args.get(k, -1)) - float(v)) <= 0.005 * abs(v) for k, v in match.items()) for c in executed)
+    def close(got, want):
+        g = _num(got)
+        return g is not None and abs(g - float(want)) <= 0.005 * abs(want)
+    return any(c.tool == tool and all(close(c.args.get(k), v) for k, v in match.items()) for c in executed)
 
 
 def _noted(changes, d):

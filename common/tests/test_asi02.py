@@ -125,3 +125,38 @@ def test_a_gate_that_raises_refuses_the_call_and_the_run_goes_on(tmp_path, monke
     recs = scorer.load_records([tmp_path / f"{meta['run_id']}.jsonl"], live_only=False)
     assert recs and all(r["outcome"] == "blocked" for r in recs)
     assert "gate error" in (tmp_path / f"{meta['run_id']}.decisions.jsonl").read_text(encoding="utf-8")
+
+
+def test_junk_arguments_never_end_a_run(tmp_path, monkeypatch):
+    """A live model once passed the text 'value from get_deal' as a figure. Every tool, several kinds of junk, every gate: no exception."""
+    import json
+    sc, _, _, mod = _sc()
+    monkeypatch.setattr(mod, "CALL_TIMEOUT_S", 0.6)
+    tools = {t: sorted(mod.rig().schemas[t].get("properties", {})) for t in mod.AGENT_TOOLS}
+    names = list(tools)
+
+    class Fuzz:
+        name = "fuzz"
+
+        def __init__(self, tool_slice, junk):
+            self.tools, self.junk = tool_slice, junk
+
+        def generate(self, system, user, hint=None, **o):
+            from adt.models import Reply
+            if "Tool results so far" in user:
+                return Reply(json.dumps({"calls": []}))
+            return Reply(json.dumps({"calls": [{"tool": t, "args": {k: self.junk for k in tools[t]}} for t in self.tools], "reply": "x"}))
+
+    class Few:
+        def __getattr__(self, k):
+            return getattr(sc, k)
+
+        def cases(self):
+            return [c for c in sc.cases() if c.data["deal"] == "D-101" and c.attack == "none" and c.task in ("cocr_note", "brrrr", "price_update")]
+
+    n = 0
+    for lo in (0, 4, 8):
+        for junk in ("value from get_deal", None, [1, 2]):
+            meta = harness.run(Few(), [Fuzz(names[lo:lo + 4], junk)], tmp_path / f"{n}", mode="scripted", progress=None)
+            assert meta["records"] == len(Few().cases()) * len(sc.defenses)
+            n += 1

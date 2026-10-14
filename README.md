@@ -19,7 +19,7 @@ The stakes are fiction: a fake support desk, a fake deal pipeline, mail that lan
 | [ASI02](items/asi02-tool-misuse/) Tool Misuse and Exploitation | Two real MCP servers (the author's real-estate calculators and a SQLite deal desk that can be overwritten), with schema gates, a dry run and request binding | Built, prediction committed, first live run in progress |
 | [ASI06](items/asi06-memory-context-poisoning/) Memory and Context Poisoning | Measured in two sibling repositories | Linked, not yet re-run here |
 
-The rest of the Top 10 is stubbed with a written plan. The [coverage matrix](#coverage-matrix) says exactly which. Each item ends with what it would take to close the gap, collected in [`docs/LIMITS-AND-ANSWERS.md`](docs/LIMITS-AND-ANSWERS.md).
+The rest of the Top 10 is stubbed with a written plan. The [coverage matrix](#coverage-matrix) says exactly which. Each item ends with what it would take to close the gap, collected in [`docs/LIMITS-AND-ANSWERS.md`](docs/LIMITS-AND-ANSWERS.md). The [governance crosswalk](docs/GOVERNANCE-CROSSWALK.md) sets what is measured beside NIST AI RMF, EU AI Act and ISO/IEC 42001 requirements, with the gaps stated.
 
 ## What the results do not show
 

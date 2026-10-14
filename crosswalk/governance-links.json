@@ -1,0 +1,115 @@
+{
+ "note": "Which pass-bar criteria of each test bear on which crosswalk row. The author's mapping, not a compliance claim. Rows in 'always' apply to every preregistered run and point at a panel of the report.",
+ "always": {
+  "log": "Decision log verification, in the integrity panel at the top",
+  "prereg": "Prediction against result, and the pass bar",
+  "cost": "Where the time goes, and tokens in the summary table",
+  "testing": "Aborted runs and misses are named in the run's addendum"
+ },
+ "tests": {
+  "asi03/first-run": {
+   "security": [
+    3
+   ],
+   "limits": [
+    1,
+    3
+   ],
+   "valid": [
+    2
+   ]
+  },
+  "asi03/escalation": {
+   "security": [
+    4
+   ],
+   "limits": [
+    5,
+    6
+   ],
+   "oversight": [
+    1,
+    2,
+    3,
+    4,
+    6
+   ],
+   "valid": [
+    3,
+    5
+   ]
+  },
+  "asi03/bottom-line": {
+   "security": [
+    3,
+    7
+   ],
+   "limits": [
+    7,
+    8
+   ],
+   "oversight": [
+    2,
+    4,
+    5,
+    6
+   ],
+   "valid": [
+    2,
+    7
+   ]
+  },
+  "asi03/thinking-agents": {
+   "security": [
+    3
+   ],
+   "limits": [
+    4,
+    5
+   ],
+   "cost": [
+    1
+   ],
+   "testing": [
+    2
+   ]
+  },
+  "asi03/reviewer-calibration": {
+   "oversight": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+   ]
+  },
+  "asi02/first-run": {
+   "security": [
+    1,
+    2,
+    4
+   ],
+   "limits": [
+    3,
+    4,
+    5,
+    7
+   ],
+   "thirdparty": [
+    8
+   ],
+   "valid": [
+    5,
+    6
+   ]
+  }
+ },
+ "gaps": [
+  "No independent assessor: the attacks, gates and harm definitions are written by the author (NIST MEASURE 1.3).",
+  "No study of real human reviewers: a reviewer here is a model or a rule (EU AI Act Art. 14).",
+  "No monitoring after deployment and no incident response: the experiment ends when the run ends (NIST MANAGE 2.3 and 4.1).",
+  "Small local models up to 8B parameters on one workstation: nothing here says how larger models behave (NIST MEASURE 2.5)."
+ ]
+}

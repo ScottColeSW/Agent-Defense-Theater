@@ -80,6 +80,22 @@ function thinkingBlock() {
   return sec("What the model wrote while reasoning", items, `First ${R.thinking.length} of ${R.thinking_total} saved. This is the text the model chose to write down, which is not necessarily why it acted. Each sample is cut at 1,500 characters; the full text is in the .thinking.jsonl file beside the run.`);
 }
 
+function governanceBlock() {
+  const G = R.governance;
+  if (!G || !G.rows.length) return "";
+  const word = s => s === "met" ? "Met" : s === "missed" ? "Missed" : "Uninformative";
+  const fw = (name, text) => `<div><div class="muted small" style="font-weight:700;letter-spacing:.04em">${name}</div><div class="small">${esc(text)}</div></div>`;
+  const crit = c => c.criteria.length
+    ? c.criteria.map(k => `<li><span class="verdict ${k.status}">${word(k.status)}</span><span><b>${k.id}.</b> ${esc(k.text)}<br><span class="muted small">Result: ${esc(k.result)}</span></span></li>`).join("")
+    : `<li><span class="muted small">${esc(c.where)}</span></li>`;
+  const body = G.rows.map(c => `<div style="padding:14px 0;border-top:1px solid var(--border-color)"><h3 style="margin:0 0 10px">${esc(c.measurement)}</h3>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px 22px;margin-bottom:10px">${fw("NIST AI RMF", c.nist)}${fw("EU AI ACT", c.eu)}${fw("ISO/IEC 42001", c.iso)}</div>
+    <ul class="passbar" style="margin:0">${crit(c)}</ul></div>`).join("");
+  const gaps = `<h3 style="margin:18px 0 8px">What this run does not show</h3><ul class="small">${G.gaps.map(g => `<li>${esc(g)}</li>`).join("")}</ul>`;
+  return sec("Governance view", `<div style="margin-top:-14px">${body}</div>${gaps}`,
+    `The author's mapping of this test's pass-bar criteria to framework requirements. It is evidence that bears on a requirement, not a claim of compliance. The EU AI Act applies to real high-risk systems, not to these tests. Full table and sources: <a href="https://github.com/ScottColeSW/Agent-Defense-Theater/blob/main/docs/GOVERNANCE-CROSSWALK.md">governance crosswalk</a>.`);
+}
+
 function tradeoffBlock() {
   return sec("Protection against valid use", `<div id="trade"></div>`,
     "A defense that blocks everything protects nothing worth having. Each point is one condition: how many attacks got through, against how much legitimate work still got done (in-tier and above-tier together). The shaded corner is protected and still useful. Lines show 95% intervals.");
@@ -163,7 +179,7 @@ function drawRecords() {
 function render() {
   document.title = `Report: ${R.run_id}`;
   const folder = R.folder ? `${GH}tree/main/items/${R.folder}/results` : GH;
-  $("page").innerHTML = header() + integrity() + tiles() + summaryTable() + analysisBlock() + tradeoffBlock() + predictionBlock() +
+  $("page").innerHTML = header() + integrity() + tiles() + summaryTable() + analysisBlock() + tradeoffBlock() + predictionBlock() + governanceBlock() +
     sec("Where the time goes", `<div id="lat"></div>`, "Per case, averaged. The reviewer's time is a model's time. Our code is the gate, the cards and the decision log. A cached reply keeps the original model time so conditions compare fairly.") +
     gpuBlock() + breakdowns() + reviewerBlock() + thinkingBlock() + errorsBlock() + recordsBlock() +
     `<section><p class="muted small">Raw files for committed results: <a href="${folder}">${esc(R.folder || "repository")} results</a>. <a href="start.html">Back to tests</a>.</p></section>`;

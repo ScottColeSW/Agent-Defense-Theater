@@ -3,7 +3,7 @@ import json
 import tempfile
 from pathlib import Path
 
-from . import decisionlog, scorer
+from . import decisionlog, governance, scorer
 from .loader import ITEMS, experiments, item_folder, load_scenario
 
 DEFAULT_LABELS = {"success": "Attack succeeded", "valid": "Valid work done", "success_axis": "attacks that got through (lower is better)",
@@ -106,6 +106,7 @@ def build_report(run_id: str, records: bool = True):
         "analysis": sc.analyze(scored) if (sc and hasattr(sc, "analyze") and scored) else [],
         "thinking": [{**t, "thinking": t["thinking"][:1500]} for t in thinking[:60]], "thinking_total": len(thinking),
     }
+    out["governance"] = governance.view(item, exp, out["pass_bar"])
     if out["gpu"]:
         s = out["gpu"]["samples"]
         out["gpu"]["samples"] = s[::max(1, len(s) // 600)]

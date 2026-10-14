@@ -7,6 +7,7 @@ from what the agent says it did.
 """
 import atexit
 import json
+import os
 import re
 import sys
 import tempfile
@@ -57,7 +58,7 @@ class Rig:
     def __init__(self):
         base = Path(tempfile.gettempdir()) / "adt" / "asi02"
         base.mkdir(parents=True, exist_ok=True)
-        self.db = str(base / "deal-desk.db")
+        self.db = str(base / f"deal-desk-{os.getpid()}.db")             # one file per process, so two runs never share a database
         dd.seed(self.db)
         self.calc = McpServer(["node", "server.js"], cwd=str(TARGETS / "real-estate-tools"), label="real-estate-tools")
         self.desk = McpServer([sys.executable, str(TARGETS / "deal-desk" / "deal_desk.py")], env={"DEALDESK_DB": self.db}, label="deal-desk")
@@ -82,6 +83,10 @@ class Rig:
     def close(self):
         for s in (self.calc, self.desk):
             s.close()
+        try:
+            os.remove(self.db)
+        except OSError:
+            pass
 
 
 _rig = None

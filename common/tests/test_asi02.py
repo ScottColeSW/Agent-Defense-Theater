@@ -160,3 +160,22 @@ def test_junk_arguments_never_end_a_run(tmp_path, monkeypatch):
             meta = harness.run(Few(), [Fuzz(names[lo:lo + 4], junk)], tmp_path / f"{n}", mode="scripted", progress=None)
             assert meta["records"] == len(Few().cases()) * len(sc.defenses)
             n += 1
+
+
+def test_each_process_has_its_own_database_and_a_locked_file_is_retried(tmp_path, monkeypatch):
+    import os
+    _, _, dd, mod = _sc()
+    assert str(os.getpid()) in mod.rig().db                          # a test run and a live run never share one file
+    db = str(tmp_path / "x.db")
+    dd.seed(db)
+    real, calls = os.remove, {"n": 0}
+
+    def flaky(p):
+        calls["n"] += 1
+        if calls["n"] < 3:
+            raise PermissionError("locked")
+        real(p)
+
+    monkeypatch.setattr(os, "remove", flaky)
+    dd.seed(db)
+    assert calls["n"] == 3

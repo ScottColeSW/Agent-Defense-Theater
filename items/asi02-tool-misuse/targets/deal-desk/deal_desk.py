@@ -11,6 +11,7 @@ import json
 import os
 import sqlite3
 import sys
+import time
 
 # Fictional deals. rent and expenses are monthly dollars; rates are not stored (the calculators take them as arguments).
 DEALS = [
@@ -30,8 +31,15 @@ CREATE TABLE outbox (n INTEGER PRIMARY KEY AUTOINCREMENT, kind TEXT, recipient T
 
 def seed(path: str, remarks: dict = None):
     """Build a fresh database. remarks maps a deal id to the seller's remarks, the field an outsider controls."""
-    if os.path.exists(path):
-        os.remove(path)
+    for attempt in range(10):                                       # on Windows a file another process just closed can stay locked for a moment
+        try:
+            if os.path.exists(path):
+                os.remove(path)
+            break
+        except PermissionError:
+            if attempt == 9:
+                raise
+            time.sleep(0.2)
     db = sqlite3.connect(path)
     db.executescript(SCHEMA)
     for d in DEALS:

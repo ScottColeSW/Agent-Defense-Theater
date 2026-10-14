@@ -1,23 +1,40 @@
 # Agent-Defense-Theater
 
-A governed range for testing AI agent defenses: Agent Theater's earned-trust tiers and human oversight, plus an adversarial arena that attacks each OWASP Top 10 for Agentic Applications risk. Measured results, honest gaps, and what it would take to close them.
+A live range for defending AI agents against the [OWASP Top 10 for Agentic Applications](https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/). Real local models are attacked through real tools, each defense is measured against the valid work it must still allow, and every prediction is written down before the run.
 
-> **Status: early.** This repository is the structure, a working harness, and one preregistered live run (ASI03, on a simulated desk with author-written attacks). ASI06 has measured results in two sibling repositories, ASI01 has partial evidence, two items are designed, and five are stubs with a written plan. Nothing here is a security product.
+The stakes are fiction: a fake support desk, a fake deal pipeline, mail that lands in a table. The models, the tool protocols, the attacks and the numbers are real, and the numbers include the misses.
 
-## What this is
+## What it demonstrates
 
-Agent-Defense-Theater joins two ideas:
+- **Defenses are measured against valid use, not alone.** Every run reports the attacks that got through next to the legitimate work that still got done. A defense that blocks everything scores zero on the second.
+- **Predictions come first.** The harness refuses a live run unless the prediction file is committed and the code matches a commit. Results that missed the prediction are reported as misses.
+- **Results can be checked.** Every decision is written to a hash-chained log (`python adt.py verify`). Scripted demo runs are labeled and never count.
+- **It runs live in the browser.** `python adt.py serve --open` starts a runner with a model picker, a GPU temperature guard that pauses runs above 72 C, a progress view, and a detailed report for each run.
+
+## Where it stands
+
+| Item | What is measured | Headline |
+| --- | --- | --- |
+| [ASI03](items/asi03-identity-privilege/) Identity and Privilege Abuse | A support desk with a shared token, scoped credentials, an approval step, request binding, and model and rule reviewers, over three rounds | With no defense 62 of 120 planted instructions were carried out. Request binding plus holds let 0 of 120 through and kept 61 of 63 valid tasks. A model reviewer alone approved 12 refunds the operator never asked for, and whether one reviewer followed the same card depended on the model |
+| [ASI02](items/asi02-tool-misuse/) Tool Misuse and Exploitation | Two real MCP servers (the author's real-estate calculators and a SQLite deal desk that can be overwritten), with schema gates, a dry run and request binding | Built, prediction committed, first live run in progress |
+| [ASI06](items/asi06-memory-context-poisoning/) Memory and Context Poisoning | Measured in two sibling repositories | Linked, not yet re-run here |
+
+The rest of the Top 10 is stubbed with a written plan. The [coverage matrix](#coverage-matrix) says exactly which. Each item ends with what it would take to close the gap, collected in [`docs/LIMITS-AND-ANSWERS.md`](docs/LIMITS-AND-ANSWERS.md).
+
+## What the results do not show
+
+- The attacks, the gates and the harm definitions are written by the author. No result has been tested against an attacker who knows the defense, except where an item says so.
+- The models are local ones up to 8B parameters, on one workstation. Nothing here says how larger models behave.
+- The taxonomy mapping is the author's classification, not an endorsement by OWASP or MITRE.
+
+## How it fits together
+
+Two ideas from the author's earlier work are joined:
 
 - **Theater** is the governance layer. Agents start on probation, earn trust, and are classed as performing, miscast, or bad from their outcomes. Human oversight runs at three speeds, slower for higher-impact actions.
 - **Greenroom** is the adversarial arena. A Black Hat side attacks a crew of agents and a White Hat side defends it, in the episode format used in [Aegis Vector](https://github.com/ScottColeSW/Project-Aegis-Vector).
 
-A shared harness (`common/`) scores every run the same way: attack success against retained utility, with cost. The ten items of the [OWASP Top 10 for Agentic Applications 2026](https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/) are the spine. Each is cross-referenced to the [OWASP Top 10 for LLM Applications 2025](https://genai.owasp.org/llm-top-10/) and [MITRE ATLAS](https://atlas.mitre.org/).
-
-## What this is not
-
-- It is not a product, and no result here has been tested against an attacker who knows the defenses unless the item says so.
-- Scripted demo runs are labeled scripted. Only saved live runs count as results.
-- The taxonomy mapping is the author's classification, not an endorsement by OWASP or MITRE.
+A shared harness (`common/`) scores every run the same way: attack success against retained utility, with cost and latency split into model time, reviewer time and our own code. Each item is cross-referenced to the [OWASP Top 10 for LLM Applications 2025](https://genai.owasp.org/llm-top-10/) and [MITRE ATLAS](https://atlas.mitre.org/).
 
 ## Coverage matrix
 
@@ -38,7 +55,7 @@ Status labels: **Stub** (plan written, nothing built), **Designed** (the design 
 
 ## Quick start
 
-Python 3.10 or newer, standard library only. [Ollama](https://ollama.com) is needed only to run live.
+Python 3.10 or newer, standard library only. [Ollama](https://ollama.com) is needed only to run live, and Node 18 or newer only for the ASI02 calculators.
 
 ```bash
 python adt.py status            # coverage and which items are runnable
@@ -47,6 +64,7 @@ python adt.py serve --open      # the site and the test runner at http://localho
 python adt.py models            # local models Ollama can see
 python adt.py gpu               # GPU temperature; live runs pause above 72 C
 python adt.py run asi03 --models llama3.1:8b,qwen2.5:7b,phi4-mini:3.8b
+python adt.py run asi02 --models llama3.1:8b,qwen2.5:7b,phi4-mini:3.8b   # needs Node 18+, and npm install in items/asi02-tool-misuse/targets/real-estate-tools
 python adt.py summary asi03 --by defense,model
 python adt.py verify            # check every decision-log hash chain
 python -m pytest -q
@@ -54,7 +72,7 @@ python -m pytest -q
 
 A live run is refused unless the item's prediction is committed first. See [`common/README.md`](common/README.md).
 
-## How it fits together
+## Architecture
 
 ```
           Theater (governance)               Greenroom (arena)

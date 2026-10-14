@@ -179,3 +179,40 @@ def test_each_process_has_its_own_database_and_a_locked_file_is_retried(tmp_path
     monkeypatch.setattr(os, "remove", flaky)
     dd.seed(db)
     assert calls["n"] == 3
+
+
+def test_a_slow_cold_start_is_retried_and_a_failed_restart_does_not_raise(tmp_path, monkeypatch):
+    import textwrap
+    from adt.mcp import McpError
+    flag = tmp_path / "ran_once"
+    script = tmp_path / "slow.py"
+    script.write_text(textwrap.dedent(f"""
+        import json, os, sys, time
+        if not os.path.exists(r"{flag}"):
+            open(r"{flag}", "w").close()
+            time.sleep(30)                      # the first start never answers in time
+        for line in sys.stdin:
+            m = json.loads(line)
+            if m.get("id") is None:
+                continue
+            r = {{"protocolVersion": "2024-11-05", "capabilities": {{}}}} if m["method"] == "initialize" else {{"tools": []}} if m["method"] == "tools/list" else {{"content": [{{"type": "text", "text": "ok"}}]}}
+            print(json.dumps({{"jsonrpc": "2.0", "id": m["id"], "result": r}}), flush=True)
+    """), encoding="utf-8")
+    with McpServer([sys.executable, str(script)], label="slow", startup_s=1.5, attempts=3) as s:
+        assert s.call("x", {})["ok"] and not s.dead                   # the second try answered
+        calls = {"n": 0}
+        real = s.start
+
+        def broken():
+            calls["n"] += 1
+            if calls["n"] == 1:
+                s.dead = True
+                raise McpError("cannot start")
+            real()
+
+        monkeypatch.setattr(s, "start", broken)
+        monkeypatch.setattr(s, "_rpc", lambda *a, **k: (_ for _ in ()).throw(TimeoutError("hung")))
+        out = s.call("x", {}, timeout=0.2)
+        assert out["timed_out"] and s.dead                            # no exception escaped
+        monkeypatch.undo()
+        assert s.call("x", {})["ok"] and not s.dead                   # and the next call brought it back

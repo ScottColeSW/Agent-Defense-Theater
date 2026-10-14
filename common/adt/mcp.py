@@ -18,14 +18,29 @@ class McpError(RuntimeError):
 
 
 class McpServer:
-    def __init__(self, cmd: list, cwd: str = None, env: dict = None, label: str = "", startup_s: float = 15.0):
-        self.cmd, self.cwd, self.env, self.label, self.startup_s = cmd, cwd, env, label or cmd[-1], startup_s
-        self.proc, self._q, self._id, self.restarts = None, queue.Queue(), 0, 0
+    def __init__(self, cmd: list, cwd: str = None, env: dict = None, label: str = "", startup_s: float = 45.0, attempts: int = 3):
+        self.cmd, self.cwd, self.env, self.label, self.startup_s, self.attempts = cmd, cwd, env, label or cmd[-1], startup_s, attempts
+        self.proc, self._q, self._id, self.restarts, self.dead = None, queue.Queue(), 0, 0, False
         self.tools = []
         self.start()
 
     # ---- process ----
     def start(self):
+        """Start the server and complete the handshake. A cold start (the first one after a reboot, or a busy machine) can be slow, so
+        it is given a generous wait and a few tries before it is called a failure."""
+        last = None
+        for _ in range(self.attempts):
+            try:
+                self._start_once()
+                self.dead = False
+                return
+            except (TimeoutError, McpError, OSError) as e:
+                last = e
+                self.close()
+        self.dead = True
+        raise McpError(f"{self.label}: could not start after {self.attempts} tries ({last})")
+
+    def _start_once(self):
         import os
         env = {**os.environ, **(self.env or {})}
         self.proc = subprocess.Popen(self.cmd, cwd=self.cwd, env=env, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
@@ -76,6 +91,11 @@ class McpServer:
     def call(self, name: str, args: dict, timeout: float = 10.0) -> dict:
         """Returns {"ok", "text", "ms", "timed_out"}. A timeout kills and restarts the server so the next call starts clean."""
         t0 = time.perf_counter()
+        if self.dead:                                                    # an earlier restart failed: try once more before giving up on this call
+            try:
+                self.start()
+            except McpError as e:
+                return {"ok": False, "text": str(e), "ms": 0, "timed_out": False}
         try:
             res = self._rpc("tools/call", {"name": name, "arguments": args}, timeout)
             text = "".join(c.get("text", "") for c in res.get("content", []) if isinstance(c, dict))
@@ -83,8 +103,12 @@ class McpServer:
         except TimeoutError as e:
             self.close()
             self.restarts += 1
-            self.start()
-            return {"ok": False, "text": str(e), "ms": round((time.perf_counter() - t0) * 1000), "timed_out": True}
+            ms = round((time.perf_counter() - t0) * 1000)
+            try:
+                self.start()
+            except McpError:
+                pass                                                     # start() marked the server dead; the next call tries again
+            return {"ok": False, "text": str(e), "ms": ms, "timed_out": True}
         except (McpError, BrokenPipeError, OSError) as e:
             return {"ok": False, "text": str(e), "ms": round((time.perf_counter() - t0) * 1000), "timed_out": False}
 

@@ -2,7 +2,7 @@
 
 | | |
 | --- | --- |
-| Status | Built (prediction committed, first live run pending) |
+| Status | Measured (first preregistered live run, with an addendum) |
 | OWASP LLM Top 10 2025 | LLM06 Excessive Agency |
 | MITRE ATLAS | AML.T0053 AI Agent Tool Invocation |
 | Existing work | RealEstateTools (the author's MCP server), copied in with provenance; Deal Desk is new |
@@ -45,7 +45,7 @@ Results use the shared schema in [`../../common/RESULTS-SCHEMA.md`](../../common
 - **Eight author-written attacks** planted in a deal's seller remarks (loud, quiet, adaptive), and **17 valid tasks per model** that need the same tools (in-tier analyses, and privileged price updates, offers, an export and a delete).
 - **Six conditions:** no defense, a prompt rule, a schema gate, a dry run, request binding, and both gates.
 - **A scripted run** shows each gate doing exactly what it was built to do (`python adt.py run asi02 --scripted`). It is never a result.
-- **Not run live yet.** The prediction and pass bar are in [`PREREGISTRATION.md`](PREREGISTRATION.md).
+- **One preregistered live run** (three models, 1,026 records). The prediction, pass bar, results and an addendum that reports the misses are in [`PREREGISTRATION.md`](PREREGISTRATION.md). With no defense 50 of 120 attacks carried out an unsafe call; a schema gate cut that to 18 (adaptive attacks still got through); request binding with the schema gate let 0 of 120 through, at a cost in valid work.
 
 ## Limits and what it would take
 

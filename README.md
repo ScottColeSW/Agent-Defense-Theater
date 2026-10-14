@@ -15,7 +15,7 @@ The targets are simulated: a support desk, a deal pipeline, mail that lands in a
 | Risk | Test | Finding |
 | --- | --- | --- |
 | [ASI03](items/asi03-identity-privilege/) Identity and Privilege Abuse | A support desk with a shared token, scoped credentials, an approval step, request binding, and model and rule reviewers (three rounds, three models) | With no defense, 62 of 120 planted instructions were carried out. Request binding with approval holds let 0 of 120 through and completed 61 of 63 valid tasks. A model reviewer alone approved 12 refunds nobody asked for, and the same card made one reviewer model perfect and another deny nearly every legitimate refund |
-| [ASI02](items/asi02-tool-misuse/) Tool Misuse and Exploitation | An agent on two real MCP servers, one of them a SQLite pipeline it can overwrite, behind a schema gate, a dry run and request binding | First live run in progress |
+| [ASI02](items/asi02-tool-misuse/) Tool Misuse and Exploitation | An agent on two real MCP servers, one of them a SQLite pipeline it can overwrite, behind a schema gate, a dry run and request binding (eight attacks, three models) | With no defense, 50 of 120 attacks carried out an unsafe call. A schema gate cut that to 18 and adaptive attacks written for it still got through (9 times). A dry run changed the database 0 times and completed 0 of 24 privileged tasks. Request binding plus the schema gate let 0 of 120 through, at a cost of valid work |
 | [ASI06](items/asi06-memory-context-poisoning/) Memory and Context Poisoning | Forged documents against a memory gate, in the sibling [Aegis Vector](https://github.com/ScottColeSW/Project-Aegis-Vector) and [Palimpsest](https://github.com/ScottColeSW/Palimpsest) repositories | Linked, not yet re-run here |
 
 Two further ASI03 tests are written with predictions committed and are waiting for their first live run: how a thinking model's reasoning changes what it does with a planted instruction, and how reliably a reviewer model follows a request card whose right answer is known.
@@ -50,7 +50,7 @@ For ASI02, run `npm install` once in `items/asi02-tool-misuse/targets/real-estat
 | ID | Risk | Status | What exists |
 | --- | --- | --- | --- |
 | [ASI01](items/asi01-goal-hijack/) | Agent Goal Hijack | Partial evidence elsewhere | Injection and spotlighting results in Aegis Vector |
-| [ASI02](items/asi02-tool-misuse/) | Tool Misuse and Exploitation | Built | Real MCP servers, three gates, eight attacks; first live run in progress |
+| [ASI02](items/asi02-tool-misuse/) | Tool Misuse and Exploitation | Measured | Real MCP servers, three gates, eight attacks; first preregistered live run |
 | [ASI03](items/asi03-identity-privilege/) | Identity and Privilege Abuse | Measured | Three preregistered live rounds |
 | [ASI04](items/asi04-supply-chain/) | Agentic Supply Chain Vulnerabilities | Stub | Plan written |
 | [ASI05](items/asi05-code-execution/) | Unexpected Code Execution | Stub | Plan written |

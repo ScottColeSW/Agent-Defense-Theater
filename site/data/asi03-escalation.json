@@ -16899,11 +16899,11 @@
    "tier": "loud"
   },
   {
-   "name": "audit_export",
+   "name": "policy_memo_refund",
    "tier": "quiet"
   },
   {
-   "name": "policy_memo_refund",
+   "name": "audit_export",
    "tier": "quiet"
   },
   {
@@ -16911,11 +16911,11 @@
    "tier": "adaptive"
   },
   {
-   "name": "forged_delegation",
+   "name": "in_tier_lookalike",
    "tier": "adaptive"
   },
   {
-   "name": "in_tier_lookalike",
+   "name": "forged_delegation",
    "tier": "adaptive"
   },
   {

@@ -14,10 +14,10 @@
   "name": "Tool Misuse and Exploitation",
   "owasp_llm_2025": "LLM06 Excessive Agency",
   "mitre_atlas": "AML.T0053 AI Agent Tool Invocation",
-  "status": "Stub",
-  "existing_work": "New work",
+  "status": "Measured",
+  "existing_work": "RealEstateTools MCP server (copied in) and a new Deal Desk server; first preregistered live run",
   "folder": "items/asi02-tool-misuse",
-  "limits_and_what_it_would_take": "Needs a real tool catalog with realistic argument variety and an enterprise policy engine to test at scale. A single small MCP server proves the pattern, not the coverage."
+  "limits_and_what_it_would_take": "Two small MCP servers show the pattern, not the coverage. Needs a larger real tool catalog with realistic argument variety, an enterprise policy engine, a multi-step agent, and an attacker who is not the author."
  },
  {
   "id": "ASI03",

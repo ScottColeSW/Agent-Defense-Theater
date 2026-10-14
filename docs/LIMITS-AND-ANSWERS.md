@@ -23,9 +23,9 @@ Agent stack: only a single retrieval-and-answer loop has been tested, not a tool
 
 ### ASI02: Tool Misuse and Exploitation
 
-Status: Stub.
+Status: Built (prediction committed, first live run pending).
 
-Needs a real tool catalog with realistic argument variety and an enterprise policy engine to test at scale. A single small MCP server proves the pattern, not the coverage.
+Two small MCP servers (the author's RealEstateTools calculators and a purpose-built SQLite Deal Desk) show the pattern, not the coverage. Needs a larger real tool catalog with realistic argument variety, an enterprise policy engine, a multi-step agent, and an attacker who is not the author.
 
 ### ASI03: Identity and Privilege Abuse
 

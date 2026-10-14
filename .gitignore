@@ -220,3 +220,6 @@ __marimo__/
 
 # Scripted runs illustrate a mechanism, are regenerable (python adt.py demo), and are never results
 items/*/results/scripted/
+
+# Installed Node dependencies of the ASI02 target (npm install in items/asi02-tool-misuse/targets/real-estate-tools)
+node_modules/

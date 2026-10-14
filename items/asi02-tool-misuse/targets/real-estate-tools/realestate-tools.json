@@ -1,0 +1,583 @@
+{
+  "name": "realestate-tools",
+  "version": "1.0.0",
+  "description": "A comprehensive suite of 31 professional calculators for real estate investors.",
+  "schemaVersion": "2024-11-05",
+  "tools": [
+    {
+      "name": "calculate_affordability",
+      "description": "Calculates home affordability based on annual income, monthly debts, and savings.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "annual_income": { "type": "number", "description": "Gross annual income before taxes." },
+          "monthly_debts": { "type": "number", "description": "Total minimum monthly debt payments (car, credit cards, student loans)." },
+          "savings": { "type": "number", "description": "Total cash available for down payment and closing costs." },
+          "target_down_payment_pct": { "type": "number", "description": "Target down payment percentage (e.g., 0.20 for 20%).", "default": 0.2 },
+          "annual_insurance_rate": { "type": "number", "description": "Annual insurance cost as a percentage of home price.", "default": 0.005 },
+          "annual_tax_rate": { "type": "number", "description": "Annual property tax as a percentage of home price.", "default": 0.01 },
+          "closing_costs_pct": { "type": "number", "description": "Closing costs as a percentage of home price.", "default": 0.03 },
+          "interest_rate": { "type": "number", "description": "Expected mortgage interest rate.", "default": 0.075 },
+          "loan_term_years": { "type": "number", "description": "Mortgage loan term in years.", "default": 30 },
+          "max_back_end_dti": { "type": "number", "description": "Maximum allowed back-end Debt-to-Income ratio.", "default": 0.43 }
+        },
+        "required": ["annual_income", "monthly_debts", "savings"]
+      }
+    },
+    {
+      "name": "analyze_brrrr_deal",
+      "description": "Analyzes a BRRRR (Buy, Rehab, Rent, Refinance, Repeat) deal.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "purchase_price": { "type": "number", "description": "Purchase price of the property." },
+          "rehab_costs": { "type": "number", "description": "Total estimated rehabilitation costs." },
+          "arv": { "type": "number", "description": "After Repair Value (estimated value after rehab)." },
+          "monthly_rent": { "type": "number", "description": "Expected monthly market rent." },
+          "refi_ltv": { "type": "number", "description": "Loan-to-Value ratio for the refinance.", "default": 0.75 },
+          "refi_interest_rate": { "type": "number", "description": "Interest rate for the refinance loan.", "default": 0.075 },
+          "refi_loan_term_years": { "type": "number", "description": "Term for the refinance loan.", "default": 30 },
+          "holding_costs": { "type": "number", "description": "Total holding costs during rehab (taxes, insurance, utilities).", "default": 0 },
+          "closing_costs_purchase": { "type": "number", "description": "Closing costs for the initial purchase.", "default": 0 },
+          "closing_costs_refi": { "type": "number", "description": "Closing costs for the refinance.", "default": 0 },
+          "monthly_expense_pct": { "type": "number", "description": "Monthly expenses as a percentage of rent (vacancy, maintenance, etc.).", "default": 0.35 }
+        },
+        "required": ["purchase_price", "rehab_costs", "arv", "monthly_rent"]
+      }
+    },
+    {
+      "name": "evaluate_house_hack",
+      "description": "Calculates savings and effective housing cost for a house hacking strategy.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "purchase_price": { "type": "number", "description": "Purchase price of the multi-unit property." },
+          "down_payment_pct": { "type": "number", "description": "Down payment percentage.", "default": 0.25 },
+          "interest_rate": { "type": "number", "description": "Mortgage interest rate.", "default": 0.075 },
+          "loan_term_years": { "type": "number", "description": "Mortgage loan term in years.", "default": 30 },
+          "annual_taxes": { "type": "number", "description": "Annual property tax amount." },
+          "annual_insurance": { "type": "number", "description": "Annual insurance cost." },
+          "num_units": { "type": "number", "description": "Total number of units in the property." },
+          "rent_owner_unit": { "type": "number", "description": "Market rent for the unit you will live in (set to 0 if not renting it).", "default": 0 },
+          "rent_other_units": { "type": "number", "description": "Market rent for each of the other units." },
+          "vacancy_rate": { "type": "number", "description": "Expected vacancy rate for rental units.", "default": 0.05 },
+          "maintenance_rate": { "type": "number", "description": "Maintenance cost as a percentage of total potential rent.", "default": 0.1 },
+          "market_rent_comparison": { "type": "number", "description": "The market rent for a similar single-family home or apartment you would otherwise rent.", "default": 3500 }
+        },
+        "required": ["purchase_price", "annual_taxes", "annual_insurance", "num_units", "rent_other_units", "market_rent_comparison"]
+      }
+    },
+    {
+      "name": "project_portfolio_growth",
+      "description": "Projects the growth of a real estate portfolio over a 20-year period.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "initial_capital": { "type": "number", "description": "Starting investment capital.", "default": 30000 },
+          "annual_savings": { "type": "number", "description": "Amount saved and invested each year.", "default": 20000 },
+          "acquisition_frequency_months": { "type": "number", "description": "How often (in months) you plan to acquire a new property.", "default": 18 },
+          "avg_property_price": { "type": "number", "description": "Average purchase price of target properties.", "default": 400000},
+          "avg_down_payment_pct": { "type": "number", "description": "Average down payment percentage for each property.", "default": 0.25 },
+          "avg_cocr": { "type": "number", "description": "Average expected Cash-on-Cash Return for properties.", "default": 0.08 },
+          "appreciation_rate": { "type": "number", "description": "Expected annual appreciation rate.", "default": 0.03 },
+          "hold_period_years": { "type": "number", "description": "Number of years to project growth.", "default": 20 }
+        },
+        "required": ["initial_capital", "annual_savings", "avg_property_price"]
+      }
+    },
+    {
+      "name": "analyze_syndication",
+      "description": "Evaluates a real estate syndication investment opportunity.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "investment": { "type": "number", "description": "Amount of capital invested." },
+          "preferred_return_pct": { "type": "number", "description": "Preferred return rate paid to investors first.", "default": 0.08 },
+          "sponsor_split_pct": { "type": "number", "description": "Sponsor's share of profits after preferred return.", "default": 0.3 },
+          "projected_irr": { "type": "number", "description": "The projected Internal Rate of Return for the deal.", "default": 0.15 },
+          "hold_period": { "type": "number", "description": "Expected hold period in years.", "default": 5 },
+          "exit_value": { "type": "number", "description": "Optional: Projected sale price at exit (overrides IRR projection).", "default": null }
+        },
+        "required": ["investment"]
+      }
+    },
+    {
+      "name": "calculate_mortgage_affordability",
+      "description": "Advanced mortgage qualification calculator with dual income support. Uses the same logic as calculate_affordability.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "annual_income": { "type": "number", "description": "Gross annual income before taxes." },
+          "monthly_debts": { "type": "number", "description": "Total minimum monthly debt payments." },
+          "savings": { "type": "number", "description": "Total cash available for down payment and closing costs." },
+          "target_down_payment_pct": { "type": "number", "description": "Target down payment percentage.", "default": 0.2 },
+          "annual_insurance_rate": { "type": "number", "description": "Annual insurance cost as a percentage of home price.", "default": 0.005 },
+          "annual_tax_rate": { "type": "number", "description": "Annual property tax as a percentage of home price.", "default": 0.01 },
+          "closing_costs_pct": { "type": "number", "description": "Closing costs as a percentage of home price.", "default": 0.03 },
+          "interest_rate": { "type": "number", "description": "Expected mortgage interest rate.", "default": 0.075 },
+          "loan_term_years": { "type": "number", "description": "Mortgage loan term in years.", "default": 30 },
+          "max_back_end_dti": { "type": "number", "description": "Maximum allowed back-end Debt-to-Income ratio.", "default": 0.43 }
+        },
+        "required": ["annual_income", "monthly_debts", "savings"]
+      }
+    },
+    {
+      "name": "analyze_debt_to_income",
+      "description": "Analyzes Debt-to-Income ratio for different loan types.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "gross_monthly_income": { "type": "number", "description": "Total gross monthly income from all sources." },
+          "total_monthly_debts": { "type": "number", "description": "Total of all monthly minimum debt payments." },
+          "proposed_monthly_piti": { "type": "number", "description": "The proposed monthly mortgage payment (Principal, Interest, Taxes, Insurance)." }
+        },
+        "required": ["gross_monthly_income", "total_monthly_debts", "proposed_monthly_piti"]
+      }
+    },
+    {
+      "name": "compare_loans",
+      "description": "Side-by-side comparison of up to 4 loan scenarios.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "loans": {
+            "type": "array",
+            "description": "Array of loan scenarios to compare.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "loan_amount": { "type": "number", "description": "Principal loan amount." },
+                "interest_rate": { "type": "number", "description": "Annual interest rate." },
+                "term_years": { "type": "number", "description": "Loan term in years." },
+                "points": { "type": "number", "description": "Points paid at closing (as a percentage of loan amount).", "default": 0 },
+                "closing_costs": { "type": "number", "description": "Other closing costs.", "default": 0 }
+              },
+              "required": ["loan_amount", "interest_rate", "term_years"]
+            }
+          }
+        },
+        "required": ["loans"]
+      }
+    },
+    {
+      "name": "calculate_irr",
+      "description": "Calculates Internal Rate of Return with sensitivity analysis.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "initial_investment": { "type": "number", "description": "The initial cash outflow (purchase price + costs)." },
+          "cash_flows": {
+            "type": "array",
+            "description": "Array of annual net cash flows (income - expenses). The last flow should include the sale proceeds.",
+            "items": { "type": "number" }
+          }
+        },
+        "required": ["initial_investment", "cash_flows"]
+      }
+    },
+    {
+      "name": "analyze_fix_flip",
+      "description": "Fix and flip profitability calculator.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "purchase_price": { "type": "number", "description": "Purchase price of the property." },
+          "rehab_costs": { "type": "number", "description": "Total estimated rehabilitation costs." },
+          "arv": { "type": "number", "description": "After Repair Value (estimated selling price)." },
+          "holding_costs": { "type": "number", "description": "Total holding costs during rehab.", "default": 0 },
+          "selling_costs_pct": { "type": "number", "description": "Selling costs as a percentage of ARV (e.g., agent commissions).", "default": 0.08 },
+          "finance_costs": { "type": "number", "description": "Cost of financing (loan interest, points).", "default": 0 }
+        },
+        "required": ["purchase_price", "rehab_costs", "arv"]
+      }
+    },
+    {
+      "name": "calculate_npv",
+      "description": "Calculates Net Present Value with inflation adjustment.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "discount_rate": { "type": "number", "description": "The discount rate (your required rate of return)." },
+          "initial_investment": { "type": "number", "description": "The initial cash outflow." },
+          "cash_flows": {
+            "type": "array",
+            "description": "Array of annual net cash flows.",
+            "items": { "type": "number" }
+          }
+        },
+        "required": ["discount_rate", "initial_investment", "cash_flows"]
+      }
+    },
+    {
+      "name": "calculate_cocr",
+      "description": "Calculates Cash-on-Cash Return with 5-year projections.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "property_price": { "type": "number", "description": "Purchase price of the property." },
+          "down_payment_pct": { "type": "number", "description": "Down payment percentage.", "default": 0.25 },
+          "loan_interest_rate": { "type": "number", "description": "Mortgage interest rate.", "default": 0.075 },
+          "loan_term_years": { "type": "number", "description": "Mortgage loan term in years.", "default": 30 },
+          "monthly_rent": { "type": "number", "description": "Expected monthly rental income." },
+          "monthly_expenses": { "type": "number", "description": "Total monthly operating expenses (not including mortgage)." },
+          "closing_costs": { "type": "number", "description": "Total closing costs.", "default": 0 }
+        },
+        "required": ["property_price", "monthly_rent", "monthly_expenses"]
+      }
+    },
+    {
+      "name": "calculate_dscr",
+      "description": "Calculates Debt Service Coverage Ratio for investment loans.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "monthly_rent": { "type": "number", "description": "Expected monthly gross rental income." },
+          "vacancy_rate": { "type": "number", "description": "Expected vacancy rate.", "default": 0.05 },
+          "annual_operating_expenses": { "type": "number", "description": "Total annual operating expenses (property management, maintenance, taxes, insurance, etc.)." },
+          "annual_debt_service": { "type": "number", "description": "Total annual mortgage payments (principal + interest)." }
+        },
+        "required": ["monthly_rent", "annual_operating_expenses", "annual_debt_service"]
+      }
+    },
+    {
+      "name": "analyze_breakeven",
+      "description": "Performs breakeven analysis for rental properties.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "total_monthly_expenses": { "type": "number", "description": "Total monthly expenses including mortgage, taxes, insurance, maintenance, etc." },
+          "total_potential_rental_income": { "type": "number", "description": "Total potential monthly rental income at 100% occupancy." }
+        },
+        "required": ["total_monthly_expenses", "total_potential_rental_income"]
+      }
+    },
+    {
+      "name": "analyze_sensitivity",
+      "description": "Performs multi-variable sensitivity analysis on a base investment value.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "base_value": { "type": "number", "description": "The base value to test sensitivity against (e.g., base IRR)." },
+          "variables": {
+            "type": "object",
+            "description": "Object where keys are variable names and values are arrays of change percentages to test (e.g., {'interest_rate': [-0.01, 0.01]}).",
+            "additionalProperties": {
+              "type": "array",
+              "items": { "type": "number" }
+            }
+          }
+        },
+        "required": ["base_value", "variables"]
+      }
+    },
+    {
+      "name": "run_monte_carlo",
+      "description": "Runs a Monte Carlo risk simulation (10,000+ scenarios).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "initial_investment": { "type": "number", "description": "The initial amount invested." },
+          "mean_return": { "type": "number", "description": "The expected mean annual return." },
+          "stddev_return": { "type": "number", "description": "The standard deviation of annual returns (volatility)." },
+          "years": { "type": "number", "description": "Number of years to simulate." },
+          "simulations": { "type": "number", "description": "Number of simulations to run.", "default": 10000 }
+        },
+        "required": ["initial_investment", "mean_return", "stddev_return", "years"]
+      }
+    },
+    {
+      "name": "calculate_tax_benefits",
+      "description": "Calculates tax benefits and depreciation for a rental property.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "property_value": { "type": "number", "description": "Purchase price of the property." },
+          "land_value": { "type": "number", "description": "Estimated value of the land (non-depreciable)." },
+          "annual_rental_income": { "type": "number", "description": "Expected annual rental income." },
+          "marginal_tax_rate": { "type": "number", "description": "Your marginal federal income tax rate." }
+        },
+        "required": ["property_value", "land_value", "annual_rental_income", "marginal_tax_rate"]
+      }
+    },
+    {
+      "name": "compare_properties",
+      "description": "Compares up to 5 properties side-by-side using a weighted scoring model.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "properties": {
+            "type": "array",
+            "description": "Array of property objects to compare.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": { "type": "string", "description": "Property identifier or address." },
+                "cash_flow": { "type": "number", "description": "Projected annual cash flow." },
+                "appreciation": { "type": "number", "description": "Projected annual appreciation potential (score 1-10)." },
+                "condition": { "type": "number", "description": "Property condition score (1-10)." },
+                "location": { "type": "number", "description": "Location quality score (1-10)." }
+              },
+              "required": ["name", "cash_flow", "appreciation", "condition", "location"]
+            }
+          }
+        },
+        "required": ["properties"]
+      }
+    },
+    {
+      "name": "analyze_refinance",
+      "description": "Analyzes a refinance opportunity with break-even and NPV calculations.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "current_balance": { "type": "number", "description": "Current remaining mortgage balance." },
+          "current_rate": { "type": "number", "description": "Current mortgage interest rate." },
+          "current_term_remaining_years": { "type": "number", "description": "Years remaining on the current loan." },
+          "new_rate": { "type": "number", "description": "New mortgage interest rate." },
+          "new_term_years": { "type": "number", "description": "Term for the new loan." },
+          "closing_costs": { "type": "number", "description": "Total closing costs for the refinance." }
+        },
+        "required": ["current_balance", "current_rate", "current_term_remaining_years", "new_rate", "closing_costs"]
+      }
+    },
+    {
+      "name": "analyze_airbnb_str",
+      "description": "Analyzes Airbnb/Short-Term Rental income potential with seasonal variations.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "purchase_price": { "type": "number", "description": "Purchase price of the property." },
+          "down_payment_pct": { "type": "number", "description": "Down payment percentage.", "default": 0.25 },
+          "loan_interest_rate": { "type": "number", "description": "Mortgage interest rate.", "default": 0.075 },
+          "loan_term_years": { "type": "number", "description": "Mortgage loan term in years.", "default": 30 },
+          "avg_nightly_rate": { "type": "number", "description": "Average nightly rental rate." },
+          "avg_occupancy_pct": { "type": "number", "description": "Average expected occupancy rate.", "default": 0.65 },
+          "cleaning_fee": { "type": "number", "description": "Cleaning fee charged per stay.", "default": 85 },
+          "monthly_expenses": { "type": "number", "description": "Other monthly expenses (utilities, supplies, etc.).", "default": 600 }
+        },
+        "required": ["purchase_price", "avg_nightly_rate"]
+      }
+    },
+    {
+      "name": "analyze_1031_exchange",
+      "description": "Analyzes a 1031 like-kind exchange for tax deferral.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "sale_price": { "type": "number", "description": "Sale price of the relinquished property." },
+          "adjusted_basis": { "type": "number", "description": "Adjusted basis (purchase price + improvements - depreciation)." },
+          "depreciation_taken": { "type": "number", "description": "Total depreciation taken on the property." },
+          "replacement_property_price": { "type": "number", "description": "Purchase price of the replacement property." }
+        },
+        "required": ["sale_price", "adjusted_basis", "depreciation_taken", "replacement_property_price"]
+      }
+    },
+    {
+      "name": "analyze_market_comps",
+      "description": "Performs a market analysis with comparable property analysis and CMA.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "subject_property": {
+            "type": "object",
+            "properties": {
+              "sqft": { "type": "number", "description": "Square footage of the subject property." },
+              "beds": { "type": "number", "description": "Number of bedrooms." },
+              "baths": { "type": "number", "description": "Number of bathrooms." }
+            },
+            "required": ["sqft", "beds", "baths"]
+          },
+          "comps": {
+            "type": "array",
+            "description": "Array of comparable property sales.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "sale_price": { "type": "number", "description": "Sale price of the comparable." },
+                "sqft": { "type": "number", "description": "Square footage of the comparable." },
+                "beds": { "type": "number", "description": "Number of bedrooms." },
+                "baths": { "type": "number", "description": "Number of bathrooms." },
+                "price_per_sqft": { "type": "number", "description": "Sale price per square foot." }
+              },
+              "required": ["sale_price", "sqft", "beds", "baths", "price_per_sqft"]
+            }
+          }
+        },
+        "required": ["subject_property", "comps"]
+      }
+    },
+    {
+      "name": "analyze_construction_loan",
+      "description": "Analyzes a construction loan with draw schedules and permanent financing.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "total_project_cost": { "type": "number", "description": "Total cost of the project (land + construction + soft costs)." },
+          "loan_to_cost_ratio": { "type": "number", "description": "Loan-to-Cost ratio offered by the lender.", "default": 0.8 },
+          "interest_rate": { "type": "number", "description": "Interest rate on the construction loan.", "default": 0.08 },
+          "draw_schedule": { "type": "array", "description": "Array of draw percentages per phase.", "items": { "type": "number" }, "default": [0.15, 0.20, 0.20, 0.25, 0.20] },
+          "loan_term_months": { "type": "number", "description": "Term of the construction loan in months.", "default": 18 }
+        },
+        "required": ["total_project_cost"]
+      }
+    },
+    {
+      "name": "analyze_wholesale_deal",
+      "description": "Analyzes a wholesale deal with assignment fees and exit strategies.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "contract_price": { "type": "number", "description": "The price under the purchase contract." },
+          "arv": { "type": "number", "description": "After Repair Value." },
+          "estimated_repairs": { "type": "number", "description": "Estimated repair costs for the end buyer." },
+          "assignment_fee": { "type": "number", "description": "The fee you will charge to assign the contract." }
+        },
+        "required": ["contract_price", "arv", "estimated_repairs", "assignment_fee"]
+      }
+    },
+    {
+      "name": "analyze_subject_to_deal",
+      "description": "Analyzes a 'subject-to' deal with existing mortgage takeover.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "property_value": { "type": "number", "description": "Current market value of the property." },
+          "existing_mortgage_balance": { "type": "number", "description": "Current balance of the existing mortgage." },
+          "existing_mortgage_payment": { "type": "number", "description": "Monthly payment of the existing mortgage." },
+          "monthly_rent": { "type": "number", "description": "Expected monthly rental income." },
+          "monthly_expenses": { "type": "number", "description": "Monthly operating expenses (not including mortgage)." }
+        },
+        "required": ["property_value", "existing_mortgage_balance", "existing_mortgage_payment", "monthly_rent", "monthly_expenses"]
+      }
+    },
+    {
+      "name": "analyze_seller_financing",
+      "description": "Analyzes a seller financing deal with terms optimization.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "sale_price": { "type": "number", "description": "Full sale price of the property." },
+          "down_payment_pct": { "type": "number", "description": "Down payment percentage.", "default": 0.1 },
+          "interest_rate": { "type": "number", "description": "Interest rate on the seller note.", "default": 0.08 },
+          "loan_term_years": { "type": "number", "description": "Term of the seller financing in years.", "default": 30 }
+        },
+        "required": ["sale_price"]
+      }
+    },
+    {
+      "name": "calculate_capital_gains_tax",
+      "description": "Calculates capital gains tax with optimization strategies.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "purchase_price": { "type": "number", "description": "Original purchase price." },
+          "sale_price": { "type": "number", "description": "Sale price of the property." },
+          "capital_improvements": { "type": "number", "description": "Cost of capital improvements made.", "default": 0 },
+          "depreciation_taken": { "type": "number", "description": "Total depreciation taken during ownership.", "default": 0 },
+          "holding_period_years": { "type": "number", "description": "Number of years the property was held." },
+          "filing_status": { "type": "string", "description": "Tax filing status (e.g., 'single', 'married').", "default": "single" },
+          "total_income": { "type": "number", "description": "Your total annual income from other sources." }
+        },
+        "required": ["purchase_price", "sale_price", "holding_period_years", "total_income"]
+      }
+    },
+    {
+      "name": "analyze_rent_vs_buy",
+      "description": "Compares the costs and benefits of renting vs buying.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "monthly_rent": { "type": "number", "description": "Current monthly rent." },
+          "home_price": { "type": "number", "description": "Price of the home you are considering buying." },
+          "down_payment_pct": { "type": "number", "description": "Down payment percentage.", "default": 0.2 },
+          "loan_interest_rate": { "type": "number", "description": "Mortgage interest rate.", "default": 0.075 },
+          "loan_term_years": { "type": "number", "description": "Mortgage loan term.", "default": 30 },
+          "annual_appreciation": { "type": "number", "description": "Expected annual home appreciation.", "default": 0.03 },
+          "annual_rent_increase": { "type": "number", "description": "Expected annual rent increase.", "default": 0.02 },
+          "investment_return": { "type": "number", "description": "Expected annual return on invested savings.", "default": 0.07 },
+          "years": { "type": "number", "description": "Time horizon for the analysis.", "default": 7 }
+        },
+        "required": ["monthly_rent", "home_price"]
+      }
+    },
+    {
+      "name": "track_deal_pipeline",
+      "description": "Tracks and analyzes multiple deals through various stages.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "deals": {
+            "type": "array",
+            "description": "Array of deal objects in the pipeline.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string", "description": "Deal identifier." },
+                "address": { "type": "string", "description": "Property address." },
+                "stage": { "type": "string", "description": "Current stage (e.g., 'analyzing', 'due_diligence', 'under_contract')." },
+                "purchase_price": { "type": "number", "description": "Target or contracted purchase price." },
+                "arv": { "type": "number", "description": "After Repair Value." },
+                "estimated_profit": { "type": "number", "description": "Estimated profit." }
+              },
+              "required": ["id", "address", "stage"]
+            }
+          }
+        },
+        "required": ["deals"]
+      }
+    },
+    {
+      "name": "analyze_joint_venture",
+      "description": "Analyzes a joint venture partnership with profit splitting.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "partner_investments": {
+            "type": "array",
+            "description": "Array of investment amounts from each partner.",
+            "items": { "type": "number" }
+          },
+          "profit_split_pct": { "type": "number", "description": "Total profit percentage to be split among partners (remainder may go to sponsor).", "default": 0.7 }
+        },
+        "required": ["partner_investments"]
+      }
+    },
+    {
+      "name": "analyze_property_management",
+      "description": "Compares self-management vs professional property management.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "monthly_rent": { "type": "number", "description": "Monthly rental income." },
+          "self_management_hours": { "type": "number", "description": "Hours per month spent on management tasks." },
+          "hourly_rate": { "type": "number", "description": "Your opportunity cost per hour.", "default": 50 },
+          "professional_management_pct": { "type": "number", "description": "Professional management fee as a percentage of rent.", "default": 0.08 }
+        },
+        "required": ["monthly_rent", "self_management_hours"]
+      }
+    },
+    {
+      "name": "track_property_expenses",
+      "description": "Tracks and analyzes property expenses with benchmarking.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "expenses": {
+            "type": "array",
+            "description": "Array of expense objects.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "category": { "type": "string", "description": "Expense category (e.g., 'repairs', 'taxes', 'insurance')." },
+                "amount": { "type": "number", "description": "Expense amount." },
+                "date": { "type": "string", "description": "Date of expense (YYYY-MM-DD)." }
+              },
+              "required": ["category", "amount"]
+            }
+          }
+        },
+        "required": ["expenses"]
+      }
+    }
+  ]
+}

@@ -8,7 +8,7 @@ Work that lives in other repositories is linked, not copied.
 | [Aegis Vector](https://github.com/ScottColeSW/Project-Aegis-Vector) | Forgery testbed and episode player | ASI06, ASI01 |
 | [Void-Marauders](https://github.com/ScottColeSW/Void-Marauders) | Outcome-sensitive trust between agents | ASI08, ASI10 |
 | [Evo](https://github.com/ScottColeSW/Evo) | Multi-agent simulation and benchmark harness | ASI07, ASI08 |
-| RealEstateTools (MCP server) | Planned target for the tool policy gate | ASI02 |
+| RealEstateTools (MCP server) | Copied into the repo as an ASI02 target, with provenance: [`items/asi02-tool-misuse/targets/`](../items/asi02-tool-misuse/targets/) | ASI02 |
 
 ## Rules
 

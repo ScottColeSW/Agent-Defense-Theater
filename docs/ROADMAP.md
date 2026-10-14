@@ -6,7 +6,7 @@ The order follows the gaps that matter most for agent containment. Each step has
 | --- | --- | --- |
 | 1 | `common/` harness, results schema, decision log | One scripted example run writes a valid result record and a verifiable log entry |
 | 2 | ASI03 Identity and Privilege Abuse | Preregistration committed; scoped-credential prototype blocks the scripted confused-deputy case with utility reported |
-| 3 | ASI02 Tool Misuse and Exploitation | Policy gate in front of the RealEstateTools MCP server; block and pass rates reported |
+| 3 | ASI02 Tool Misuse and Exploitation | Policy gates in front of two real MCP servers (RealEstateTools calculators and a SQLite Deal Desk); unsafe-call and valid-work rates reported |
 | 4 | ASI05 Unexpected Code Execution | Sandbox tier runs the crew's generated code with no network; escape attempts logged |
 | 5 | ASI01 Goal Hijack on a tool-using crew | Plan-diff gate measured against the three attack tiers |
 | 6 | ASI04 Supply Chain | Pinned manifest check catches a tampered tool; false-block rate reported |

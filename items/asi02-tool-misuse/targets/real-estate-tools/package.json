@@ -1,0 +1,13 @@
+{
+  "name": "real-estate-mcp-tools",
+  "version": "1.0.0",
+  "description": "Professional Real estate Investment calculators for MCP integrations",
+  "main": "server.js",
+  "bin": {
+    "real-estate-mcp-tools": "./server.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.4.0",
+    "mathjs": "^12.2.1"
+  }
+}

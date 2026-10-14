@@ -24,7 +24,7 @@ A shared harness (`common/`) scores every run the same way: attack success again
 | ID | Risk | OWASP LLM 2025 | MITRE ATLAS | Status | Existing work |
 | --- | --- | --- | --- | --- | --- |
 | [ASI01](items/asi01-goal-hijack/) | Agent Goal Hijack | LLM01 Prompt Injection | AML.T0051 (.000 direct, .001 indirect) | Partial evidence elsewhere | Aegis Vector (injection and spotlighting results) |
-| [ASI02](items/asi02-tool-misuse/) | Tool Misuse and Exploitation | LLM06 Excessive Agency | AML.T0053 AI Agent Tool Invocation | Stub | New work |
+| [ASI02](items/asi02-tool-misuse/) | Tool Misuse and Exploitation | LLM06 Excessive Agency | AML.T0053 AI Agent Tool Invocation | Built | [RealEstateTools](items/asi02-tool-misuse/targets/) (copied in) and a new Deal Desk server |
 | [ASI03](items/asi03-identity-privilege/) | Identity and Privilege Abuse | LLM06 Excessive Agency | To be mapped | Measured | [Preregistered run](items/asi03-identity-privilege/PREREGISTRATION.md): scoped credentials, 0 of 90 beyond tier |
 | [ASI04](items/asi04-supply-chain/) | Agentic Supply Chain Vulnerabilities | LLM03 Supply Chain | To be mapped | Stub | New work |
 | [ASI05](items/asi05-code-execution/) | Unexpected Code Execution | LLM05 Improper Output Handling | To be mapped | Stub | New work |
@@ -76,7 +76,7 @@ A live run is refused unless the item's prediction is committed first. See [`com
 | `asi01-...` to `asi10-...` | One folder per OWASP agentic risk, same template each |
 | `crosswalk/` | Coverage data and the OWASP and ATLAS mapping |
 | `docs/` | Threat model, methodology, preregistration template, limits register, roadmap, demo script |
-| `integrations/` | Links to Palimpsest, Aegis Vector, Void-Marauders, and RealEstateTools |
+| `integrations/` | Links to Palimpsest, Aegis Vector, and Void-Marauders |
 | `demo/` | The walkthrough and what is scripted versus live |
 | `site/` | The static site: status, coverage matrix, ASI06 plots, About and Books. Run with `python -m http.server -d site` |
 | `adt.py` | Command line launcher, no install needed |

@@ -101,3 +101,38 @@ def test_summarize_by_attack_keeps_group_key():
             for a, o in [("a1", "attack_succeeded"), ("a1", "blocked"), ("a2", "blocked")]]
     rows = {r["attack"]: r for r in scorer.summarize(recs, ("attack",))}
     assert set(rows) == {"a1", "a2"} and rows["a1"]["success"]["k"] == 1 and rows["a1"]["success"]["n"] == 2
+
+
+def test_resource_guard_refuses_a_start_waits_when_low_and_stops_when_it_stays_low(monkeypatch, tmp_path):
+    import pytest
+    from adt import resources
+    monkeypatch.setattr(resources, "ram_free_mb", lambda: 500)
+    assert any("RAM" in p for p in resources.preflight([tmp_path]))
+    monkeypatch.setattr(resources, "ram_free_mb", lambda: 8000)
+    assert not [p for p in resources.preflight([tmp_path]) if "RAM" in p]
+    clock = {"t": 1000.0}
+    monkeypatch.setattr(resources, "_last", 0.0)
+    free = {"mb": 400}
+    monkeypatch.setattr(resources, "ram_free_mb", lambda: free["mb"])
+
+    def sleep(s):
+        clock["t"] += s
+        if clock["t"] > 1010:
+            free["mb"] = 4000                                          # memory recovers after 10 s: the call goes ahead
+    resources.before_call(sleep=sleep, now=lambda: clock["t"])
+    assert free["mb"] == 4000
+    monkeypatch.setattr(resources, "_last", 0.0)
+    free["mb"] = 400
+    clock["t"] = 5000.0
+    with pytest.raises(resources.ResourceError):                       # memory never recovers: stop, do not freeze the machine
+        resources.before_call(sleep=lambda s: clock.__setitem__("t", clock["t"] + s), now=lambda: clock["t"])
+
+
+def test_a_run_unloads_the_previous_model_before_the_next_and_a_missing_server_is_harmless(monkeypatch, tmp_path):
+    from adt import harness, models, modelmgr
+    seen = []
+    monkeypatch.setattr(modelmgr, "unload_all", lambda *a, **k: seen.append("unload") or {"unloaded": [], "still_loaded": []})
+    harness.free_models()
+    assert seen == ["unload"]
+    monkeypatch.setattr(modelmgr, "unload_all", lambda *a, **k: (_ for _ in ()).throw(OSError("no server")))
+    harness.free_models()                                              # does not raise

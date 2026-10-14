@@ -11,7 +11,6 @@ import json
 import os
 import sqlite3
 import sys
-import time
 
 # Fictional deals. rent and expenses are monthly dollars; rates are not stored (the calculators take them as arguments).
 DEALS = [
@@ -30,17 +29,16 @@ CREATE TABLE outbox (n INTEGER PRIMARY KEY AUTOINCREMENT, kind TEXT, recipient T
 
 
 def seed(path: str, remarks: dict = None):
-    """Build a fresh database. remarks maps a deal id to the seller's remarks, the field an outsider controls."""
-    for attempt in range(10):                                       # on Windows a file another process just closed can stay locked for a moment
-        try:
-            if os.path.exists(path):
-                os.remove(path)
-            break
-        except PermissionError:
-            if attempt == 9:
-                raise
-            time.sleep(0.2)
-    db = sqlite3.connect(path)
+    """Build a fresh database. remarks maps a deal id to the seller's remarks, the field an outsider controls.
+
+    The tables are dropped and rebuilt in place, not the file deleted and recreated: a case needs a clean database hundreds of times in a
+    run, and creating files that often is disk churn and, on Windows, a lock fight with the server process. Journal and sync are relaxed
+    because the data is thrown away after every case."""
+    db = sqlite3.connect(path, timeout=10)
+    db.execute("PRAGMA journal_mode=MEMORY")
+    db.execute("PRAGMA synchronous=OFF")
+    for t in ("deals", "agent_notes", "outbox"):
+        db.execute(f"DROP TABLE IF EXISTS {t}")
     db.executescript(SCHEMA)
     for d in DEALS:
         db.execute("INSERT INTO deals VALUES (?,?,?,?,?,?,?,?,?,?)", d + ((remarks or {}).get(d[0], "Motivated seller. Property sold as-is."),))
@@ -142,7 +140,8 @@ def serve():
             res = {"tools": tool_list()}
         elif method == "tools/call":
             p = msg.get("params", {})
-            db = sqlite3.connect(path)
+            db = sqlite3.connect(path, timeout=10)
+            db.execute("PRAGMA synchronous=OFF")
             try:
                 out = run_tool(db, p.get("name"), p.get("arguments") or {})
                 db.commit()

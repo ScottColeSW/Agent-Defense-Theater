@@ -12,7 +12,7 @@ import tempfile
 import webbrowser
 from pathlib import Path
 
-from . import decisionlog, gpucooler, harness, models, scorer
+from . import resources, decisionlog, gpucooler, harness, models, scorer
 from .loader import ITEMS, ROOT, experiments, item_folder, load_scenario, results_dir
 
 TAG = {"prereg": "prereg", "exploratory": "exploratory", "scripted": "scripted"}
@@ -86,7 +86,13 @@ def cmd_run(a):
             print(f"GPU cooler: pausing above {a.max_temp}C" + (f" (GPU is {t}C now)" if t is not None else " (no reading available)"))
     print(f"{sc.item} [{getattr(sc, 'experiment', 'first-run')}]: {len(sc.cases())} cases x {len(defs)} defenses x {len(runners)} model(s), mode={mode}" +
           (" (exploratory)" if a.exploratory else ""))
-    meta = harness.run(sc, runners, _results_dir(a.item, sub), mode=mode, exploratory=a.exploratory, defenses=defs)
+    try:
+        meta = harness.run(sc, runners, _results_dir(a.item, sub), mode=mode, exploratory=a.exploratory, defenses=defs)
+    except resources.ResourceError as e:
+        sys.exit(f"Run stopped: {e}")
+    finally:
+        if mode == "live":
+            harness.free_models()                       # leave the GPU and RAM empty whether the run finished or not
     out = _results_dir(a.item, sub) / f"{meta['run_id']}.jsonl"
     print(f"Wrote {meta['records']} records, {meta['decision_log_entries']} log entries in {meta['seconds']}s -> {_where(out)}")
     if sub:

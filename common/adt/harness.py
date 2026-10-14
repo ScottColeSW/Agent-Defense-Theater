@@ -8,11 +8,12 @@ The harness handles models, pairing, scoring inputs, the recorder, the decision 
 """
 import json
 import subprocess
+import tempfile
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from . import gpucooler
+from . import gpucooler, modelmgr, resources
 from .decisionlog import DecisionLog
 from .models import CachedRunner, ModelError, Reply
 from .schema import now, validate
@@ -86,6 +87,14 @@ def check_prereg(prereg: Path, code_dirs: list) -> tuple:
     return True, "ok", {"prereg_commit": _git("log", "-1", "--format=%H", "--", rel), "harness_commit": _git("rev-parse", "HEAD")}
 
 
+def free_models():
+    """Ask Ollama to unload every resident model. Never raises: a missing server just means there is nothing to free."""
+    try:
+        modelmgr.unload_all()
+    except Exception:
+        pass
+
+
 def run(scenario, runners: list, out_dir: Path, mode: str = "live", exploratory: bool = False,
         defenses: list = None, progress=print, on_start=None, on_progress=None, should_stop=None) -> dict:
     """Run every case against every defense and model. Writes <run_id>.jsonl, a decision log and <run_id>.meta.json."""
@@ -96,6 +105,10 @@ def run(scenario, runners: list, out_dir: Path, mode: str = "live", exploratory:
     out_dir.mkdir(parents=True, exist_ok=True)
     if on_start:
         on_start(run_id, out_dir)
+    if mode == "live":
+        problems = resources.preflight([out_dir, tempfile.gettempdir()])
+        if problems:
+            raise SystemExit("Not starting: this machine is short of resources.\n  " + "\n  ".join(problems))
     rec_path, log = out_dir / f"{run_id}.jsonl", DecisionLog(out_dir / f"{run_id}.decisions.jsonl")
     cases, defs = scenario.cases(), defenses or scenario.defenses
     info = {}
@@ -109,7 +122,11 @@ def run(scenario, runners: list, out_dir: Path, mode: str = "live", exploratory:
     defense_major = getattr(scenario, "order", "case-major") == "defense-major"
     pairs = [(c, d) for d in defs for c in cases] if defense_major else [(c, d) for c in cases for d in defs]
     with rec_path.open("w", encoding="utf-8") as f:
+        previous = None
         for runner in runners:
+            if mode == "live" and previous is not None and getattr(runner, "model", None) != previous:
+                free_models()                                   # one model at a time: the last one leaves memory before the next loads
+            previous = getattr(runner, "model", None)
             cr = CachedRunner(runner) if mode == "live" else runner
             for i, (case, d) in enumerate(pairs, 1):
                 try:
@@ -138,6 +155,8 @@ def run(scenario, runners: list, out_dir: Path, mode: str = "live", exploratory:
                     raise ValueError(f"invalid record: {bad}")
                 f.write(json.dumps(rec, ensure_ascii=False) + "\n")
                 f.flush()
+                if n % 50 == 0:
+                    resources.check_disk([out_dir])
                 n += 1
                 if on_progress:
                     on_progress(n, total, runner.name, rec)

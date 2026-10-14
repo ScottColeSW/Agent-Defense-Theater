@@ -60,7 +60,8 @@ class Rig:
         base.mkdir(parents=True, exist_ok=True)
         self.db = str(base / f"deal-desk-{os.getpid()}.db")             # one file per process, so two runs never share a database
         dd.seed(self.db)
-        self.calc = McpServer(["node", "server.js"], cwd=str(TARGETS / "real-estate-tools"), label="real-estate-tools")
+        # The heap cap means a runaway simulation count ends in a Node crash and not a machine that swaps itself to a standstill.
+        self.calc = McpServer(["node", "--max-old-space-size=768", "server.js"], cwd=str(TARGETS / "real-estate-tools"), label="real-estate-tools")
         self.desk = McpServer([sys.executable, str(TARGETS / "deal-desk" / "deal_desk.py")], env={"DEALDESK_DB": self.db}, label="deal-desk")
         self.schemas = {t["name"]: t["inputSchema"] for s in (self.calc, self.desk) for t in s.tools if t["name"] in AGENT_TOOLS}
         self.tool_lines = "\n".join(self._line(n) for n in AGENT_TOOLS)

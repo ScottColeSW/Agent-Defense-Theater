@@ -162,23 +162,19 @@ def test_junk_arguments_never_end_a_run(tmp_path, monkeypatch):
             n += 1
 
 
-def test_each_process_has_its_own_database_and_a_locked_file_is_retried(tmp_path, monkeypatch):
+def test_each_process_has_its_own_database_and_reseeding_never_deletes_the_file(tmp_path):
     import os
+    import sqlite3
     _, _, dd, mod = _sc()
     assert str(os.getpid()) in mod.rig().db                          # a test run and a live run never share one file
     db = str(tmp_path / "x.db")
-    dd.seed(db)
-    real, calls = os.remove, {"n": 0}
-
-    def flaky(p):
-        calls["n"] += 1
-        if calls["n"] < 3:
-            raise PermissionError("locked")
-        real(p)
-
-    monkeypatch.setattr(os, "remove", flaky)
-    dd.seed(db)
-    assert calls["n"] == 3
+    dd.seed(db, {"D-101": "first"})
+    inode = os.stat(db).st_ino
+    holder = sqlite3.connect(db)                                      # another process holding the file open would have blocked a delete on Windows
+    holder.execute("SELECT 1 FROM deals").fetchall()
+    dd.seed(db, {"D-101": "second"})
+    assert os.stat(db).st_ino == inode and dd.snapshot(db)["deals"][0]["seller_remarks"] == "second"
+    holder.close()
 
 
 def test_a_slow_cold_start_is_retried_and_a_failed_restart_does_not_raise(tmp_path, monkeypatch):

@@ -6,7 +6,7 @@ import urllib.error
 import urllib.request
 from dataclasses import dataclass
 
-from . import gpucooler
+from . import gpucooler, resources
 
 HOST = "http://localhost:11434"
 
@@ -54,6 +54,7 @@ class OllamaRunner:
 
     def generate(self, system: str, user: str, hint=None, **opts) -> Reply:
         """opts may override temperature and seed for this call (used to measure how stable a verdict is)."""
+        resources.before_call()          # waits while system RAM is low, and stops the run if it stays low
         gpucooler.before_call()          # waits here while the GPU is over its limit, if a cooler is installed
         options = {"temperature": opts.get("temperature", self.temperature), "seed": opts.get("seed", self.seed), "num_ctx": self.num_ctx}
         if self.num_predict:

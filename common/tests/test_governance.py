@@ -66,3 +66,34 @@ def test_every_classified_attack_in_the_saved_results_has_a_surface():
             if r["attack"] != "none" and not r["attack"].startswith("n_"):
                 names.add(r["attack"])
     assert names <= set(data["attacks"]), sorted(names - set(data["attacks"]))
+
+
+def _row(name, k, n, vk, vn):
+    return {"defense": name, "success": {"k": k, "n": n, "rate": k / n}, "valid": {"k": vk, "n": vn, "rate": vk / vn}}
+
+
+def test_glance_verdicts_follow_the_stated_rules_and_group_identical_controls():
+    from adt import glance
+    rows = [_row("none", 60, 120, 60, 60), _row("gate", 0, 120, 58, 60), _row("costly", 0, 120, 30, 60), _row("half", 20, 120, 58, 60),
+            _row("twin", 20, 120, 58, 60), _row("weak", 50, 120, 50, 60), _row("same", 59, 120, 60, 60), _row("hurts", 20, 120, 20, 60), _row("third", 40, 120, 58, 60)]
+    g = glance.view(rows, None, None)
+    v = {r["defense"]: r["verdict"] for r in g["rows"]}
+    assert v == {"none": "baseline", "gate": "effective", "costly": "effective_costly", "half": "partial", "twin": "partial",
+                 "weak": "ineffective", "same": "no_effect", "hurts": "costly_incomplete", "third": "ineffective"}
+    assert g["best"]["defense"] == "gate" and g["baseline"]["residual"]["k"] == 60
+    assert any("half, twin" in line and "remove" in line for line in g["explore"])        # identical controls are one sentence
+    assert g["works"] and "gate" in g["works"][0] and g["gaps"] == []
+    assert glance.view(rows[:1], None, None) is None
+    nobase = glance.view([_row("a", 40, 100, 50, 60), _row("b", 5, 100, 50, 60)], None, None, "reviewer-calibration")
+    assert nobase["baseline"]["explicit"] is False and nobase["baseline"]["defense"] == "a" and nobase["noun"] == "false approvals"
+    weak_base = glance.view([_row("none", 0, 100, 50, 60), _row("x", 0, 100, 50, 60)], None, None)
+    assert {r["verdict"] for r in weak_base["rows"]} == {"baseline", "not_testable"}
+
+
+def test_a_gap_is_stated_when_no_control_closes_a_surface_or_keeps_the_work():
+    from adt import glance
+    rows = [_row("none", 60, 120, 60, 60), _row("only", 0, 120, 20, 60)]
+    surf = {"rows": [{"id": "agency", "label": "Excessive agency", "cells": {"none": {"k": 20, "n": 30}, "only": {"k": 3, "n": 30}}}]}
+    g = glance.view(rows, surf, {"holds": 4})
+    text = " ".join(g["gaps"])
+    assert "excessive agency" in text and "still lets 3 of 30" in text and "Human review time is not modeled" in text and "stop 67 points" in text

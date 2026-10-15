@@ -80,6 +80,46 @@ function thinkingBlock() {
   return sec("What the model wrote while reasoning", items, `First ${R.thinking.length} of ${R.thinking_total} saved. This is the text the model chose to write down, which is not necessarily why it acted. Each sample is cut at 1,500 characters; the full text is in the .thinking.jsonl file beside the run.`);
 }
 
+function glanceBlock() {
+  const G = R.glance;
+  if (!G) return "";
+  const col = {good: "var(--accent-emerald)", warn: "var(--accent-amber)", bad: "var(--accent-rose)", neutral: "var(--grid)"};
+  const ink = {good: "var(--green-ink)", warn: "var(--amber-ink)", bad: "var(--red-ink)", neutral: "var(--text-secondary)"};
+  const chipBg = {good: "var(--chip-ok)", warn: "var(--chip-warn)", bad: "var(--chip-bad)", neutral: "var(--soft)"};
+  const base = G.baseline, best = G.best;
+  const impactTone = p => p == null ? "neutral" : p <= 10 ? "good" : p <= 30 ? "warn" : "bad";
+  const big = (v, label, tone) => `<div class="card tile" style="border-left:6px solid ${col[tone]}"><div class="v" style="color:${ink[tone]}">${esc(v)}</div><div class="l">${esc(label)}</div></div>`;
+  const tiles = [
+    big(`${base.residual.k} of ${base.residual.n}`, `${G.noun} carried out at baseline (${esc(base.defense)}), ${pct(base.residual.rate)}`, "bad"),
+    best ? big(`${best.residual.k} of ${best.residual.n}`, `${G.noun} left by the best control (${esc(best.defense)}), ${pct(best.residual.rate)}`, best.tone === "neutral" ? "warn" : best.tone) : "",
+    best && best.valid ? big(pct(best.valid.rate), `of valid work kept by that control (baseline ${pct(base.valid_rate)})`, impactTone(best.impact_pts)) : "",
+  ].join("");
+  const order = [...G.rows].sort((a, b) => (a.verdict === "baseline" ? -1 : b.verdict === "baseline" ? 1 : b.residual.rate - a.residual.rate));
+  const bar = (rate, tone, text, baseRate) => `<div style="position:relative;height:22px;background:var(--soft);border-radius:6px">
+      <div style="height:100%;width:${Math.max(rate * 100, rate > 0 ? 1.5 : 0)}%;background:${col[tone]};border-radius:6px;opacity:${tone === "neutral" ? .55 : .9}"></div>
+      ${baseRate != null ? `<div style="position:absolute;top:-3px;bottom:-3px;left:${baseRate * 100}%;width:2px;background:var(--text-primary);opacity:.55"></div>` : ""}
+      <div style="position:absolute;inset:0;display:flex;align-items:center;padding-left:8px;font-size:12.5px;font-weight:700;color:var(--text-primary)">${text}</div></div>`;
+  const rows = order.map(o => {
+    const isBase = o.verdict === "baseline";
+    const rt = isBase ? "neutral" : o.tone;
+    const vtone = isBase ? "neutral" : impactTone(o.impact_pts);
+    return `<div style="display:grid;grid-template-columns:minmax(190px,1.1fr) 2fr 2fr;gap:14px;align-items:center;padding:10px 0;border-top:1px solid var(--border-color);${o.tone === "neutral" && !isBase ? "opacity:.65" : ""}">
+      <div><div style="font-weight:700">${esc(o.defense)}</div><span style="display:inline-block;margin-top:3px;font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:999px;background:${chipBg[o.tone]};color:${ink[o.tone]}" title="${esc(o.meaning)}">${esc(o.label)}</span></div>
+      ${bar(o.residual.rate, isBase ? "bad" : rt === "neutral" ? "warn" : rt, `${o.residual.k} of ${o.residual.n} · ${pct(o.residual.rate)}`, isBase ? null : base.residual.rate)}
+      ${o.valid ? bar(o.valid.rate, isBase ? "neutral" : vtone, `${pct(o.valid.rate)}` + (o.impact_pts != null && !isBase ? ` · ${o.impact_pts > 0 ? "-" : "+"}${Math.abs(o.impact_pts)} pts` : ""), isBase ? null : base.valid_rate) : "<div class=\"muted small\">no valid-work cases</div>"}</div>`;
+  }).join("");
+  const list = (title, items, tone, empty) => `<div class="card" style="border-top:6px solid ${col[tone]}"><h3 style="margin:0 0 8px;color:${ink[tone]}">${title}</h3>${items.length ? `<ul class="small" style="margin:0;padding-left:18px">${items.map(i => `<li style="margin-bottom:6px">${esc(i)}</li>`).join("")}</ul>` : `<p class="muted small" style="margin:0">${empty}</p>`}</div>`;
+  return `<section><h2>At a glance</h2>
+    <div class="tiles" style="margin-bottom:16px">${tiles}</div>
+    <div class="card"><div style="display:grid;grid-template-columns:minmax(190px,1.1fr) 2fr 2fr;gap:14px;padding-bottom:8px;font-size:12px;font-weight:700;letter-spacing:.04em" class="muted">
+        <div>CONTROL AND VERDICT</div><div>RESIDUAL RISK: ${esc(G.noun.toUpperCase())} CARRIED OUT, LOWER IS BETTER</div><div>BUSINESS IMPACT: VALID WORK KEPT, HIGHER IS BETTER</div></div>${rows}
+      <p class="muted small" style="margin:12px 0 0">The vertical line on each bar is the baseline. Green closes the risk or keeps the work, amber is partial or costly, red does not hold, grey is the baseline or no measurable effect. Verdict rules: effective means residual risk at or under ${Math.round(G.rules.effective_residual * 100)}% with at most ${Math.round(G.rules.low_impact * 100)} points of valid work lost; partial means at least ${Math.round(G.rules.partial_reduction * 100)}% of the baseline risk removed; more than ${Math.round(G.rules.high_impact * 100)} points of work lost is high business impact. Counts are pooled over the models and rest on author-written attacks.</p></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-top:16px">
+      ${list("What works", G.works, "good", "No control closed the risk with low business impact in this run.")}
+      ${list("Worth exploring", G.explore, "warn", "Nothing partial or costly to refine.")}
+      ${list("Gap: needs a better solution", G.gaps, "bad", "No gap left in this run's attack set.")}</div></section>`;
+}
+
 function governanceBlock() {
   const G = R.governance;
   if (!G || !G.rows.length) return "";
@@ -211,7 +251,7 @@ function drawRecords() {
 function render() {
   document.title = `Report: ${R.run_id}`;
   const folder = R.folder ? `${GH}tree/main/items/${R.folder}/results` : GH;
-  $("page").innerHTML = header() + integrity() + tiles() + summaryTable() + analysisBlock() + tradeoffBlock() + surfaceBlock() + tempoBlock() + predictionBlock() + governanceBlock() +
+  $("page").innerHTML = header() + glanceBlock() + integrity() + tiles() + summaryTable() + analysisBlock() + tradeoffBlock() + surfaceBlock() + tempoBlock() + predictionBlock() + governanceBlock() +
     sec("Where the time goes", `<div id="lat"></div>`, "Per case, averaged. The reviewer's time is a model's time. Our code is the gate, the cards and the decision log. A cached reply keeps the original model time so conditions compare fairly.") +
     gpuBlock() + breakdowns() + reviewerBlock() + thinkingBlock() + errorsBlock() + recordsBlock() +
     `<section><p class="muted small">Raw files for committed results: <a href="${folder}">${esc(R.folder || "repository")} results</a>. <a href="start.html">Back to tests</a>.</p></section>`;

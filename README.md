@@ -20,7 +20,7 @@ The targets are simulated: a support desk, a deal pipeline, mail that lands in a
 
 A reviewer-calibration test has also run: seven reviewer models shown 22 cards whose right answers are known. Showing a reviewer the agent's own reason let 40% of non-matching requests through, against 6% when the system's comparison came first, and reviewers differed by 27 points on the same card. A thinking-model test also ran: with no defense, `qwen3:4b` followed planted instructions more often with thinking on (21 of 40) than off (12 of 40), the opposite of the prediction, at 14 times the tokens. The defenses held in both modes, though the difference rests on 40 cases a cell and is not statistically firm.
 
-![A report: summary by condition, and attacks that got through plotted against valid work completed](docs/img/report.png)
+![The top of a report: baseline risk, best control, and a verdict for every control, with residual risk and business impact side by side](docs/img/report.png)
 
 ## How it works
 
@@ -30,7 +30,7 @@ A reviewer-calibration test has also run: seven reviewer models shown 22 cards w
 4. **Score.** Harm is read from what actually happened (a database difference, a call that reached a server), never from what the agent says. Valid tasks run in every condition, so protection is always shown next to the work it cost.
 5. **Record.** Every decision goes into a hash-chained log (`python adt.py verify`). Scripted demo runs are labeled and never count as results.
 
-A GPU temperature guard pauses live runs above 72 C, and latency is split into model time, reviewer time and our own code. Each report also shows tempo (how long a case takes to an unsafe call or a refusal, with people explicitly not modeled) and threat surfaces (which kind of attack got through: prompt injection, identity and authority claims, or excessive agency), and a governance view that maps the results to framework requirements.
+Every report opens with an at-a-glance view: each control gets a verdict (effective, partial, costly, does not hold, or no measurable effect), with residual risk and business impact side by side and plain statements of what works, what is worth exploring and where a better solution is needed. A GPU temperature guard pauses live runs above 72 C, and latency is split into model time, reviewer time and our own code. Each report also shows tempo (how long a case takes to an unsafe call or a refusal, with people explicitly not modeled) and threat surfaces (which kind of attack got through: prompt injection, identity and authority claims, or excessive agency), and a governance view that maps the results to framework requirements.
 
 ## Quick start
 

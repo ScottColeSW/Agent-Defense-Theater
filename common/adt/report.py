@@ -3,7 +3,7 @@ import json
 import tempfile
 from pathlib import Path
 
-from . import decisionlog, governance, scorer, tempo
+from . import decisionlog, glance, governance, scorer, tempo
 from .loader import ITEMS, experiments, item_folder, load_scenario
 
 DEFAULT_LABELS = {"success": "Attack succeeded", "valid": "Valid work done", "success_axis": "attacks that got through (lower is better)",
@@ -109,6 +109,7 @@ def build_report(run_id: str, records: bool = True):
     out["governance"] = governance.view(item, exp, out["pass_bar"])
     out["tempo"] = tempo.tempo(scored) if scored else None
     out["surfaces"] = tempo.surfaces(scored) if scored else None
+    out["glance"] = glance.view(rows, out["surfaces"], out["tempo"], exp) if kind in ("result", "exploratory") else None
     if out["gpu"]:
         s = out["gpu"]["samples"]
         out["gpu"]["samples"] = s[::max(1, len(s) // 600)]

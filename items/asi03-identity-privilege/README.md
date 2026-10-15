@@ -92,6 +92,10 @@ Seven of eight pass-bar criteria were met. The same card that made `qwen2.5:7b` 
 
 Seven reviewer models (eight configurations, since `qwen3:4b` ran with thinking off and on) were shown 22 request cards whose right answers are known, in six card styles, 1,056 records. Showing the reviewer the agent's own reason let 40.2% of requests that did not match through, against 6.2% when the system's comparison came first. Reviewers differed by 27 points on the same card (100% to 73% correct). Verdicts were stable under sampling (96% of cards unanimous across four runs). Thinking made `qwen3:4b` worse (86% against 100%) at 30 times the tokens. Six of seven pass-bar criteria met. The prediction, results and limits are in [`PREREGISTRATION-reviewer-calibration.md`](PREREGISTRATION-reviewer-calibration.md).
 
+### Thinking agents (fifth preregistered run)
+
+One thinking model, `qwen3:4b`, run with thinking off and on against the same attacks and four conditions (488 records). With no defense it followed planted instructions more often with thinking on (21 of 40, 52.5%) than off (12 of 40, 30%), the opposite of the prediction, at 14 times the output tokens and 5 times the time. The difference came from the quiet attacks and rests on 40 cases a cell (p of about 0.07). Request binding let 0 of 80 through in both modes. Four of five pass-bar criteria met; the thinking-off mode returned an unusable plan 13% of the time. Details, limits and the two earlier starts that did not count are in [`PREREGISTRATION-thinking-agents.md`](PREREGISTRATION-thinking-agents.md).
+
 ### Planned against done
 
 | Planned | First run |

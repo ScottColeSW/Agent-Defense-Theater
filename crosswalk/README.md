@@ -11,3 +11,8 @@
 ## Maintenance
 
 The README matrix, `site/index.html`, and this CSV show the same data. Update the CSV first and copy the change to the other two until a generator exists.
+
+## Other files
+
+- [`governance.csv`](governance.csv) and [`governance-links.json`](governance-links.json): the governance crosswalk and which pass-bar criteria of each test bear on which row. See [`../docs/GOVERNANCE-CROSSWALK.md`](../docs/GOVERNANCE-CROSSWALK.md).
+- [`threat-surfaces.json`](threat-surfaces.json): the author's grouping of planted attacks into prompt injection, identity and authority claims, and excessive agency, used by the report's Threat surfaces view.

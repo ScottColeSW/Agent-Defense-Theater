@@ -30,7 +30,7 @@ A reviewer-calibration test has also run: seven reviewer models shown 22 cards w
 4. **Score.** Harm is read from what actually happened (a database difference, a call that reached a server), never from what the agent says. Valid tasks run in every condition, so protection is always shown next to the work it cost.
 5. **Record.** Every decision goes into a hash-chained log (`python adt.py verify`). Scripted demo runs are labeled and never count as results.
 
-A GPU temperature guard pauses live runs above 72 C, and latency is split into model time, reviewer time and our own code.
+A GPU temperature guard pauses live runs above 72 C, and latency is split into model time, reviewer time and our own code. Each report also shows tempo (how long a case takes to an unsafe call or a refusal, with people explicitly not modeled) and threat surfaces (which kind of attack got through: prompt injection, identity and authority claims, or excessive agency), and a governance view that maps the results to framework requirements.
 
 ## Quick start
 

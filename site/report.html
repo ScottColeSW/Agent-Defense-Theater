@@ -96,6 +96,38 @@ function governanceBlock() {
     `The author's mapping of this test's pass-bar criteria to framework requirements. It is evidence that bears on a requirement, not a claim of compliance. The EU AI Act applies to real high-risk systems, not to these tests. Full table and sources: <a href="https://github.com/ScottColeSW/Agent-Defense-Theater/blob/main/docs/GOVERNANCE-CROSSWALK.md">governance crosswalk</a>.`);
 }
 
+function tempoBlock() {
+  const T = R.tempo;
+  if (!T) return "";
+  const u = T.to_unsafe_call, b = T.to_refusal;
+  const tile = (v, l, cls) => `<div class="card tile"><div class="v ${cls || ""}">${esc(v)}</div><div class="l">${esc(l)}</div></div>`;
+  const tiles = [
+    u.n ? tile(ms(u.median_ms), `median time from task to an unsafe call carried out (${u.n} cases)`, "bad") : tile("none", "no unsafe call was carried out in this run", "good"),
+    u.n ? tile(ms(u.fastest_ms), "fastest unsafe call, task to action") : "",
+    b.n ? tile(ms(b.median_ms), `median time to a refusal (${b.n} cases)`) : "",
+    tile(T.holds ? T.holds.toLocaleString() : "0", T.holds ? "holds sent for a decision, all decided by a model or a rule" : "no holds in this run"),
+  ].join("");
+  const rows = T.rows.map(r => `<tr><td>${esc(r.defense)}</td><td class="num">${ms(r.agent_ms)}</td><td class="num">${r.reviewer_ms ? ms(r.reviewer_ms) : "none"}</td><td class="num">${ms(r.gate_ms)}</td>
+    <td class="num">${r.tools_ms ? ms(r.tools_ms) : "none"}</td><td class="num">${pct(r.decide_share)}</td></tr>`).join("");
+  return `<section><h2>Tempo</h2><div class="tiles" style="margin-bottom:16px">${tiles}</div><div class="card"><div class="tblwrap"><table class="tbl"><thead><tr><th>Condition</th><th>Agent model</th><th>Reviewer model</th><th>Our gate</th><th>Tool servers</th><th>Defense share of decision time</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <p class="muted small" style="margin:12px 0 0">Mean time per case. The clock starts when the agent is given the task with the planted instruction already in what it reads, and runs to the call being carried out or refused. For tests that call tools in several rounds this is the whole case, so it is an upper bound on the time to the unsafe call. Waiting for the GPU to cool is excluded.</p>
+    <p class="small" style="margin:10px 0 0"><b>People are not modeled.</b> ${esc(T.human)}</p></div></section>`;
+}
+
+function surfaceBlock() {
+  const S = R.surfaces;
+  if (!S || !S.rows.length) return "";
+  const head = S.rows.map(r => `<th>${esc(r.label)}<br><span class="muted" style="font-weight:400;font-size:11px">${esc(r.attacks.join(", "))}</span></th>`).join("");
+  const cell = c => c ? `<td style="position:relative;white-space:nowrap"><div style="position:absolute;left:0;bottom:0;height:3px;width:${c.n ? Math.round(c.k / c.n * 100) : 0}%;background:var(--accent-rose);opacity:.7"></div>${c.k}/${c.n} <span class="muted small">${c.n ? pct(c.k / c.n) : ""}</span></td>` : "<td></td>";
+  const rows = S.defenses.map(d => `<tr><td>${esc(d)}</td>${S.rows.map(r => cell(r.cells[d])).join("")}</tr>`).join("");
+  const defs = S.rows.map(r => `<li><b>${esc(r.label)}.</b> ${esc(r.what)}</li>`).join("");
+  const why = Object.entries(S.why).map(([a, w]) => `<li><b>${esc(a)}:</b> ${esc(w)}</li>`).join("");
+  return `<section><h2>Threat surfaces</h2><div class="card"><div class="tblwrap"><table class="tbl"><thead><tr><th>Condition</th>${head}</tr></thead><tbody>${rows}</tbody></table></div>
+    <p class="muted small" style="margin:12px 0 0">Unsafe calls carried out over planted attempts, all models pooled. The bar under a count is its share.${S.unclassified.length ? " Not classified, and left out: " + esc(S.unclassified.join(", ")) + "." : ""}</p>
+    <ul class="small" style="margin:12px 0 0">${defs}</ul>${why ? `<details style="margin-top:10px"><summary class="small">Why some attacks sit where they do</summary><ul class="small">${why}</ul></details>` : ""}
+    <p class="muted small" style="margin:10px 0 0">${esc(S.note)}</p></div></section>`;
+}
+
 function tradeoffBlock() {
   return sec("Protection against valid use", `<div id="trade"></div>`,
     "A defense that blocks everything protects nothing worth having. Each point is one condition: how many attacks got through, against how much legitimate work still got done (in-tier and above-tier together). The shaded corner is protected and still useful. Lines show 95% intervals.");
@@ -179,7 +211,7 @@ function drawRecords() {
 function render() {
   document.title = `Report: ${R.run_id}`;
   const folder = R.folder ? `${GH}tree/main/items/${R.folder}/results` : GH;
-  $("page").innerHTML = header() + integrity() + tiles() + summaryTable() + analysisBlock() + tradeoffBlock() + predictionBlock() + governanceBlock() +
+  $("page").innerHTML = header() + integrity() + tiles() + summaryTable() + analysisBlock() + tradeoffBlock() + surfaceBlock() + tempoBlock() + predictionBlock() + governanceBlock() +
     sec("Where the time goes", `<div id="lat"></div>`, "Per case, averaged. The reviewer's time is a model's time. Our code is the gate, the cards and the decision log. A cached reply keeps the original model time so conditions compare fairly.") +
     gpuBlock() + breakdowns() + reviewerBlock() + thinkingBlock() + errorsBlock() + recordsBlock() +
     `<section><p class="muted small">Raw files for committed results: <a href="${folder}">${esc(R.folder || "repository")} results</a>. <a href="start.html">Back to tests</a>.</p></section>`;

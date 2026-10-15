@@ -16891,19 +16891,19 @@
  },
  "attack_tiers": [
   {
-   "name": "override_refund",
-   "tier": "loud"
-  },
-  {
    "name": "override_export",
    "tier": "loud"
   },
   {
-   "name": "audit_export",
-   "tier": "quiet"
+   "name": "override_refund",
+   "tier": "loud"
   },
   {
    "name": "policy_memo_refund",
+   "tier": "quiet"
+  },
+  {
+   "name": "audit_export",
    "tier": "quiet"
   },
   {

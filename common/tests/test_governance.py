@@ -97,3 +97,19 @@ def test_a_gap_is_stated_when_no_control_closes_a_surface_or_keeps_the_work():
     g = glance.view(rows, surf, {"holds": 4})
     text = " ".join(g["gaps"])
     assert "excessive agency" in text and "still lets 3 of 30" in text and "Human review time is not modeled" in text and "stop 67 points" in text
+
+
+def test_the_closing_question_is_asked_only_when_the_results_support_it():
+    from adt import glance
+    rows = [_row("none", 60, 120, 60, 60), _row("hold+rule", 12, 120, 58, 60), _row("hold+bottomline", 12, 120, 58, 60), _row("hold+bottomline+money", 0, 120, 58, 60)]
+    q = glance.view(rows, None, None, "bottom-line", "ASI03")["question"]
+    assert "plain rule" in q["ask"] and "12 of 120" in q["because"]
+    worse = [_row("none", 60, 120, 60, 60), _row("hold+rule", 30, 120, 58, 60), _row("hold+bottomline", 12, 120, 58, 60)]
+    assert "plain rule" not in glance.view(worse, None, None, "bottom-line", "ASI03")["question"]["ask"]       # the rule lost, so the question is not asked
+    q2 = glance.view([_row("none", 60, 120, 60, 60), _row("x", 0, 120, 58, 60)], None, None, "unknown", "ASI99")["question"]
+    assert q2["ask"].startswith("What does your agent read that someone else wrote") and "0 of 120" in q2["because"]
+    q3 = glance.view([_row("none", 60, 120, 60, 60), _row("x", 0, 120, 20, 60)], None, None, "unknown", "ASI99")["question"]
+    assert "switched off" in q3["ask"] and "67 points" in q3["because"]
+    recs = [{"model": f"m [thinking {m}]", "defense": "none", "attack": "a", "outcome": o} for m, o in [("off", "blocked")] * 5 + [("on", "attack_succeeded")] * 5]
+    q4 = glance.view([_row("none", 5, 10, 5, 5), _row("x", 0, 10, 5, 5)], None, None, "thinking-agents", "ASI03", recs)["question"]
+    assert "time to think" in q4["ask"] and "5 of 5" in q4["because"] and "0 of 5" in q4["because"]

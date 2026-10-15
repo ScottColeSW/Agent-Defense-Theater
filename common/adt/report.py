@@ -109,7 +109,7 @@ def build_report(run_id: str, records: bool = True):
     out["governance"] = governance.view(item, exp, out["pass_bar"])
     out["tempo"] = tempo.tempo(scored) if scored else None
     out["surfaces"] = tempo.surfaces(scored) if scored else None
-    out["glance"] = glance.view(rows, out["surfaces"], out["tempo"], exp) if kind in ("result", "exploratory") else None
+    out["glance"] = glance.view(rows, out["surfaces"], out["tempo"], exp, item, scored) if kind in ("result", "exploratory") else None
     if out["gpu"]:
         s = out["gpu"]["samples"]
         out["gpu"]["samples"] = s[::max(1, len(s) // 600)]

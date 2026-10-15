@@ -123,9 +123,11 @@ def run(scenario, runners: list, out_dir: Path, mode: str = "live", exploratory:
     pairs = [(c, d) for d in defs for c in cases] if defense_major else [(c, d) for c in cases for d in defs]
     with rec_path.open("w", encoding="utf-8") as f:
         previous = None
+        gpucooler.settle()                                  # begin cool
         for runner in runners:
             if mode == "live" and previous is not None and getattr(runner, "model", None) != previous:
                 free_models()                                   # one model at a time: the last one leaves memory before the next loads
+                gpucooler.settle()                              # and the card cools before the next model loads
             previous = getattr(runner, "model", None)
             cr = CachedRunner(runner) if mode == "live" else runner
             for i, (case, d) in enumerate(pairs, 1):

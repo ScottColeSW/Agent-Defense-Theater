@@ -1,7 +1,9 @@
 """GPU cooler: pause model calls while the GPU is too hot, so a hot card does not skew timing or throttle the run.
 
 Before every model call the cooler reads the GPU temperature (nvidia-smi). Above `max_c` it waits, polling every few
-seconds, until the card is at or below `resume_c`, a few degrees lower so it does not flap on and off at the limit.
+seconds, until the card is at or below `resume_c` (60 C by default, well under the limit, so it does not flap on and off at it).
+Between `soft_c` and `max_c` it does not stop: it eases off with a short rest before each call, so a run slows down before it
+reaches the limit. At the start of a run and when one model gives way to the next it settles the card to `resume_c` first.
 It records the peak temperature, the number of pauses and the seconds spent paused, and the harness stamps each
 result record with the temperature and any wait, so latency can be read with the waits taken out.
 
@@ -18,6 +20,9 @@ import time
 
 DEFAULT_MAX_C = 72
 DEFAULT_MARGIN_C = 4
+DEFAULT_RESUME_C = 60       # where a pause ends and a run starts: well under the limit, so the card is not bouncing off it
+DEFAULT_SOFT_MARGIN_C = 6   # the card eases off this far under the limit
+DEFAULT_EASE_S = 2.0        # the rest before each call while the card is between the soft and hard limits
 
 
 def read_temp_c():
@@ -36,9 +41,11 @@ def read_temp_c():
 
 class GpuCooler:
     def __init__(self, max_c=DEFAULT_MAX_C, resume_c=None, poll_s=3.0, give_up_s=1800,
-                 read=read_temp_c, sleep=time.sleep, clock=time.monotonic, say=print):
+                 read=read_temp_c, sleep=time.sleep, clock=time.monotonic, say=print, soft_c=None, ease_s=DEFAULT_EASE_S):
         self.max_c = max_c
-        self.resume_c = resume_c if resume_c is not None else max_c - DEFAULT_MARGIN_C
+        self.resume_c = resume_c if resume_c is not None else min(DEFAULT_RESUME_C, max_c - DEFAULT_MARGIN_C)
+        self.soft_c = soft_c if soft_c is not None else max(self.resume_c, max_c - DEFAULT_SOFT_MARGIN_C)
+        self.ease_s, self.eased, self.eased_s, self.settled_s = ease_s, 0, 0.0, 0.0
         if self.resume_c > self.max_c:
             raise ValueError("resume_c must not be above max_c")
         self.poll_s, self.give_up_s = poll_s, give_up_s
@@ -81,6 +88,10 @@ class GpuCooler:
         self.available = True
         self._see(t)
         if t <= self.max_c:
+            if t > self.soft_c and self.ease_s:           # warm but under the limit: rest a little before this call
+                self.eased += 1
+                self.eased_s += self.ease_s
+                self._sleep(self.ease_s)
             return t
         self.pauses += 1
         first = t
@@ -106,14 +117,43 @@ class GpuCooler:
         self._say(f"GPU cooler: resumed at {t}C after {waited:.0f}s.")
         return t
 
+    def settle(self, max_wait_s=900):
+        """Wait until the card is at or below resume_c. Called before a run starts and when one model gives way to the next, so each begins cool.
+        It never raises: after max_wait_s it says so and lets the run go on, since the hard limit still holds on every call."""
+        t0 = self._clock()
+        try:
+            t = self._read()
+            if t is None:
+                return None
+            self._see(t)
+            if t <= self.resume_c:
+                return t
+            self._say(f"GPU cooler: {t}C at the start. Settling to {self.resume_c}C before going on.")
+            while t > self.resume_c:
+                if self._clock() - t0 > max_wait_s:
+                    self._say(f"GPU cooler: still {t}C after {max_wait_s}s. Going on, the {self.max_c}C limit still applies to every call.")
+                    break
+                self._sleep(self.poll_s)
+                nt = self._read()
+                if nt is None:
+                    break
+                t = nt
+                self._see(t)
+            return t
+        finally:
+            waited = self._clock() - t0
+            self.settled_s += waited if waited > 0.05 else 0.0
+            self.busy_s += waited
+
     def take_wait_ms(self) -> int:
         """Milliseconds paused since the last call, for stamping one result record."""
         d, self._taken_s = self.paused_s - self._taken_s, self.paused_s
         return round(d * 1000)
 
     def stats(self) -> dict:
-        return {"max_c": self.max_c, "resume_c": self.resume_c, "peak_c": self.peak, "pauses": self.pauses,
-                "paused_s": round(self.paused_s, 1), "available": bool(self.available)}
+        return {"max_c": self.max_c, "resume_c": self.resume_c, "soft_c": self.soft_c, "peak_c": self.peak, "pauses": self.pauses,
+                "paused_s": round(self.paused_s, 1), "eased": self.eased, "eased_s": round(self.eased_s, 1), "settled_s": round(self.settled_s, 1),
+                "available": bool(self.available)}
 
     def timeline(self) -> dict:
         """Everything the UI needs to draw the cooldown: temperature samples, the pauses, and the two limits."""
@@ -153,6 +193,11 @@ def uninstall():
 def busy_ms() -> int:
     """Total time the cooler has spent checking and pausing so far. Subtract the change across a section to keep it out of that section's timing."""
     return round(active.busy_s * 1000) if active else 0
+
+
+def settle():
+    """Called by the harness at the start of a run and between models: begin cool."""
+    return active.settle() if active else None
 
 
 def before_call():

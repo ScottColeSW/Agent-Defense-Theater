@@ -26,13 +26,13 @@ def test_old_records_without_the_split_still_summarize():
 
 
 def test_cooler_timeline_records_samples_and_pauses():
-    seq, t = [75, 71, 66], {"now": 100.0}
+    seq, t = [75, 66, 60], {"now": 100.0}
     c = GpuCooler(read=lambda: seq.pop(0) if len(seq) > 1 else seq[0], sleep=lambda s: t.__setitem__("now", t["now"] + s),
                   clock=lambda: t["now"], say=lambda m: None)
     c.wait()
     tl = c.timeline()
-    assert tl["max_c"] == 72 and tl["resume_c"] == 68 and tl["pause_events"] == [dict(start_s=0.0, seconds=6.0, from_c=75, to_c=66)] and tl["pauses"] == 1
-    assert [s[1] for s in tl["samples"]] == [75, 71, 66] and tl["samples"][0][0] == 0.0 and tl["peak_c"] == 75
+    assert tl["max_c"] == 72 and tl["resume_c"] == 60 and tl["pause_events"] == [dict(start_s=0.0, seconds=6.0, from_c=75, to_c=60)] and tl["pauses"] == 1
+    assert [s[1] for s in tl["samples"]] == [75, 66, 60] and tl["samples"][0][0] == 0.0 and tl["peak_c"] == 75
 
 
 def test_harness_writes_the_gpu_timeline_when_a_cooler_is_active(tmp_path):
@@ -47,7 +47,7 @@ def test_harness_writes_the_gpu_timeline_when_a_cooler_is_active(tmp_path):
 
 
 def test_cooler_busy_time_counts_checks_and_pauses_so_callers_can_subtract_it():
-    seq, t = [75, 66], {"now": 0.0}
+    seq, t = [75, 60], {"now": 0.0}
     c = GpuCooler(read=lambda: seq.pop(0) if len(seq) > 1 else seq[0], sleep=lambda s: t.__setitem__("now", t["now"] + s),
                   clock=lambda: t["now"], say=lambda m: None)
     gpucooler.install(c, sampler=False)

@@ -29,7 +29,7 @@ def test_below_limit_does_not_pause():
 
 
 def test_pauses_over_the_limit_until_it_has_cooled_past_the_margin():
-    c, msgs = _cooler([75, 74, 71, 69, 67], max_c=72)           # resume at 68, so 69 is not cool enough yet
+    c, msgs = _cooler([75, 74, 71, 69, 67], max_c=72, resume_c=68)   # resume at 68, so 69 is not cool enough yet
     assert c.wait() == 67
     assert c.pauses == 1 and c.paused_s == pytest.approx(12.0)  # four polls of three seconds
     assert c.stats()["peak_c"] == 75
@@ -74,3 +74,27 @@ def test_record_snapshot_and_hook(monkeypatch):
     finally:
         gpucooler.uninstall()
     assert gpucooler.before_call() is None and gpucooler.snapshot() == {}
+
+
+def test_default_resume_is_60_and_the_card_eases_off_before_the_limit():
+    c, msgs = _cooler([55, 67, 70, 72])
+    assert c.resume_c == 60 and c.soft_c == 66 and c.max_c == 72
+    assert [c.wait(), c.wait(), c.wait(), c.wait()] == [55, 67, 70, 72]
+    assert c.eased == 3 and c.eased_s == pytest.approx(6.0) and c.pauses == 0 and not msgs      # warm calls rest, nothing stops, nothing is printed
+    assert c.busy_s == pytest.approx(6.0)                                                      # and the rest is kept out of latency
+
+
+def test_a_pause_now_lasts_until_60():
+    c, _ = _cooler([75, 70, 66, 62, 60], max_c=72)
+    assert c.wait() == 60 and c.paused_s == pytest.approx(12.0)
+
+
+def test_settle_waits_for_a_cool_card_and_never_raises():
+    c, msgs = _cooler([68, 64, 61, 59])
+    assert c.settle() == 59 and c.settled_s == pytest.approx(9.0) and any("Settling" in m for m in msgs)
+    c2, msgs2 = _cooler([90], give_up_s=30)
+    assert c2.settle(max_wait_s=10) == 90 and any("Going on" in m for m in msgs2)            # gives up quietly, the per-call limit still holds
+    c3, _ = _cooler([None])
+    assert c3.settle() is None
+    gpucooler.uninstall()
+    assert gpucooler.settle() is None

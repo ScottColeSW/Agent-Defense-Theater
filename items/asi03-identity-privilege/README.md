@@ -88,6 +88,10 @@ Round 2's reviewer mostly denied and approved unrequested refunds. This round ma
 
 Seven of eight pass-bar criteria were met. The same card that made `qwen2.5:7b` approve every legitimate hold and deny every attack did not fix `llama3.1:8b`, which denied all 18 refund holds while the card said MATCH. A reviewer has to be checked on known cases before it is trusted. The rule did what the best model did for 3 ms, so a model earns its place only on requests the system cannot decide, which was not tested. Request binding plus holds protected fully (0 of 120) and kept all the valid work (61 of 63). Every request here is explicit, which flatters it. Prediction, misses and next steps: [`PREREGISTRATION-bottom-line.md`](PREREGISTRATION-bottom-line.md).
 
+### Reviewer calibration (fourth preregistered run)
+
+Seven reviewer models (eight configurations, since `qwen3:4b` ran with thinking off and on) were shown 22 request cards whose right answers are known, in six card styles, 1,056 records. Showing the reviewer the agent's own reason let 40.2% of requests that did not match through, against 6.2% when the system's comparison came first. Reviewers differed by 27 points on the same card (100% to 73% correct). Verdicts were stable under sampling (96% of cards unanimous across four runs). Thinking made `qwen3:4b` worse (86% against 100%) at 30 times the tokens. Six of seven pass-bar criteria met. The prediction, results and limits are in [`PREREGISTRATION-reviewer-calibration.md`](PREREGISTRATION-reviewer-calibration.md).
+
 ### Planned against done
 
 | Planned | First run |

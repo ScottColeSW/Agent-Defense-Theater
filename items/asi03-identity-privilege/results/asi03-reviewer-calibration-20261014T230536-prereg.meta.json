@@ -1,0 +1,166 @@
+{
+ "run_id": "asi03-reviewer-calibration-20261014T230536-prereg",
+ "item": "ASI03",
+ "experiment": "reviewer-calibration",
+ "mode": "live",
+ "exploratory": false,
+ "models": [
+  "qwen2.5:7b",
+  "llama3.1:8b",
+  "phi4-mini:3.8b",
+  "mistral:7b",
+  "hermes3:8b",
+  "gemma3:4b",
+  "qwen3:4b [thinking off]",
+  "qwen3:4b [thinking on]"
+ ],
+ "defenses": [
+  "agent_card",
+  "effect_card",
+  "bottomline",
+  "bottomline@s1",
+  "bottomline@s2",
+  "bottomline@s3"
+ ],
+ "cases": 22,
+ "records": 1056,
+ "seconds": 3900.5,
+ "decision_log_head": "7918f328b0b9dc785bb7f13762e4c6d2f342c32b426dfff9936e5434e12a4ebb",
+ "decision_log_entries": 1056,
+ "hardware_note": "One workstation, RTX 2080 Super 8 GB. Local models up to 8B parameters.",
+ "prereg_commit": "7a73d04299a33ab0ae9ae2a4783c185e141f6fe8",
+ "harness_commit": "dd0018971b6c9385e364df372aea99eb2edf8631",
+ "gpu": {
+  "max_c": 72,
+  "resume_c": 68,
+  "peak_c": 77,
+  "pauses": 140,
+  "paused_s": 598.3,
+  "available": true
+ },
+ "model_info": {
+  "qwen2.5:7b": {
+   "name": "qwen2.5:7b",
+   "digest": "845dbda0ea48ed749caafd9e6037047aa19acfcfd82e704d7ca97d631a0b697e",
+   "capabilities": [
+    "completion",
+    "tools"
+   ],
+   "family": "qwen2",
+   "params": "7.6B",
+   "quant": "Q4_K_M",
+   "context": 32768,
+   "think": null,
+   "temperature": 0.0,
+   "seed": 0
+  },
+  "llama3.1:8b": {
+   "name": "llama3.1:8b",
+   "digest": "46e0c10c039e019119339687c3c1757cc81b9da49709a3b3924863ba87ca666e",
+   "capabilities": [
+    "completion",
+    "tools"
+   ],
+   "family": "llama",
+   "params": "8.0B",
+   "quant": "Q4_K_M",
+   "context": 131072,
+   "think": null,
+   "temperature": 0.0,
+   "seed": 0
+  },
+  "phi4-mini:3.8b": {
+   "name": "phi4-mini:3.8b",
+   "digest": "78fad5d182a7c33065e153a5f8ba210754207ba9d91973f57dffa7f487363753",
+   "capabilities": [
+    "completion",
+    "tools"
+   ],
+   "family": "phi3",
+   "params": "3.8B",
+   "quant": "Q4_K_M",
+   "context": 131072,
+   "think": null,
+   "temperature": 0.0,
+   "seed": 0
+  },
+  "mistral:7b": {
+   "name": "mistral:7b",
+   "digest": "6577803aa9a036369e481d648a2baebb381ebc6e897f2bb9a766a2aa7bfbc1cf",
+   "capabilities": [
+    "completion",
+    "tools"
+   ],
+   "family": "llama",
+   "params": "7.2B",
+   "quant": "Q4_K_M",
+   "context": 32768,
+   "think": null,
+   "temperature": 0.0,
+   "seed": 0
+  },
+  "hermes3:8b": {
+   "name": "hermes3:8b",
+   "digest": "fafeb646f5da902360868fb889ff6b8f5981a4a68ac50fc1cd63d9737e8051cc",
+   "capabilities": [
+    "completion",
+    "tools"
+   ],
+   "family": "llama",
+   "params": "8.0B",
+   "quant": "Q4_0",
+   "context": 131072,
+   "think": null,
+   "temperature": 0.0,
+   "seed": 0
+  },
+  "gemma3:4b": {
+   "name": "gemma3:4b",
+   "digest": "c30276f7dffec93a536d283e15088990454b8d21cf180a3d6eea4959e4147291",
+   "capabilities": [
+    "completion",
+    "vision"
+   ],
+   "family": "gemma3",
+   "params": "4.3B",
+   "quant": "Q4_K_M",
+   "context": 131072,
+   "think": null,
+   "temperature": 0.0,
+   "seed": 0
+  },
+  "qwen3:4b [thinking off]": {
+   "name": "qwen3:4b",
+   "digest": "359d7dd4bcdab3d86b87d73ac27966f4dbb9f5efdfcc75d34a8764a09474fae7",
+   "capabilities": [
+    "completion",
+    "tools",
+    "thinking"
+   ],
+   "family": "qwen3",
+   "params": "4.0B",
+   "quant": "Q4_K_M",
+   "context": 262144,
+   "think": false,
+   "temperature": 0.0,
+   "seed": 0
+  },
+  "qwen3:4b [thinking on]": {
+   "name": "qwen3:4b",
+   "digest": "359d7dd4bcdab3d86b87d73ac27966f4dbb9f5efdfcc75d34a8764a09474fae7",
+   "capabilities": [
+    "completion",
+    "tools",
+    "thinking"
+   ],
+   "family": "qwen3",
+   "params": "4.0B",
+   "quant": "Q4_K_M",
+   "context": 262144,
+   "think": true,
+   "temperature": 0.0,
+   "seed": 0
+  }
+ },
+ "started": "2026-10-15T00:10:38Z"
+}

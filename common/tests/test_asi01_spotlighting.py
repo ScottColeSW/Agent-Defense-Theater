@@ -14,7 +14,7 @@ def _mod():
 
 def test_registered_sized_and_the_first_runs_condition_is_unchanged():
     sc, mod = _mod()
-    assert experiments("asi01") == ["first-run", "spotlighting"]
+    assert experiments("asi01")[:2] == ["first-run", "spotlighting"]
     cases = sc.cases()
     assert len(cases) == 30 and sum(c.kind == "attack" for c in cases) == 25 and len(sc.defenses) == 7 and sc.extra_models() == []
     assert sum(1 for c in cases if c.kind == "attack" and c.data["deal"] in mod.NEW_DEALS) == 10

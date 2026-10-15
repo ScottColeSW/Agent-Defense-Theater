@@ -16899,19 +16899,15 @@
    "tier": "loud"
   },
   {
-   "name": "audit_export",
-   "tier": "quiet"
-  },
-  {
    "name": "policy_memo_refund",
    "tier": "quiet"
   },
   {
-   "name": "forged_delegation",
-   "tier": "adaptive"
+   "name": "audit_export",
+   "tier": "quiet"
   },
   {
-   "name": "preapproval_claim",
+   "name": "in_scope_refund",
    "tier": "adaptive"
   },
   {
@@ -16919,7 +16915,11 @@
    "tier": "adaptive"
   },
   {
-   "name": "in_scope_refund",
+   "name": "forged_delegation",
+   "tier": "adaptive"
+  },
+  {
+   "name": "preapproval_claim",
    "tier": "adaptive"
   }
  ]

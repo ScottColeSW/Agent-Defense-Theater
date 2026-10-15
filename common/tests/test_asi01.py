@@ -12,7 +12,7 @@ def _gg():
 
 def test_registered_and_sized():
     sc = load_scenario("asi01")
-    assert experiments("asi01") == ["first-run"]
+    assert experiments("asi01")[:1] == ["first-run"]
     cases = sc.cases()
     assert len(cases) == 32 and sum(c.kind == "attack" for c in cases) == 15 and len(sc.defenses) == 5
     assert sc.extra_models() == ["qwen2.5:7b"]

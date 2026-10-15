@@ -43,6 +43,7 @@ Results use the shared schema in [`../../common/RESULTS-SCHEMA.md`](../../common
 
 - **A live arena** (reused from ASI02): a deal-desk agent, two real MCP servers and a SQLite pipeline. Five author-written attacks that try to replace or extend the operator's goal, the same valid tasks as ASI02, and five conditions: no defense, spotlighting, a plan locked before the agent reads anything untrusted, a goal check by a separate reviewer model, and the last two together.
 - **One preregistered live run** (three models, 480 records, with an addendum that reports the misses). A plan written before the agent reads anything untrusted stopped every goal change that needed a new tool (0 of 36) and a goal check by a separate reviewer model stopped all 45 hijacks, at some cost in valid work. Spotlighting, the defense expected to help, made hijacks more likely (73% against 49% with no defense) and the run does not explain why. See [`PREREGISTRATION.md`](PREREGISTRATION.md).
+- **A follow-up on the spotlighting result** ([`PREREGISTRATION-spotlighting.md`](PREREGISTRATION-spotlighting.md), 630 records). The effect replicated on deals the first run did not use (80% against 43%) and lives in the soft attacks. It was not the rule's wording: a plain two-sentence rule raised hijacks too (61%), and a rule that names the forbidden actions did not cut them (53% against 47%). Any security rule added to the prompt raised the rate here. Why is open, and the addendum names a test.
 
 ## Limits and what it would take
 

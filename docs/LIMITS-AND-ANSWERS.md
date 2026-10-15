@@ -19,7 +19,7 @@ Every item, including the measured ones, has limits. This page collects them wit
 
 Status: Measured (first preregistered live run), with sibling evidence in Aegis Vector.
 
-One agent on one simulated desk, author-written attacks, and three small models. The goal check is one small model on one prompt, and the plan lock assumes a trusted, complete request. Needs: a tool-using agent crew, an adaptive red team that is not the author, goal checks across several models, and models above the 8B size this hardware allows. The spotlighting result (it made hijacks more likely here) is unexplained and needs its own investigation.
+One agent on one simulated desk, author-written attacks, and three small models. The goal check is one small model on one prompt, and the plan lock assumes a trusted, complete request. Needs: a tool-using agent crew, an adaptive red team that is not the author, goal checks across several models, and models above the 8B size this hardware allows. Spotlighting made hijacks more likely here, replicated on new deals, and a follow-up showed it was the presence of a security rule and not its wording. Why is still open: the leading reading, that a rule primes the model to follow procedures it meets afterward, is untested.
 
 ### ASI02: Tool Misuse and Exploitation
 

@@ -4,7 +4,7 @@
   "name": "Agent Goal Hijack",
   "owasp_llm_2025": "LLM01 Prompt Injection",
   "mitre_atlas": "AML.T0051 (.000 direct, .001 indirect)",
-  "status": "Built",
+  "status": "Measured",
   "existing_work": "Reuses the ASI02 arena; Aegis Vector (injection and spotlighting results) is sibling evidence",
   "folder": "items/asi01-goal-hijack",
   "limits_and_what_it_would_take": "Agent stack: only a single retrieval-and-answer loop has been tested, not a tool-using planner. Needs: a tool-using agent crew in Greenroom, an adaptive red team that is not the author, and models above the 8B size this hardware allows."
@@ -34,7 +34,7 @@
   "name": "Agentic Supply Chain Vulnerabilities",
   "owasp_llm_2025": "LLM03 Supply Chain",
   "mitre_atlas": "To be mapped",
-  "status": "Built",
+  "status": "Measured",
   "existing_work": "The ASI02 calculator server with tampered stand-ins (a proxy)",
   "folder": "items/asi04-supply-chain",
   "limits_and_what_it_would_take": "Needs an organizational registry, software bill of materials tooling, and real package ecosystems. A toy registry cannot show scale or incentive effects."
@@ -74,7 +74,7 @@
   "name": "Cascading Failures",
   "owasp_llm_2025": "LLM10 Unbounded Consumption (partial)",
   "mitre_atlas": "To be mapped",
-  "status": "Built",
+  "status": "Measured",
   "existing_work": "A three-agent crew on the ASI02 arena",
   "folder": "items/asi08-cascading-failures",
   "limits_and_what_it_would_take": "Needs production-scale topologies with many agents and real dependencies. A five-agent crew shows the mechanism, not the amplification factor."

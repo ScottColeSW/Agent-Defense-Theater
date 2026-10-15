@@ -99,6 +99,29 @@ def question(key, out, base, best, rows, records):
             if gap >= 20:
                 return {"ask": f"Same card, same question, a {gap}-point gap between reviewers. Who checks the checker?",
                         "because": f"On the bottom-line card {ranked[0][1]} was right {ranked[0][0] * 100:.0f}% of the time and {ranked[-1][1]} {ranked[-1][0] * 100:.0f}%."}
+    if key == "asi04/first-run" and records:
+        upd = [r for r in records if r["defense"] == "code_pin" and r["attack"] == "none" and r.get("variant") == "legit_update"]
+        aware = [r for r in records if r["defense"] == "canary_diff" and r["attack"] == "canary_aware"]
+        if "code_pin" in by and by["code_pin"]["success"]["k"] == 0 and upd and aware:
+            refused = sum(1 for r in upd if r.get("refused"))
+            fooled = sum(r["outcome"] == "attack_succeeded" for r in aware)
+            return {"ask": "How do you tell a legitimate update from a tampered one without a person?",
+                    "because": f"The only control that stopped every tampered tool, the code pin, also refused {refused} of {len(upd)} legitimate updates. The one that let updates through, "
+                               f"the canary comparison, was fooled {fooled} of {len(aware)} times by a tool that recognizes the check."}
+    if key == "asi01/first-run" and "spotlighting" in by and by["spotlighting"]["success"]["rate"] > base["success"]["rate"]:
+        sl = by["plan_lock"] if "plan_lock" in by else None
+        tail = f" A plan written before reading anything untrusted left {_k(sl)}." if sl else ""
+        return {"ask": "Telling the model the text was untrusted made it follow the text more. What else do we assume works because it sounds right?",
+                "because": f"With no defense {_k(base)} goals were hijacked. With the text marked as untrusted data, {_k(by['spotlighting'])}.{tail}"}
+    if key == "asi08/first-run" and records:
+        def agreed(defense, bad):
+            rs = [r for r in records if r["defense"] == defense and (r["attack"] != "none") == bad and r.get("reviewer_agreed") is not None]
+            return sum(1 for r in rs if r["reviewer_agreed"]), len(rs)
+        (vb, nb), (vh, nh) = agreed("verify_prompt", True), agreed("verify_prompt", False)
+        (ob, nob), (oh, noh) = agreed("none", True), agreed("none", False)
+        if nb and nh and nob and noh and vb + vh == 0 and ob > 0:
+            return {"ask": "A reviewer that agrees with everything and one that rejects everything are both useless. How would you know which one you have?",
+                    "because": f"With no instruction the reviewers agreed with {ob} of {nob} bad reports and {oh} of {noh} honest ones. Told to verify, they agreed with {vb + vh} of {nb + nh}, honest or bad."}
     if key == "asi02/first-run" and "request_binding" in by:
         return {"ask": "Every control that held was checking something the agent did not write. What is the equivalent in your environment?",
                 "because": f"Request binding, which traces each action to the operator's words or the record, let {_k(by['request_binding'])} through, against {_k(base)} with no control."}

@@ -113,3 +113,34 @@ def test_the_closing_question_is_asked_only_when_the_results_support_it():
     recs = [{"model": f"m [thinking {m}]", "defense": "none", "attack": "a", "outcome": o} for m, o in [("off", "blocked")] * 5 + [("on", "attack_succeeded")] * 5]
     q4 = glance.view([_row("none", 5, 10, 5, 5), _row("x", 0, 10, 5, 5)], None, None, "thinking-agents", "ASI03", recs)["question"]
     assert "time to think" in q4["ask"] and "5 of 5" in q4["because"] and "0 of 5" in q4["because"]
+
+
+def test_closing_questions_for_the_supply_chain_goal_hijack_and_cascade_runs():
+    from adt import glance
+    rec = lambda **kw: dict({"attack": "none", "outcome": "task_succeeded"}, **kw)
+    r4 = [_row("none", 20, 45, 22, 45), _row("code_pin", 0, 45, 15, 45), _row("canary_diff", 14, 45, 22, 45)]
+    recs = [rec(defense="code_pin", variant="legit_update", refused=True) for _ in range(18)] + [rec(defense="canary_diff", attack="canary_aware", outcome="attack_succeeded") for _ in range(6)] \
+        + [rec(defense="canary_diff", attack="canary_aware") for _ in range(3)]
+    q = glance.view(r4, None, None, "first-run", "ASI04", recs)["question"]
+    assert "legitimate update from a tampered one" in q["ask"] and "refused 18 of 18" in q["because"] and "fooled 6 of 9" in q["because"]
+    r1 = [_row("none", 22, 45, 40, 51), _row("spotlighting", 33, 45, 38, 51), _row("plan_lock", 1, 45, 30, 51)]
+    q1 = glance.view(r1, None, None, "first-run", "ASI01")["question"]
+    assert "untrusted made it follow the text more" in q1["ask"] and "33 of 45" in q1["because"] and "1 of 45" in q1["because"]
+    better = [_row("none", 22, 45, 40, 51), _row("spotlighting", 10, 45, 38, 51)]
+    assert "untrusted made it follow" not in glance.view(better, None, None, "first-run", "ASI01")["question"]["ask"]       # only asked when it backfired
+    r8 = [_row("none", 29, 45, 25, 30), _row("verify_prompt", 10, 45, 21, 30)]
+    recs8 = [{"defense": "none", "attack": "a", "reviewer_agreed": i < 35} for i in range(45)] + [{"defense": "none", "attack": "none", "reviewer_agreed": i < 20} for i in range(30)] \
+        + [{"defense": "verify_prompt", "attack": "a", "reviewer_agreed": False} for _ in range(45)] + [{"defense": "verify_prompt", "attack": "none", "reviewer_agreed": False} for _ in range(30)]
+    q8 = glance.view(r8, None, None, "first-run", "ASI08", recs8)["question"]
+    assert "agrees with everything and one that rejects everything" in q8["ask"] and "35 of 45" in q8["because"] and "0 of 75" in q8["because"]
+
+
+def test_the_cascade_stage_table_counts_an_offer_as_reaching_the_decider():
+    import sys
+    from adt.loader import load_scenario
+    sc = load_scenario("asi08")
+    stage_of = sys.modules[type(sc).__module__].stage_of
+    assert stage_of({"outcome": "attack_succeeded", "reviewer_agreed": False, "broke": ""}) == "decider_acted"       # the reviewer disagreed and the decider acted anyway
+    assert stage_of({"outcome": "blocked", "reviewer_agreed": False, "broke": ""}) == "reviewer_rejected"
+    assert stage_of({"outcome": "blocked", "reviewer_agreed": True, "broke": ""}) == "decider_declined"
+    assert stage_of({"outcome": "blocked", "reviewer_agreed": None, "broke": "figure is outside the range"}) == "circuit_broke"

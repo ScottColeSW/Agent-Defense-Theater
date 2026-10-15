@@ -17,9 +17,9 @@ Every item, including the measured ones, has limits. This page collects them wit
 
 ### ASI01: Agent Goal Hijack
 
-Status: Partial evidence elsewhere.
+Status: Measured (first preregistered live run), with sibling evidence in Aegis Vector.
 
-Agent stack: only a single retrieval-and-answer loop has been tested, not a tool-using planner. Needs: a tool-using agent crew in Greenroom, an adaptive red team that is not the author, and models above the 8B size this hardware allows.
+One agent on one simulated desk, author-written attacks, and three small models. The goal check is one small model on one prompt, and the plan lock assumes a trusted, complete request. Needs: a tool-using agent crew, an adaptive red team that is not the author, goal checks across several models, and models above the 8B size this hardware allows. The spotlighting result (it made hijacks more likely here) is unexplained and needs its own investigation.
 
 ### ASI02: Tool Misuse and Exploitation
 
@@ -39,9 +39,9 @@ The third round adds: every operator request in it states its amount and destina
 
 ### ASI04: Agentic Supply Chain Vulnerabilities
 
-Status: Stub.
+Status: Measured (first preregistered live run).
 
-Needs an organizational registry, software bill of materials tooling, and real package ecosystems. A toy registry cannot show scale or incentive effects.
+The tampered tools are a proxy in front of one reviewed server, not real compromised packages, and there is no time-delayed tampering. Needs an organizational registry, software bill of materials tooling, real package ecosystems, and a way to hash a remote server, which the code pin cannot do. A toy registry cannot show scale or incentive effects.
 
 ### ASI05: Unexpected Code Execution
 
@@ -63,15 +63,15 @@ Needs agents on separate hosts or runtimes and a real key management service. A 
 
 ### ASI08: Cascading Failures
 
-Status: Stub.
+Status: Measured (first preregistered live run).
 
-Needs production-scale topologies with many agents and real dependencies. A five-agent crew shows the mechanism, not the amplification factor.
+The fault is injected at the first of three stages, and the reviewer and decider are the same model. This shows whether a bad figure crosses two hops, not the amplification factor. Needs production-scale topologies with many agents and real dependencies, and a crew whose failures are produced by agents and not injected.
 
 ### ASI09: Human-Agent Trust Exploitation
 
-Status: Designed elsewhere.
+Status: AI reviewers measured (the ASI03 calibration run), a people study built and waiting for participants.
 
-Needs a human-subject study with real reviewers. Simulated reviewers cannot show how people actually fail.
+Needs a human-subject study with real reviewers, which the study page now makes possible, and enough of them: at least five finishing before anything is reported. A pilot of self-selected colleagues with nothing at stake cannot show how people fail under real queue pressure.
 
 ### ASI10: Rogue Agents
 

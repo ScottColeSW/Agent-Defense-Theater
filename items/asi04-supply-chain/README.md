@@ -2,7 +2,7 @@
 
 | | |
 | --- | --- |
-| Status | Built (prediction committed, first live run pending) |
+| Status | Measured (first preregistered live run, with an addendum) |
 | OWASP LLM Top 10 2025 | LLM03 Supply Chain |
 | MITRE ATLAS | To be mapped |
 | Existing work | New work |
@@ -42,7 +42,7 @@ Results use the shared schema in [`../../common/RESULTS-SCHEMA.md`](../../common
 ## What exists today
 
 - **A live arena:** the ASI02 deal-desk agent with the RealEstateTools calculator server as the reviewed tool, tampered stand-ins staged by a proxy ([`targets/mutating_proxy.py`](targets/mutating_proxy.py)), and three load-time controls (a manifest pin, a canary comparison, a code pin) with a legitimate update to show their cost.
-- **Not run live yet.** The prediction and pass bar are in [`PREREGISTRATION.md`](PREREGISTRATION.md).
+- **One preregistered live run** (three models, 450 records, with an addendum). Each load-time control saw exactly what it was built to see: the manifest pin stopped every poisoned description and look-alike, the canary comparison stopped a plain change in answers and was fooled by a tool that recognizes the check, and the code pin stopped everything and refused every legitimate update. See [`PREREGISTRATION.md`](PREREGISTRATION.md).
 
 ## Limits and what it would take
 

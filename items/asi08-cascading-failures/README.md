@@ -2,7 +2,7 @@
 
 | | |
 | --- | --- |
-| Status | Built (prediction committed, first live run pending) |
+| Status | Measured (first preregistered live run, with an addendum) |
 | OWASP LLM Top 10 2025 | LLM10 Unbounded Consumption (partial) |
 | MITRE ATLAS | To be mapped |
 | Existing work | New work |
@@ -42,7 +42,7 @@ Results use the shared schema in [`../../common/RESULTS-SCHEMA.md`](../../common
 ## What exists today
 
 - **A live arena:** a three-agent crew (analyst fault injected, reviewer and decider live) on the ASI02 deal-desk arena, three faults, and four conditions: no defense, a verify prompt, a range check and an independent cross-check, with honest reports to show what each costs.
-- **Not run live yet.** The prediction and pass bar are in [`PREREGISTRATION.md`](PREREGISTRATION.md).
+- **One preregistered live run** (three models, 300 records, with an addendum). With no defense 29 of 45 bad figures became a harmful offer, because the reviewer was not a check: it agreed with 78% of bad reports and 67% of honest ones. An independent recomputation stopped all 45 and cost nothing. See [`PREREGISTRATION.md`](PREREGISTRATION.md).
 
 ## Limits and what it would take
 

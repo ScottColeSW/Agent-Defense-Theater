@@ -49,15 +49,15 @@ For ASI02, run `npm install` once in `items/asi02-tool-misuse/targets/real-estat
 
 | ID | Risk | Status | What exists |
 | --- | --- | --- | --- |
-| [ASI01](items/asi01-goal-hijack/) | Agent Goal Hijack | Partial evidence elsewhere | Injection and spotlighting results in Aegis Vector |
+| [ASI01](items/asi01-goal-hijack/) | Agent Goal Hijack | Built | Reuses the ASI02 arena: five goal-hijack attacks, a plan lock and a goal check; first live run pending. Injection and spotlighting results in Aegis Vector |
 | [ASI02](items/asi02-tool-misuse/) | Tool Misuse and Exploitation | Measured | Real MCP servers, three gates, eight attacks; first preregistered live run |
 | [ASI03](items/asi03-identity-privilege/) | Identity and Privilege Abuse | Measured | Three preregistered live rounds |
-| [ASI04](items/asi04-supply-chain/) | Agentic Supply Chain Vulnerabilities | Stub | Plan written |
+| [ASI04](items/asi04-supply-chain/) | Agentic Supply Chain Vulnerabilities | Built | A tampered MCP tool staged in front of the real server, and three load-time controls; first live run pending |
 | [ASI05](items/asi05-code-execution/) | Unexpected Code Execution | Stub | Plan written |
 | [ASI06](items/asi06-memory-context-poisoning/) | Memory and Context Poisoning | Measured elsewhere | Palimpsest and Aegis Vector |
 | [ASI07](items/asi07-inter-agent-communication/) | Insecure Inter-Agent Communication | Stub | Plan written |
-| [ASI08](items/asi08-cascading-failures/) | Cascading Failures | Stub | Plan written |
-| [ASI09](items/asi09-human-agent-trust/) | Human-Agent Trust Exploitation | Designed elsewhere | Agent Theater Framework |
+| [ASI08](items/asi08-cascading-failures/) | Cascading Failures | Built | A three-agent crew where a bad figure can spread to an offer; first live run pending |
+| [ASI09](items/asi09-human-agent-trust/) | Human-Agent Trust Exploitation | Built | AI reviewers measured; a [people study](site/study.html) built and waiting for participants |
 | [ASI10](items/asi10-rogue-agents/) | Rogue Agents | Designed elsewhere | Agent Theater Framework and Void-Marauders |
 
 Status means: **Stub** (plan written, nothing built), **Designed** (design exists, nothing measured), **Built** (runs, not yet measured), **Measured** (saved results with a prior prediction), **Adversarially tested** (measured against an attacker who knows the defense). Each item's mapping to the OWASP LLM Top 10 and MITRE ATLAS is in [`crosswalk/coverage.csv`](crosswalk/coverage.csv), and what each gap would take to close is in [`docs/LIMITS-AND-ANSWERS.md`](docs/LIMITS-AND-ANSWERS.md).

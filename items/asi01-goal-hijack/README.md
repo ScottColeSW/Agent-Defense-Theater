@@ -2,7 +2,7 @@
 
 | | |
 | --- | --- |
-| Status | Partial evidence elsewhere |
+| Status | Built (prediction committed, first live run pending) |
 | OWASP LLM Top 10 2025 | LLM01 Prompt Injection |
 | MITRE ATLAS | AML.T0051 (.000 direct, .001 indirect) |
 | Existing work | Aegis Vector (injection and spotlighting results) |
@@ -41,7 +41,8 @@ Results use the shared schema in [`../../common/RESULTS-SCHEMA.md`](../../common
 
 ## What exists today
 
-Aegis Vector measured spotlighting and layered prompt defenses against instruction injection (see its Threat mapping section).
+- **A live arena** (reused from ASI02): a deal-desk agent, two real MCP servers and a SQLite pipeline. Five author-written attacks that try to replace or extend the operator's goal, the same valid tasks as ASI02, and five conditions: no defense, spotlighting, a plan locked before the agent reads anything untrusted, a goal check by a separate reviewer model, and the last two together.
+- **Not run live yet.** The prediction and pass bar are in [`PREREGISTRATION.md`](PREREGISTRATION.md). Aegis Vector's spotlighting results are sibling evidence.
 
 ## Limits and what it would take
 

@@ -66,6 +66,21 @@ def cmd_build(a):
     sys.exit(subprocess.call(cmd))
 
 
+def cmd_study(a):
+    from . import study
+    s = study.Study().summary()
+    print(f"Reviewer study: {s['participants']} participant(s), {s['finished']} finished all {len(study.Study()._load())} cards, {s['answers']} answers.")
+    if not s["enough"]:
+        print(f"Fewer than {s['min_participants']} finished: too few to read anything into. Treat it as a pilot.")
+    pct = lambda k, n: "n/a" if not n else f"{k / n * 100:.0f}% ({k}/{n})"
+    print(f"{'card style':14} {'people: false approvals':26} {'people: false denials':24} {'median s':9} {'models: false approvals':26} {'models: false denials'}")
+    for st in study.STYLES:
+        h, m = s["by_style"][st], s["models"].get(st, {})
+        if h["n"]:
+            print(f"{st:14} {pct(h['false_approvals'], h['non_matching']):26} {pct(h['false_denials'], h['matching']):24} {h['median_ms'] / 1000:<9.1f} "
+                  f"{pct(m.get('false_approvals', 0), m.get('non_matching', 0)):26} {pct(m.get('false_denials', 0), m.get('matching', 0))}")
+
+
 def cmd_run(a):
     sc = load_scenario(a.item, a.experiment)
     if hasattr(sc, "configure"):
@@ -214,6 +229,7 @@ def main(argv=None):
     s = sub.add_parser("demo", help="scripted ASI03 run, then verify its log"); s.add_argument("--experiment", **EXP); s.set_defaults(f=cmd_demo)
     s = sub.add_parser("prereg", help="check an item's prediction is committed"); s.add_argument("item"); s.add_argument("--experiment", **EXP); s.set_defaults(f=cmd_prereg)
     sub.add_parser("experiments", help="list runnable experiments").set_defaults(f=cmd_experiments)
+    sub.add_parser("study", help="summary of the reviewer study (people approving the calibration cards), beside the model reviewers").set_defaults(f=cmd_study)
     s = sub.add_parser("overhead", help="latency our own code adds, measured without a model"); s.add_argument("item"); s.add_argument("--experiment", **EXP)
     s.add_argument("--repeat", type=int, default=5); s.set_defaults(f=cmd_overhead)
     a = p.parse_args(argv)

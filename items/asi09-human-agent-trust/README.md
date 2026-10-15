@@ -2,7 +2,7 @@
 
 | | |
 | --- | --- |
-| Status | Designed elsewhere |
+| Status | Partly measured: AI reviewers measured, a people study built and waiting for participants |
 | OWASP LLM Top 10 2025 | LLM09 Misinformation (partial) |
 | MITRE ATLAS | To be mapped |
 | Existing work | Agent Theater Framework |
@@ -41,7 +41,9 @@ Results use the shared schema in [`../../common/RESULTS-SCHEMA.md`](../../common
 
 ## What exists today
 
-Agent Theater defines human-in-the-loop oversight at three speeds. No measurement exists yet.
+- **AI reviewers, measured.** The [ASI03 reviewer-calibration run](../asi03-identity-privilege/PREREGISTRATION-reviewer-calibration.md) put 22 request cards to seven models in three presentation styles. Shown the agent's own account, reviewers approved 40% of the requests that did not match what the operator asked, against 6% when the system's comparison came first.
+- **A study of people, built.** [`site/study.html`](../../site/study.html) (start the runner with `python adt.py serve --open`, then open `/study.html`) puts the same cards to a person and records each decision and the time taken, anonymously. `python adt.py study` and `study.html?view=summary` show the results beside the models'. The [protocol](STUDY-PROTOCOL.md), with the prediction and pass bar, is committed before the first participant.
+- **No participants yet.** Nothing is reported as a result until at least five people have finished.
 
 ## Limits and what it would take
 

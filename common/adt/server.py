@@ -7,6 +7,7 @@ API
   POST /api/jobs                  start a job: {tests, mode: scripted|live|exploratory, models, reviewer, max_temp, defenses}
   GET  /api/jobs/<id>             progress; POST /api/jobs/<id>/cancel
   GET  /api/reports               saved runs; GET /api/reports/<run_id> the detailed report
+  POST /api/study/start           begin the reviewer study; /api/study/answer and /api/study/finish record and reveal; GET /api/study/summary
 
 Protections: only local Host names are served (DNS rebinding), a POST needs a JSON content type and, when a browser sends an
 Origin, it must be this server's own (so a page on another site cannot start runs on this machine), and model names must be
@@ -22,12 +23,13 @@ import time
 import webbrowser
 from urllib.parse import urlparse
 
-from . import gpucooler, modelmgr, models, report
+from . import gpucooler, modelmgr, models, report, study
 from .jobs import MANAGER, Busy
 from .loader import ROOT
 from .registry import list_tests
 
 SITE = ROOT / "site"
+STUDY = study.Study()
 MAX_BODY = 1_000_000           # a request body bigger than this is refused
 MAX_JSON = 65_536              # and a JSON document bigger than this is not parsed
 
@@ -59,7 +61,7 @@ class GpuMonitor:
     def snapshot(self) -> dict:
         c = gpucooler.active
         return {"available": bool(self.available), "temp_c": self.last, "history": list(self.history),
-                "max_c": c.max_c if c else gpucooler.DEFAULT_MAX_C, "resume_c": c.resume_c if c else gpucooler.DEFAULT_MAX_C - gpucooler.DEFAULT_MARGIN_C,
+                "max_c": c.max_c if c else gpucooler.DEFAULT_MAX_C, "resume_c": c.resume_c if c else gpucooler.DEFAULT_RESUME_C,
                 "cooler_active": bool(c), "paused": bool(c and c.paused), "cooler": c.stats() if c else None, "cooler_started": c.wall0 if c else None,
                 "pause_events": list(c.pause_events) if c else []}
 
@@ -105,6 +107,8 @@ def make_handler(port: int, monitor: GpuMonitor):
                         return self._json(modelmgr.catalog())
                     except OSError:
                         return self._json({"error": "Ollama is not reachable"}, 503)
+                if path == "/api/study/summary":
+                    return self._json(STUDY.summary())
                 if path == "/api/reports":
                     return self._json({"reports": report.list_reports()})
                 if path.startswith("/api/reports/"):
@@ -156,6 +160,12 @@ def make_handler(port: int, monitor: GpuMonitor):
             except (ValueError, json.JSONDecodeError):
                 return self._json({"error": "invalid JSON"}, 400)
             try:
+                if path == "/api/study/start":
+                    return self._json(STUDY.start(), 201)
+                if path == "/api/study/answer":
+                    return self._json(STUDY.answer(body.get("participant"), body.get("n"), body.get("decision"), body.get("ms")))
+                if path == "/api/study/finish":
+                    return self._json(STUDY.finish(body.get("participant")))
                 if path == "/api/jobs":
                     return self._json(MANAGER.view(MANAGER.submit(body)), 201)
                 if path == "/api/models/unload":

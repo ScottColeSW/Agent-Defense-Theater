@@ -2,7 +2,7 @@
 
 | | |
 | --- | --- |
-| Status | Stub |
+| Status | Built (prediction committed, first live run pending) |
 | OWASP LLM Top 10 2025 | LLM10 Unbounded Consumption (partial) |
 | MITRE ATLAS | To be mapped |
 | Existing work | New work |
@@ -41,7 +41,8 @@ Results use the shared schema in [`../../common/RESULTS-SCHEMA.md`](../../common
 
 ## What exists today
 
-Void-Marauders shows outcome-sensitive trust between agents, which informs the breaker rules.
+- **A live arena:** a three-agent crew (analyst fault injected, reviewer and decider live) on the ASI02 deal-desk arena, three faults, and four conditions: no defense, a verify prompt, a range check and an independent cross-check, with honest reports to show what each costs.
+- **Not run live yet.** The prediction and pass bar are in [`PREREGISTRATION.md`](PREREGISTRATION.md).
 
 ## Limits and what it would take
 

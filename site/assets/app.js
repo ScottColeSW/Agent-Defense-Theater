@@ -10,7 +10,7 @@ const GH = "https://github.com/ScottColeSW/Agent-Defense-Theater/";
 
 /* ---------- chrome ---------- */
 function chrome(active) {
-  const links = [["index.html", "Home"], ["start.html", "Tests"], ["about.html", "About"], ["books.html", "Books"]];
+  const links = [["index.html", "Home"], ["start.html", "Tests"], ["study.html", "Study"], ["about.html", "About"], ["books.html", "Books"]];
   $("nav").innerHTML = links.map(([h, t]) => `<a href="${h}" class="${h === active ? "on" : ""}">${t}</a>`).join("");
   mountTheme();
   $("foot").innerHTML = `<div class="wrap row"><p>Agent Defense Theater is a research foundation, not a product. MIT licensed. Built by Scott A. Cole.</p>

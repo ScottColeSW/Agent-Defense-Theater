@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reviewer Study</title>
+<link rel="stylesheet" href="assets/app.css">
+<script src="assets/theme.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <nav class="site-nav" id="nav" aria-label="Site"></nav>
+  <div id="page"></div>
+</div>
+<footer id="foot"></footer>
+
+<script src="assets/app.js"></script>
+<script>
+const STYLE_NAME = {agent_card: "the agent's own account", effect_card: "system-computed checks", bottomline: "the system's comparison first"};
+let S = null, i = 0, shown = 0, busy = false;
+const view = new URLSearchParams(location.search).get("view");
+const frac = (k, n) => n ? `${Math.round(k / n * 100)}% (${k}/${n})` : "n/a";
+
+function intro() {
+  $("page").innerHTML = `<header style="padding:24px 0 4px"><h1 style="font-size:clamp(26px,5vw,40px)">Would you have approved it?</h1>
+    <p class="muted" style="max-width:62ch;margin-top:8px">A short exercise for anyone who signs off on what an AI agent wants to do. Twenty-two requests, no right to be quick, and no wrong way to read them.</p></header>
+    <section><div class="card" style="max-width:68ch"><h2 style="margin-top:0">What you will do</h2>
+    <p>An AI agent has asked to do something on behalf of an operator. You are the approver. Read each request and decide: <b>approve it only if it is something the operator actually asked for</b>, and deny it if it is not. A request that goes beyond what the operator asked is a denial, however reasonable it sounds.</p>
+    <p class="small muted">Your answers are anonymous. The page records a random id, your decision on each request, and how long you took. Nothing else is asked or kept, and it stays on the machine running this page. It is a pilot, not an experiment: the same requests were put to AI reviewers, and the point is to see how people compare. You will see how you did at the end.</p>
+    <p style="margin-top:18px"><button class="btn primary" id="go">Begin</button> <a class="btn" href="study.html?view=summary" style="margin-left:8px">See the results so far</a></p></div></section>`;
+  $("go").onclick = begin;
+}
+
+async function begin() {
+  try { S = await post("/api/study/start", {}); }
+  catch (e) { $("page").innerHTML = `<div class="notice bad" style="margin-top:24px"><b>The study needs the local runner.</b> Start it with <code>python adt.py serve --open</code>. ${esc(e.message)}</div>`; return; }
+  i = 0; card();
+}
+
+function card() {
+  const c = S.cards[i], total = S.cards.length;
+  $("page").innerHTML = `<header style="padding:24px 0 0"><div class="muted small" style="font-weight:700;letter-spacing:.06em">REQUEST ${i + 1} OF ${total}</div>
+      <div style="height:6px;background:var(--soft);border-radius:4px;margin:8px 0 18px"><div style="height:100%;width:${Math.round(i / total * 100)}%;background:var(--accent-blue);border-radius:4px"></div></div></header>
+    <section><div class="card"><pre style="white-space:pre-wrap;font-size:15px;line-height:1.5;margin:0;font-family:var(--font-mono)">${esc(c.card)}</pre></div>
+    <div style="display:flex;gap:14px;margin-top:18px;flex-wrap:wrap"><button class="btn primary" id="yes" style="min-width:180px;font-size:16px;padding:14px 22px">Approve <span class="muted small">(A)</span></button>
+      <button class="btn" id="no" style="min-width:180px;font-size:16px;padding:14px 22px">Deny <span class="muted small">(D)</span></button></div>
+    <p class="muted small" style="margin-top:14px">Approve only what the operator actually asked for.</p></section>`;
+  shown = performance.now();
+  $("yes").onclick = () => decide("approve");
+  $("no").onclick = () => decide("deny");
+}
+
+async function decide(d) {
+  if (busy) return;
+  busy = true;
+  try { await post("/api/study/answer", {participant: S.participant, n: S.cards[i].n, decision: d, ms: Math.round(performance.now() - shown)}); }
+  catch (e) { busy = false; alert("Could not record that answer: " + e.message); return; }
+  busy = false;
+  i++;
+  if (i < S.cards.length) card(); else done();
+}
+
+document.addEventListener("keydown", e => {
+  if (!S || i >= S.cards.length || !$("yes") || e.ctrlKey || e.metaKey || e.altKey) return;
+  if (e.key === "a" || e.key === "A") decide("approve");
+  if (e.key === "d" || e.key === "D") decide("deny");
+});
+
+async function done() {
+  const r = await post("/api/study/finish", {participant: S.participant});
+  const rows = Object.entries(r.by_style).filter(([, v]) => v.n).map(([k, v]) => `<tr><td>${esc(STYLE_NAME[k])}</td><td>${v.n}</td><td>${frac(v.false_approvals, v.non_matching)}</td><td>${frac(v.false_denials, v.matching)}</td><td>${(v.median_ms / 1000).toFixed(1)} s</td></tr>`).join("");
+  $("page").innerHTML = `<header style="padding:24px 0 4px"><h1 style="font-size:clamp(24px,4vw,34px)">Done. Here is how it went.</h1>
+    <p class="muted" style="max-width:62ch">You got ${r.overall.correct} of ${r.overall.n} right. Each request was shown to you in one of three ways, and that is the part worth looking at.</p></header>
+    <section><div class="card"><div class="tblwrap"><table class="tbl"><thead><tr><th>How the request was shown</th><th>Requests</th><th>Approved what was not asked for</th><th>Denied what was asked for</th><th>Median time</th></tr></thead><tbody>${rows}</tbody></table></div>
+      <p class="muted small" style="margin:12px 0 0">With only a few requests in each row, one slip moves a percentage a long way. Read the counts, not the percentages.</p></div></section>
+    <section><div class="card" style="max-width:68ch"><h3 style="margin-top:0">The three ways</h3><ul class="small">
+      <li><b>The agent's own account.</b> What the agent asked for, and the reason the agent gave.</li>
+      <li><b>System-computed checks.</b> The operator's words beside the checks the system worked out, with a flag when the request is over a limit.</li>
+      <li><b>The system's comparison first.</b> A line stating whether the request matches what the operator asked, ahead of the details.</li></ul>
+      <p class="small">AI reviewers saw the same requests. <a href="study.html?view=summary">See how people and models compare so far.</a></p>
+      <p style="margin-top:14px"><button class="btn primary" onclick="location.href='study.html'">Hand it to the next reviewer</button></p></div></section>`;
+}
+
+async function summary() {
+  let s;
+  try { s = await api("/api/study/summary"); } catch (e) { $("page").innerHTML = `<div class="notice bad" style="margin-top:24px">The study needs the local runner. ${esc(e.message)}</div>`; return; }
+  const bar = (k, n, tone) => `<div style="position:relative;height:20px;background:var(--soft);border-radius:6px;min-width:150px"><div style="height:100%;width:${n ? Math.max(k / n * 100, k ? 2 : 0) : 0}%;background:${tone};border-radius:6px;opacity:.85"></div><div style="position:absolute;inset:0;padding-left:8px;display:flex;align-items:center;font-size:12.5px;font-weight:700">${frac(k, n)}</div></div>`;
+  const rows = ["agent_card", "effect_card", "bottomline"].map(st => {
+    const h = s.by_style[st], m = s.models[st] || {};
+    return `<tr><td><b>${esc(STYLE_NAME[st])}</b></td><td>${bar(h.false_approvals || 0, h.non_matching || 0, "var(--accent-rose)")}</td><td>${bar(m.false_approvals || 0, m.non_matching || 0, "var(--grid)")}</td>
+      <td>${bar(h.false_denials || 0, h.matching || 0, "var(--accent-amber)")}</td><td>${bar(m.false_denials || 0, m.matching || 0, "var(--grid)")}</td><td>${h.n ? (h.median_ms / 1000).toFixed(1) + " s" : "n/a"}</td></tr>`;
+  }).join("");
+  const thirds = Object.entries(s.approval_by_third).map(([k, v]) => `${["first", "second", "last"][k - 1]} third ${Math.round(v * 100)}%`).join(", ");
+  $("page").innerHTML = `<header style="padding:24px 0 4px"><h1 style="font-size:clamp(24px,4vw,34px)">People and models, on the same requests</h1>
+    <p class="muted" style="max-width:66ch">${s.participants} participant(s), ${s.finished} finished all 22 requests, ${s.answers} answers.</p></header>
+    ${s.enough ? "" : `<div class="notice warn"><b>Too few to read anything into.</b> At least ${s.min_participants} people need to finish before these figures mean anything. Treat what is below as a pilot.</div>`}
+    <section><div class="card"><div class="tblwrap"><table class="tbl"><thead><tr><th>How the request was shown</th><th>People: approved what was not asked</th><th>AI reviewers: same</th><th>People: denied what was asked</th><th>AI reviewers: same</th><th>People: median time</th></tr></thead><tbody>${rows}</tbody></table></div>
+      <p class="muted small" style="margin:12px 0 0">AI reviewers are the seven models of the reviewer-calibration run, pooled, one pass each. ${thirds ? "Share of requests approved, by position in the exercise: " + esc(thirds) + "." : ""}
+      Participants are self-selected, nothing was at stake, and nobody was waiting. This says how a few people read these cards, not how reviewers behave under real pressure.</p>
+      <p style="margin-top:14px"><a class="btn primary" href="study.html">Take it</a></p></div></section>`;
+}
+
+chrome("study.html");
+if (view === "summary") summary(); else intro();
+</script>
+</body>
+</html>

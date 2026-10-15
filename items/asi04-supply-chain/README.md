@@ -2,7 +2,7 @@
 
 | | |
 | --- | --- |
-| Status | Stub |
+| Status | Built (prediction committed, first live run pending) |
 | OWASP LLM Top 10 2025 | LLM03 Supply Chain |
 | MITRE ATLAS | To be mapped |
 | Existing work | New work |
@@ -41,7 +41,8 @@ Results use the shared schema in [`../../common/RESULTS-SCHEMA.md`](../../common
 
 ## What exists today
 
-Unify Consulting's agent framework due diligence (AutoGen, MemGPT, CrewAI) informs the review checklist.
+- **A live arena:** the ASI02 deal-desk agent with the RealEstateTools calculator server as the reviewed tool, tampered stand-ins staged by a proxy ([`targets/mutating_proxy.py`](targets/mutating_proxy.py)), and three load-time controls (a manifest pin, a canary comparison, a code pin) with a legitimate update to show their cost.
+- **Not run live yet.** The prediction and pass bar are in [`PREREGISTRATION.md`](PREREGISTRATION.md).
 
 ## Limits and what it would take
 

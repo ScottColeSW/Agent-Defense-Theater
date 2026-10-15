@@ -104,6 +104,63 @@
     5,
     6
    ]
+  },
+  "asi01/first-run": {
+   "security": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "limits": [
+    1,
+    5,
+    6
+   ],
+   "oversight": [
+    4
+   ],
+   "valid": [
+    6
+   ]
+  },
+  "asi04/first-run": {
+   "security": [
+    2,
+    3,
+    4
+   ],
+   "limits": [
+    1,
+    5
+   ],
+   "thirdparty": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+   ],
+   "valid": [
+    5,
+    6
+   ]
+  },
+  "asi08/first-run": {
+   "security": [
+    3,
+    4
+   ],
+   "limits": [
+    3,
+    7
+   ],
+   "valid": [
+    6,
+    7
+   ]
   }
  },
  "gaps": [

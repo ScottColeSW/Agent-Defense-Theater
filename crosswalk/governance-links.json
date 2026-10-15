@@ -161,6 +161,18 @@
     6,
     7
    ]
+  },
+  "asi01/spotlighting": {
+   "security": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "limits": [
+    3
+   ]
   }
  },
  "gaps": [

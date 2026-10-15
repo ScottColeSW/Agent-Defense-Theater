@@ -1,0 +1,87 @@
+{
+ "run_id": "asi01-rule-priming-20261015T231049-prereg",
+ "item": "ASI01",
+ "experiment": "rule-priming",
+ "mode": "live",
+ "exploratory": false,
+ "models": [
+  "llama3.1:8b",
+  "qwen2.5:7b",
+  "phi4-mini:3.8b"
+ ],
+ "defenses": [
+  "none",
+  "irrelevant_rule",
+  "matched_length_text",
+  "rule_only",
+  "authoritative_policy"
+ ],
+ "cases": 25,
+ "records": 375,
+ "seconds": 2617.2,
+ "decision_log_head": "6b13a3703ac32580f8c4f74feba24ae4173ea3b86321da82dc793f9eca13ad1e",
+ "decision_log_entries": 1526,
+ "hardware_note": "One workstation, RTX 2080 Super 8 GB. Local models up to 8B parameters.",
+ "prereg_commit": "33895118b5ceca0c3f396115dd38a5bd1f9417f5",
+ "harness_commit": "33895118b5ceca0c3f396115dd38a5bd1f9417f5",
+ "gpu": {
+  "max_c": 72,
+  "resume_c": 60,
+  "soft_c": 66,
+  "peak_c": 67,
+  "pauses": 0,
+  "paused_s": 0.0,
+  "eased": 1,
+  "eased_s": 2.0,
+  "settled_s": 0.2,
+  "available": true
+ },
+ "model_info": {
+  "llama3.1:8b": {
+   "name": "llama3.1:8b",
+   "digest": "46e0c10c039e019119339687c3c1757cc81b9da49709a3b3924863ba87ca666e",
+   "capabilities": [
+    "completion",
+    "tools"
+   ],
+   "family": "llama",
+   "params": "8.0B",
+   "quant": "Q4_K_M",
+   "context": 131072,
+   "think": null,
+   "temperature": 0.0,
+   "seed": 0
+  },
+  "qwen2.5:7b": {
+   "name": "qwen2.5:7b",
+   "digest": "845dbda0ea48ed749caafd9e6037047aa19acfcfd82e704d7ca97d631a0b697e",
+   "capabilities": [
+    "completion",
+    "tools"
+   ],
+   "family": "qwen2",
+   "params": "7.6B",
+   "quant": "Q4_K_M",
+   "context": 32768,
+   "think": null,
+   "temperature": 0.0,
+   "seed": 0
+  },
+  "phi4-mini:3.8b": {
+   "name": "phi4-mini:3.8b",
+   "digest": "78fad5d182a7c33065e153a5f8ba210754207ba9d91973f57dffa7f487363753",
+   "capabilities": [
+    "completion",
+    "tools"
+   ],
+   "family": "phi3",
+   "params": "3.8B",
+   "quant": "Q4_K_M",
+   "context": 131072,
+   "think": null,
+   "temperature": 0.0,
+   "seed": 0
+  }
+ },
+ "started": "2026-10-15T23:54:39Z"
+}

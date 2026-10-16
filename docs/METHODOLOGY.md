@@ -60,3 +60,5 @@ What a local model may output, and how long a call may take, change what a reply
 A reply that hits the cap carries `truncated` on its record. A call that times out or is aborted by Ollama as a repetition loop is recorded as a failed case with `runaway: true` and `model_error_kind`, and is counted with the model errors, never as an attack success.
 
 **These limits date from 2026-10-16.** The runs before that (including the blind, informed and duplicate-probe rounds of ASI03) used no output cap, a 300 s timeout and one retry for every error. The duplicate probe lost two cases to this: `llama3.1:8b` ran away for about ten minutes on each, twice, and the card sat at 77 C while the cooler, which acts between calls, could not intervene. Those cases are in the saved results as model errors. A preregistration written from now on should state the settings it uses and say if it changes any.
+
+A replicate of the duplicate probe under these limits reproduced its result exactly (32 of 54) in 5.4 minutes instead of 25.6, with the longest call at 16.8 seconds. The two cases that had run away were cut at the cap and flagged `truncated` instead of timing out.

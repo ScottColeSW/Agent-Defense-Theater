@@ -41,11 +41,14 @@ def read_temp_c():
 
 class GpuCooler:
     def __init__(self, max_c=DEFAULT_MAX_C, resume_c=None, poll_s=3.0, give_up_s=1800,
-                 read=read_temp_c, sleep=time.sleep, clock=time.monotonic, say=print, soft_c=None, ease_s=DEFAULT_EASE_S):
+                 read=read_temp_c, sleep=time.sleep, clock=time.monotonic, say=print, soft_c=None, ease_s=DEFAULT_EASE_S,
+                 settle_c=None, settle_max_s=900):
         self.max_c = max_c
         self.resume_c = resume_c if resume_c is not None else min(DEFAULT_RESUME_C, max_c - DEFAULT_MARGIN_C)
         self.soft_c = soft_c if soft_c is not None else max(self.resume_c, max_c - DEFAULT_SOFT_MARGIN_C)
         self.ease_s, self.eased, self.eased_s, self.settled_s = ease_s, 0, 0.0, 0.0
+        self.settle_c = settle_c if settle_c is not None else self.resume_c      # where a run starts and where each model change begins; can be below resume_c
+        self.settle_max_s = settle_max_s
         if self.resume_c > self.max_c:
             raise ValueError("resume_c must not be above max_c")
         self.poll_s, self.give_up_s = poll_s, give_up_s
@@ -117,19 +120,21 @@ class GpuCooler:
         self._say(f"GPU cooler: resumed at {t}C after {waited:.0f}s.")
         return t
 
-    def settle(self, max_wait_s=900):
-        """Wait until the card is at or below resume_c. Called before a run starts and when one model gives way to the next, so each begins cool.
-        It never raises: after max_wait_s it says so and lets the run go on, since the hard limit still holds on every call."""
+    def settle(self, max_wait_s=None):
+        """Wait until the card is at or below settle_c (resume_c unless set lower). Called before a run starts and when one model gives way to the next,
+        so each begins cool. It never raises: after max_wait_s (settle_max_s unless given) it says so and lets the run go on, since the hard limit
+        still holds on every call. A card that idles above settle_c, for example with other programs using the GPU, will use the whole wait."""
+        max_wait_s = self.settle_max_s if max_wait_s is None else max_wait_s
         t0 = self._clock()
         try:
             t = self._read()
             if t is None:
                 return None
             self._see(t)
-            if t <= self.resume_c:
+            if t <= self.settle_c:
                 return t
-            self._say(f"GPU cooler: {t}C at the start. Settling to {self.resume_c}C before going on.")
-            while t > self.resume_c:
+            self._say(f"GPU cooler: {t}C at the start. Settling to {self.settle_c}C before going on.")
+            while t > self.settle_c:
                 if self._clock() - t0 > max_wait_s:
                     self._say(f"GPU cooler: still {t}C after {max_wait_s}s. Going on, the {self.max_c}C limit still applies to every call.")
                     break
@@ -152,7 +157,7 @@ class GpuCooler:
 
     def stats(self) -> dict:
         return {"max_c": self.max_c, "resume_c": self.resume_c, "soft_c": self.soft_c, "peak_c": self.peak, "pauses": self.pauses,
-                "paused_s": round(self.paused_s, 1), "eased": self.eased, "eased_s": round(self.eased_s, 1), "settled_s": round(self.settled_s, 1),
+                "paused_s": round(self.paused_s, 1), "eased": self.eased, "eased_s": round(self.eased_s, 1), "settled_s": round(self.settled_s, 1), "settle_c": self.settle_c,
                 "available": bool(self.available)}
 
     def timeline(self) -> dict:

@@ -153,7 +153,7 @@ def cmd_informed(a):
             sys.exit("The attacker has to be a hosted model (provider:model); see: adt keys")
         attacker, victims, mode = models.make_runner(a.attacker, max_out=informed.MAX_OUTPUT_TOKENS, temperature=0.7), [models.make_runner(n) for n in names], "live"
         if a.max_temp:
-            gpucooler.install(gpucooler.GpuCooler(max_c=a.max_temp))
+            gpucooler.install(gpucooler.GpuCooler(max_c=a.max_temp, settle_c=getattr(a, "settle_temp", None), settle_max_s=getattr(a, "settle_max", 900)))
             print(f"GPU cooler: pausing above {a.max_temp}C (GPU is {gpucooler.read_temp_c()}C now)")
     try:
         s = informed.run(a.item, attacker, victims, mode=mode)
@@ -215,7 +215,7 @@ def cmd_run(a):
             sys.exit("Name the models: --models llama3.1:8b,qwen2.5:7b  (see: adt models)")
         runners = sc.make_runners(names) if hasattr(sc, "make_runners") else [models.make_runner(n) for n in names]
         if a.max_temp:
-            gpucooler.install(gpucooler.GpuCooler(max_c=a.max_temp))
+            gpucooler.install(gpucooler.GpuCooler(max_c=a.max_temp, settle_c=getattr(a, "settle_temp", None), settle_max_s=getattr(a, "settle_max", 900)))
             t = gpucooler.read_temp_c()
             print(f"GPU cooler: pausing above {a.max_temp}C" + (f" (GPU is {t}C now)" if t is not None else " (no reading available)"))
     print(f"{sc.item} [{getattr(sc, 'experiment', 'first-run')}]: {len(sc.cases())} cases x {len(defs)} defenses x {len(runners)} model(s), mode={mode}" +
@@ -342,6 +342,8 @@ def main(argv=None):
     s = sub.add_parser("informed", help="informed-attacker rounds: a hosted model shown the defenses writes attacks and learns from outcomes"); s.add_argument("item")
     s.add_argument("--attacker", help="hosted attacker, provider:model"); s.add_argument("--models", help="local victim models")
     s.add_argument("--max-temp", type=int, default=64, help="pause live model calls above this many C; 0 turns the cooler off")
+    s.add_argument("--settle-temp", type=int, default=None, help="cool to this many C before a run and between models (default: the resume point)")
+    s.add_argument("--settle-max", type=int, default=900, help="longest wait for --settle-temp, in seconds, before going on")
     s.add_argument("--scripted", action="store_true", help="a canned attacker and scripted victims, never a result"); s.add_argument("--summary", metavar="SESSION_FILE", help="print a saved session instead of running")
     s.set_defaults(f=cmd_informed)
     sub.add_parser("status", help="coverage table and which items are runnable").set_defaults(f=cmd_status)
@@ -352,6 +354,8 @@ def main(argv=None):
     s = sub.add_parser("run", help="run an item"); s.add_argument("item"); s.add_argument("--models"); s.add_argument("--defenses")
     s.add_argument("--experiment", **EXP); s.add_argument("--reviewer", help="model that plays the approver, where the experiment has one")
     s.add_argument("--max-temp", type=int, default=gpucooler.DEFAULT_MAX_C, help="pause live model calls while the GPU is above this many C; 0 turns the cooler off")
+    s.add_argument("--settle-temp", type=int, default=None, help="cool to this many C before a run and between models (default: the resume point)")
+    s.add_argument("--settle-max", type=int, default=900, help="longest wait for --settle-temp, in seconds, before going on")
     s.add_argument("--scripted", action="store_true", help="human-written replies, never a result")
     s.add_argument("--exploratory", action="store_true", help="run without a committed prediction, labeled as such"); s.set_defaults(f=cmd_run)
     s = sub.add_parser("summary", help="score saved runs"); s.add_argument("item"); s.add_argument("--by", default="defense", help="comma list: defense,model,tier,attack,task")

@@ -98,3 +98,12 @@ def test_settle_waits_for_a_cool_card_and_never_raises():
     assert c3.settle() is None
     gpucooler.uninstall()
     assert gpucooler.settle() is None
+
+
+def test_settle_can_cool_below_the_resume_point_and_gives_up_after_its_cap():
+    c, msgs = _cooler([62, 58, 55, 52, 49], settle_c=50)
+    assert c.settle() == 49 and c.settled_s == pytest.approx(12.0) and any("Settling to 50C" in m for m in msgs)
+    c2, msgs2 = _cooler([53] * 40, settle_c=50, settle_max_s=15)                             # a card that idles above the target
+    assert c2.settle() == 53 and any("Going on" in m for m in msgs2) and c2.settled_s < 25
+    c3, _ = _cooler([55])
+    assert c3.settle_c == c3.resume_c and c3.settle() == 55 or c3.settle_c == c3.resume_c    # unset: it is the resume point, as before

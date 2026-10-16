@@ -76,3 +76,31 @@ def test_local_attacker_must_not_be_a_provider_name():
                             resume_from=None, max_temp=0, settle_temp=None, settle_max=300))()
     with pytest.raises(SystemExit, match="local Ollama model"):
         cli.cmd_informed(ns)
+
+
+def test_every_live_path_installs_the_cooler_with_the_requested_settle_temperature(monkeypatch):
+    """A local-attacker run once ran with no cooler at all: the install sat only on the hosted-attacker branch."""
+    from adt import gpucooler
+    seen = {}
+
+    def fake_run(item, attacker, victims, mode="live", **kw):
+        c = gpucooler.active
+        seen.update(cooler=c, mode=mode, kw=kw)
+        return {"rounds": [], "complete": False, "stopped_because": "test", "spend": {"attacker_calls": 0, "provider_requests": 0}, "file": ""}
+    monkeypatch.setattr(informed, "run", fake_run)
+    monkeypatch.setattr(informed, "summarize", lambda f: "")
+    monkeypatch.setattr(cli.harness, "free_models", lambda: None)
+    monkeypatch.setattr(gpucooler, "read_temp_c", lambda: 50)
+    monkeypatch.setattr(models, "make_runner", lambda name, **kw: type("R", (), {"name": name})())
+    base = dict(item="asi03", summary=None, models="qwen2.5:7b", scripted=False, attacker=None, resume_from=None, max_temp=64, settle_temp=50, settle_max=300)
+    gpucooler.uninstall()
+    cli.cmd_informed(type("A", (), dict(base, local_attacker="hermes3:8b"))())
+    assert seen["cooler"] is not None and seen["cooler"].max_c == 64 and seen["cooler"].settle_c == 50 and seen["cooler"].settle_max_s == 300
+    gpucooler.uninstall()
+    monkeypatch.setattr(cli, "keys_is_remote", lambda n: True)
+    cli.cmd_informed(type("A", (), dict(base, local_attacker=None, attacker="google:gemini-pro-latest"))())
+    assert seen["cooler"] is not None and seen["cooler"].settle_c == 50
+    gpucooler.uninstall()
+    cli.cmd_informed(type("A", (), dict(base, scripted=True, local_attacker=None, max_temp=64))())
+    assert seen["cooler"] is None and seen["mode"] == "scripted"             # a scripted run uses no GPU
+    gpucooler.uninstall()

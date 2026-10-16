@@ -164,9 +164,10 @@ def cmd_informed(a):
         if not keys_is_remote(a.attacker):
             sys.exit("The attacker has to be a hosted model (provider:model); see: adt keys. For a local model use --local-attacker")
         attacker, victims, mode = models.make_runner(a.attacker, max_out=informed.MAX_OUTPUT_TOKENS, temperature=0.7), [models.make_runner(n) for n in names], "live"
-        if a.max_temp:
-            gpucooler.install(gpucooler.GpuCooler(max_c=a.max_temp, settle_c=getattr(a, "settle_temp", None), settle_max_s=getattr(a, "settle_max", 900)))
-            print(f"GPU cooler: pausing above {a.max_temp}C (GPU is {gpucooler.read_temp_c()}C now)")
+    if mode == "live" and a.max_temp:                  # every live path, whichever attacker it uses: victims always run on the local GPU
+        gpucooler.install(gpucooler.GpuCooler(max_c=a.max_temp, settle_c=getattr(a, "settle_temp", None), settle_max_s=getattr(a, "settle_max", 900)))
+        print(f"GPU cooler: pausing above {a.max_temp}C" + (f", cooling to {a.settle_temp}C between models" if getattr(a, "settle_temp", None) else "") +
+              f" (GPU is {gpucooler.read_temp_c()}C now)")
     try:
         s = informed.run(a.item, attacker, victims, mode=mode, **kw)
     finally:

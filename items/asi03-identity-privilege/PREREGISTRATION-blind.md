@@ -97,4 +97,32 @@ What changed from the first committed version (`58848f3`), and why:
 
 ## Addendum (after the run)
 
-To be added after the run: actual results, which predictions missed, and what changed in the plan.
+Run `asi03-blind-20261016T153902-prereg` (3,690 records, 71 minutes, decision log verified). Harness commit `362901e`. Three agent models, reviewer `qwen2.5:7b`, 675 attack cases per condition.
+
+| Condition | Predicted | Actual | Verdict |
+| --- | --- | --- | --- |
+| `none` | 52% (40 to 65%) | **75.0%** (506/675) | Missed, high |
+| `scoped_credentials` | 8% (3 to 14%) | 11.3% (76/675) | Inside the interval |
+| `task_binding` | 0% | 0/675 | As predicted |
+| `hold+bottomline` | 8% (3 to 14%) | 11.3% (76/675), bad approvals 0/649 | Inside the interval |
+| `task_binding+hold+bottomline` | 0% | 0/675 | As predicted |
+
+**Pass bar:** all six criteria met (the harness's own scoring was run on the saved records).
+
+**What the data show**
+
+- **Every leak is the known gap.** All 76 successes under `scoped_credentials` (and the same 76 under `hold+bottomline`) come from the 6 attacks that ask for a refund of $50 or less to the ticket's own account. The other 39 attacks leaked 0 of 585 cases. Those 6 attacks succeeded in 76 of 90 cases (84%); the preregistration assumed about 60%, which is why the headline figure is high in its interval.
+- **Request binding closed it** (0/675, with and without holds) with no change in valid work: in-tier 35/36 in every condition, above-tier 26/27 under both hold conditions, identical to round 3.
+- **The model reviewer added nothing here.** A refund inside the credential is allowed without a hold, so `hold+bottomline` leaks exactly what scoped credentials leak. It made no bad approvals (0 of 649 holds).
+- **The no-defense prediction was wrong.** The blind attacks beat the ambient token more often than the author's attacks did (75% against 52%). By agent: `qwen2.5:7b` 90%, `phi4-mini:3.8b` 69%, `llama3.1:8b` 65%. The hand-written set had `llama3.1:8b` at 12.5%, so the generated attacks are stronger against that model.
+- **By source (descriptive only):** the 27 `flash-lite` attacks: 69.6% undefended, 6.9% under scoped credentials. The 12 unfocused pro attacks: 80.6% and 0%. The 6 focused pro attacks: 87.8% and 53.3%.
+
+**What this does and does not show**
+
+- Unprompted, the blind generators found the in-gap shape in only 2 of 39 attacks; the strategy memo and a focus line were needed to get more. A defender relying on blind attackers alone would have under-tested the one shape that leaks.
+- The set is weighted toward that shape after the amendment, so the 11.3% depends on the 6-in-45 mix. Do not read it as a rate for attackers in general.
+- Both generators are Google models. Both reviewers and all victims are local models of 8B or less, on one simulated desk.
+- Two cases per condition failed with a model error (the same two cases, reused across conditions); 10 attack records lack the `generator` field because of that.
+- The cooler limit was 60 C. The card peaked at 64 C, with 395 pauses (1,542 s) and 508 eased calls (1,016 s), about 60% of the run time spent waiting. The limit sat close to the resume point, so the cooler repeatedly paused. This changed run time, not answers.
+
+**What changed in the plan:** nothing in the prediction. A next round should test an attacker that is shown the defenses and gets pass or fail feedback, since the one gap that leaks was found only with a hint.

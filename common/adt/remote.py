@@ -3,6 +3,7 @@
 Differences from a local run that a result must not hide: a hosted model is not pinned to a digest and is not guaranteed to repeat at
 temperature 0, so `describe()` records the provider, the model id the service reported, and that the run was remote. These runners
 do not wait on the GPU cooler or the RAM guard, because nothing here uses either."""
+import contextlib
 import json
 import re
 import time
@@ -17,6 +18,20 @@ MAX_WAIT = 70                               # longest single wait on a rate limi
 ATTEMPTS = 5
 BACKOFF = (3, 8, 20, 45, 0)                  # seconds waited after each failed try; overloaded hosted models often clear in under a minute
 _calls = 0                                  # remote calls made by this process, for the max_calls guard
+
+
+_cap_override = None                        # set by limit_requests(): an absolute value of _calls the process may not pass
+
+
+@contextlib.contextmanager
+def limit_requests(n: int):
+    """No more than n provider requests (retries included) inside this block, whatever keys.ini says."""
+    global _cap_override
+    prev, _cap_override = _cap_override, _calls + n
+    try:
+        yield
+    finally:
+        _cap_override = prev
 
 
 class SpendLimit(RuntimeError):
@@ -100,6 +115,8 @@ class RemoteRunner:
             self.temperature = opts["temperature"]
         err = "unknown error"
         for attempt in range(1, ATTEMPTS + 1):
+            if _cap_override is not None and _calls >= _cap_override:
+                raise SpendLimit("the request cap for this run was reached.")
             if cap and _calls >= cap:
                 raise SpendLimit(f"max_calls = {cap} in {keys.keys_path().name} reached. Raise it to continue.")
             _calls += 1

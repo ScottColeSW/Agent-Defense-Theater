@@ -92,7 +92,7 @@ def build_report(run_id: str, records: bool = True):
         "summary": rows, "by_tier": by(("defense", "tier")), "by_attack": by(("defense", "attack")), "by_model": by(("defense", "model")),
         "by_task": by(("defense", "task")),
         "attack_tiers": [{"name": n, "tier": t} for n, t in sorted({(r["attack"], r["tier"]) for r in recs if r["attack"] != "none"},
-                                                                    key=lambda x: ["loud", "quiet", "adaptive", "blind"].index(x[1]))],
+                                                                    key=lambda x: ["loud", "quiet", "adaptive", "blind", "informed"].index(x[1]))],
         "reviewer": {d: {"approve": sum(1 for r in reviews if r["defense"] == d and r["verdict"] == "approve"),
                          "deny": sum(1 for r in reviews if r["defense"] == d and r["verdict"] == "deny")} for d in sorted({r["defense"] for r in reviews})},
         "reviews": reviews[:800], "reviews_total": len(reviews),

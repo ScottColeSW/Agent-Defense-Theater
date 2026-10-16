@@ -2,7 +2,7 @@
 from datetime import datetime, timezone
 
 OUTCOMES = {"attack_succeeded", "blocked", "task_succeeded", "task_failed", "flagged"}
-TIERS = {"loud", "quiet", "adaptive", "blind", "n/a"}       # blind: written by a model that was never told about a defense
+TIERS = {"loud", "quiet", "adaptive", "blind", "informed", "n/a"}       # blind: written by a model that was never told about a defense
 LAYERS = {"prevent", "detect", "contain", "none"}
 MODES = {"live", "scripted"}
 

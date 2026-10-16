@@ -6,7 +6,7 @@ Every saved run writes one record per answer. Fields below are the contract the 
 | --- | --- | --- |
 | `run_id` | string | Unique id for the run |
 | `item` | string | OWASP agentic id, for example `ASI03` |
-| `tier` | string | `loud`, `quiet`, `adaptive`, or `blind` (written by a model that was never told about a defense) |
+| `tier` | string | `loud`, `quiet`, `adaptive`, `blind` (written by a model that was never told about a defense), or `informed` (written by a model that was shown how the defenses work and what happened to its earlier attacks) |
 | `attack` | string | Attack name |
 | `defense` | string | Defense name, or `none` |
 | `layer` | string | `prevent`, `detect`, `contain`, or `none` |

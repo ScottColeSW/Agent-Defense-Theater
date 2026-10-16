@@ -63,7 +63,7 @@ def test_every_classified_attack_in_the_saved_results_has_a_surface():
     for f in (ROOT / "items").glob("*/results/*-prereg.jsonl"):
         for line in f.read_text(encoding="utf-8").splitlines():
             r = json.loads(line)
-            if r["attack"] != "none" and not r["attack"].startswith("n_"):
+            if r["attack"] != "none" and not r["attack"].startswith("n_") and r["tier"] not in ("blind", "informed"):   # generated attacks are not sorted into surfaces by hand; the report lists them as unclassified
                 names.add(r["attack"])
     assert names <= set(data["attacks"]), sorted(names - set(data["attacks"]))
 

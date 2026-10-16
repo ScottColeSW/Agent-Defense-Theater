@@ -39,13 +39,22 @@ class JobManager:
                 "strong_reviewer": spec.get("strong_reviewer") or None, "max_temp": int(spec.get("max_temp", gpucooler.DEFAULT_MAX_C)),
                 "defenses": list(spec.get("defenses") or []), "unload_before": bool(spec.get("unload_before", True)), "unload_after": bool(spec.get("unload_after", True))}
         if mode != "scripted":
-            installed = {n for n, _ in models.ollama_models()} if self._ollama_up() else None
+            from . import keys
+            names_all = spec["models"] + [r for r in (spec["reviewer"], spec["strong_reviewer"]) if r]
+            for n in names_all:
+                if keys.is_remote(n):
+                    try:
+                        keys.provider_config(keys.split(n)[0])
+                    except KeyError as e:
+                        raise ValueError(str(e))
+            local = [n for n in names_all if not keys.is_remote(n)]
+            installed = {n for n, _ in models.ollama_models()} if (local and self._ollama_up()) else (set() if not local else None)
             if installed is None:
                 raise ValueError("Ollama is not reachable. Start it, then try again.")
             names = spec["models"] + [r for r in (spec["reviewer"], spec["strong_reviewer"]) if r]
             if not spec["models"]:
                 raise ValueError("choose at least one model for a live run")
-            missing = [n for n in names if n not in installed]
+            missing = [n for n in names if not keys.is_remote(n) and n not in installed]
             if missing:
                 raise ValueError("not installed in Ollama: " + ", ".join(missing))
             ok, why = modelmgr.preflight(list(dict.fromkeys(names)))            # refuse a model that will not fit, before anything starts
@@ -140,7 +149,7 @@ class JobManager:
             sc.configure(reviewer=spec["reviewer"], strong_reviewer=spec["strong_reviewer"])
         defs = [d for d in sc.defenses if not spec["defenses"] or d.name in spec["defenses"]]
         runners = ([models.ScriptedRunner()] if mode == "scripted" else sc.make_runners(spec["models"]) if hasattr(sc, "make_runners")
-                   else [models.OllamaRunner(m) for m in spec["models"]])
+                   else [models.make_runner(m) for m in spec["models"]])
         if mode == "live" and spec["max_temp"]:
             gpucooler.install(gpucooler.GpuCooler(max_c=spec["max_temp"], say=lambda m: self._say(job, m)))
         t["state"] = "running"

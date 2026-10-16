@@ -48,6 +48,24 @@ def cmd_models(a):
         sys.exit(f"Ollama is not reachable at {models.HOST} ({e}). Start the Ollama app, or run: ollama serve")
 
 
+def cmd_keys(a):
+    """Which remote providers have a key (never the key itself); --check makes one tiny live call to each that does."""
+    from . import keys
+    p = keys.keys_path()
+    print(f"Keys file: {p} ({'found' if p.exists() else 'missing: copy keys.example.ini to keys.ini'})")
+    lim = keys.limits()
+    print(f"Limits: {lim['max_output_tokens']} output tokens a call, " + (f"stop after {lim['max_calls']} calls" if lim["max_calls"] else "no call cap"))
+    st = keys.status()
+    for prov, state, where in st:
+        print(f"  {prov:<12}{state:<9}{where}")
+    if a.check:
+        if not a.model:
+            sys.exit("Name a model to try: adt keys --check anthropic:claude-haiku-5-5")
+        r = models.make_runner(a.model)
+        rep = r.generate('Reply with the JSON {"ok": true}.', "ping")
+        print(f"{a.model}: replied in {rep.latency_ms} ms, {rep.tokens_in} in / {rep.tokens_out} out. Reported as: {r.describe()['reported_model']}")
+
+
 def cmd_status(a):
     with open(ROOT / "crosswalk" / "coverage.csv", newline="", encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
@@ -94,7 +112,7 @@ def cmd_run(a):
         names = a.models.split(",") if a.models else []
         if not names:
             sys.exit("Name the models: --models llama3.1:8b,qwen2.5:7b  (see: adt models)")
-        runners = sc.make_runners(names) if hasattr(sc, "make_runners") else [models.OllamaRunner(n) for n in names]
+        runners = sc.make_runners(names) if hasattr(sc, "make_runners") else [models.make_runner(n) for n in names]
         if a.max_temp:
             gpucooler.install(gpucooler.GpuCooler(max_c=a.max_temp))
             t = gpucooler.read_temp_c()
@@ -213,6 +231,8 @@ def main(argv=None):
     sub = p.add_subparsers(dest="cmd", required=True)
     sub.add_parser("models", help="list local Ollama models").set_defaults(f=cmd_models)
     s = sub.add_parser("gpu", help="current GPU temperature against the cooler limit"); s.add_argument("--max-temp", type=int, default=gpucooler.DEFAULT_MAX_C); s.set_defaults(f=cmd_gpu)
+    s = sub.add_parser("keys", help="which remote providers have an API key set (keys.ini)"); s.add_argument("--check", action="store_true", help="make one tiny paid call with --model to prove the key works")
+    s.add_argument("model", nargs="?", help="with --check: provider:model to try"); s.set_defaults(f=cmd_keys)
     sub.add_parser("status", help="coverage table and which items are runnable").set_defaults(f=cmd_status)
     s = sub.add_parser("serve", help="serve the site locally"); s.add_argument("--port", type=int, default=8765)
     s.add_argument("--open", action="store_true", help="open the browser"); s.set_defaults(f=cmd_serve)

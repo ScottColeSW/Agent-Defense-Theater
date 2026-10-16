@@ -223,3 +223,7 @@ items/*/results/scripted/
 
 # Installed Node dependencies of the ASI02 target (npm install in items/asi02-tool-misuse/targets/real-estate-tools)
 node_modules/
+
+# Local API keys for remote models (copy keys.example.ini to keys.ini)
+keys.ini
+*.keys.ini

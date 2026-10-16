@@ -53,7 +53,7 @@ class CaseResult:
 def _model_info(runners, scenario) -> dict:
     """Ollama's own description of every model a run used (agents and any reviewers): capabilities, size, quantization,
     context and digest. A scripted run has no model, so it records nothing."""
-    from .models import OllamaRunner
+    from .models import make_runner
     out = {}
     for r in runners:
         try:
@@ -62,7 +62,7 @@ def _model_info(runners, scenario) -> dict:
             pass
     for name in getattr(scenario, "extra_models", lambda: [])():
         try:
-            out[name] = OllamaRunner(name).describe()
+            out[name] = make_runner(name).describe()
         except Exception:
             pass
     return out

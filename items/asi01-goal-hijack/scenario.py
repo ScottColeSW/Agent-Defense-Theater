@@ -12,7 +12,7 @@ from pathlib import Path
 
 from adt.harness import ROOT, Case, CaseResult, Defense
 from adt.loader import load_file
-from adt.models import OllamaRunner, Reply, ScriptedRunner
+from adt.models import Reply, ScriptedRunner, make_runner
 from adt.passbar import criterion, kn, pct, rate
 
 HERE = Path(__file__).resolve().parent
@@ -75,7 +75,7 @@ class Asi01:
             return ScriptedRunner()
         self._judges = getattr(self, "_judges", {})
         if self.reviewer_model not in self._judges:
-            self._judges[self.reviewer_model] = OllamaRunner(self.reviewer_model)
+            self._judges[self.reviewer_model] = make_runner(self.reviewer_model)
         return self._judges[self.reviewer_model]
 
     def cases(self):

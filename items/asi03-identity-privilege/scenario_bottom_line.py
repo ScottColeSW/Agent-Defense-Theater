@@ -9,7 +9,7 @@ from pathlib import Path
 
 from adt.harness import ROOT, Defense
 from adt.loader import load_file
-from adt.models import CachedRunner, OllamaRunner
+from adt.models import CachedRunner, make_runner
 from adt.passbar import criterion, kn, pct, rate
 
 HERE = Path(__file__).resolve().parent
@@ -85,7 +85,7 @@ class AsiBottomLine(base.AsiEscalation):
 
     def _runner_for(self, model):
         if model not in self._runners:
-            self._runners[model] = CachedRunner(OllamaRunner(model))
+            self._runners[model] = CachedRunner(make_runner(model))
         return self._runners[model]
 
     # ---- hooks ----

@@ -11,7 +11,7 @@ from adt import gpucooler
 from adt.harness import ROOT, Case, CaseResult, Defense
 from adt.passbar import criterion, kn, pct, rate
 from adt.loader import load_file
-from adt.models import CachedRunner, OllamaRunner, Reply
+from adt.models import CachedRunner, Reply, make_runner
 
 HERE = Path(__file__).resolve().parent
 desk = load_file(HERE / "eval" / "desk.py", "asi03_desk")
@@ -114,7 +114,7 @@ class AsiEscalation:
 
     def _runner(self):
         if self._reviewer_runner is None:
-            self._reviewer_runner = CachedRunner(OllamaRunner(self.reviewer_model))
+            self._reviewer_runner = CachedRunner(make_runner(self.reviewer_model))
         return self._reviewer_runner
 
     def _approver(self, kind, scripted):

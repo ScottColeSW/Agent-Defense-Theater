@@ -46,6 +46,8 @@ python adt.py run asi03 --models llama3.1:8b,qwen2.5:7b,phi4-mini:3.8b
 python -m pytest -q
 ```
 
+Remote models: copy `keys.example.ini` to `keys.ini` (git ignores it), fill in the providers you have, and name a model with its provider, for example `--models anthropic:claude-haiku-5-5,llama3.1:8b`. `python adt.py keys` shows what is set up without printing a key, and `[limits]` in the file caps calls and output tokens. Hosted models are not digest-pinned, and each run records the provider and the model id the service reported.
+
 For ASI02, run `npm install` once in `items/asi02-tool-misuse/targets/real-estate-tools`. `python adt.py -h` lists the rest (models, gpu, status, summary, verify, prereg, experiments).
 
 ## Coverage

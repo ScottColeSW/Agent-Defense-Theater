@@ -89,6 +89,15 @@ class OllamaRunner:
         raise ModelError(f"{self.model}: {err} (after one retry)")
 
 
+def make_runner(name: str, **kw):
+    """A runner for a model name. 'anthropic:claude-haiku-5-5' goes to that provider (keys in keys.ini); anything else is a local Ollama model."""
+    from . import keys
+    if keys.is_remote(name):
+        from .remote import RemoteRunner
+        return RemoteRunner(name, **{k: v for k, v in kw.items() if k in ("temperature", "label")})
+    return OllamaRunner(name, **kw)
+
+
 class CachedRunner:
     """Reuse a reply when the exact prompt repeats. At temperature 0 the model would answer the same,
     and defenses that act after the model (a credential gate) then see identical model output, which

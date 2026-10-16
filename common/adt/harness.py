@@ -37,7 +37,7 @@ class Defense:
 class Case:
     kind: str           # "attack" or "legit"
     attack: str         # attack name, or "none"
-    tier: str           # loud | quiet | adaptive | n/a
+    tier: str           # loud | quiet | adaptive | blind | n/a
     task: str
     data: dict = field(default_factory=dict)
 

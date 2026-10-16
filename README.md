@@ -100,6 +100,7 @@ The [governance crosswalk](docs/GOVERNANCE-CROSSWALK.md) sets each measurement b
 | `common/` | The shared harness and `adt` command line, results schema, decision log, MCP client, model and GPU management, tests |
 | `site/` | The static site: the runner, reports, coverage and project pages |
 | `docs/` | Methodology, threat model, preregistration template, limits register, roadmap, governance crosswalk |
+| [`docs/CHECKLIST.md`](docs/CHECKLIST.md), [`docs/ROLE-QUESTIONS.md`](docs/ROLE-QUESTIONS.md) | An eleven-item agent security checklist and open questions by role, each with a measured answer and its caveat. A test recomputes every quoted number from the saved results |
 | `crosswalk/` | Coverage and governance mapping data |
 | `theater/`, `greenroom/` | The governance model (earned trust, three oversight speeds) and the adversarial arena spec the project builds on |
 | `integrations/` | Sibling projects used or linked |

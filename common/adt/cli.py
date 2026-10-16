@@ -284,6 +284,8 @@ def main(argv=None):
         a.f(a)
     except (AuthError, SpendLimit) as e:
         sys.exit(f"Stopped: {e}")
+    except models.ModelError as e:
+        sys.exit(f"Model call failed: {e}")
     except KeyError as e:
         sys.exit(str(e.args[0]))
 

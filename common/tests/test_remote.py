@@ -115,7 +115,7 @@ def test_a_server_error_is_retried_then_a_model_error_with_the_key_redacted(ini,
     monkeypatch.setattr(remote, "_post", post)
     with pytest.raises(ModelError) as e:
         models.make_runner("openai:gpt-x").generate("s", "u")
-    assert len(n) == 3 and "SECRET" not in str(e.value) and "[key]" in str(e.value)
+    assert len(n) == remote.ATTEMPTS and "SECRET" not in str(e.value) and "[key]" in str(e.value)
 
 
 def test_a_model_that_refuses_temperature_is_retried_without_it(ini, monkeypatch):
@@ -163,3 +163,16 @@ def test_an_account_with_no_credit_stops_at_once_without_retrying(ini, monkeypat
     with pytest.raises(remote.AuthError, match="no usable credit"):
         models.make_runner("openai:gpt-x").generate("s", "u")
     assert len(n) == 1
+
+
+def test_a_per_minute_rate_limit_waits_as_told_and_then_succeeds(ini, monkeypatch):
+    waits, calls = [], []
+    monkeypatch.setattr(remote.time, "sleep", lambda s: waits.append(s))
+    def post(*a, **k):
+        calls.append(1)
+        if len(calls) == 1:
+            raise http_error(429, b'You exceeded your current quota, please check your plan and billing details. Please retry in 30.4s.')
+        return {"choices": [{"message": {"content": "ok"}}], "usage": {}}
+    monkeypatch.setattr(remote, "_post", post)
+    assert models.make_runner("openai:gpt-x").generate("s", "u").text == "ok"
+    assert waits == [31.4]

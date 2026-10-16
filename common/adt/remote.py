@@ -4,6 +4,7 @@ Differences from a local run that a result must not hide: a hosted model is not 
 temperature 0, so `describe()` records the provider, the model id the service reported, and that the run was remote. These runners
 do not wait on the GPU cooler or the RAM guard, because nothing here uses either."""
 import json
+import re
 import time
 import urllib.error
 import urllib.request
@@ -12,6 +13,9 @@ from . import keys
 from .models import ModelError, Reply
 
 ANTHROPIC_VERSION = "2023-06-01"
+MAX_WAIT = 70                               # longest single wait on a rate limit, seconds
+ATTEMPTS = 5
+BACKOFF = (3, 8, 20, 45, 0)                  # seconds waited after each failed try; overloaded hosted models often clear in under a minute
 _calls = 0                                  # remote calls made by this process, for the max_calls guard
 
 
@@ -95,13 +99,13 @@ class RemoteRunner:
         if "temperature" in opts:
             self.temperature = opts["temperature"]
         err = "unknown error"
-        for attempt in (1, 2, 3):
+        for attempt in range(1, ATTEMPTS + 1):
             if cap and _calls >= cap:
                 raise SpendLimit(f"max_calls = {cap} in {keys.keys_path().name} reached. Raise it to continue.")
             _calls += 1
             url, headers, body = self._request(system, user)
             t0 = time.perf_counter()
-            wait = 2 * attempt
+            wait = BACKOFF[attempt - 1]
             try:
                 d = _post(url, headers, body)
                 text, tin, tout = self._parse(d)
@@ -113,14 +117,15 @@ class RemoteRunner:
                 msg = _error_text(e)
                 if e.code in (401, 403):
                     raise AuthError(f"{self.provider} refused the key (HTTP {e.code}). Check {keys.keys_path().name}.") from e
-                if e.code in (402, 429) and any(w in msg.lower() for w in ("insufficient_quota", "credit_balance", "billing")):
+                if e.code in (402, 429) and any(w in msg.lower() for w in ("insufficient_quota", "credit_balance")):
                     raise AuthError(f"{self.provider} accepted the key but the account has no usable credit (HTTP {e.code}). Add credit or a payment method, then try again.") from e
                 if e.code == 400 and self._send_temperature and "temperature" in msg.lower():
                     self._send_temperature = False             # some models fix their own temperature; retry without it
                     continue
                 if e.code == 429:
+                    m = re.search(r"retry in ([\d.]+)\s*s", msg)            # Google names the wait; a free tier allows only a few calls a minute
                     try:
-                        wait = min(float(e.headers.get("retry-after", wait)), 30)
+                        wait = min(float(m.group(1)) + 1 if m else float(e.headers.get("retry-after", wait)), MAX_WAIT)
                     except (TypeError, ValueError):
                         pass
                 err = f"HTTP {e.code}" + (f": {msg}" if msg else "")
@@ -130,6 +135,6 @@ class RemoteRunner:
                 err = keys.redact(str(e.reason))
             except TimeoutError:
                 err = "timed out"
-            if attempt < 3:
+            if attempt < ATTEMPTS:
                 time.sleep(wait)
         raise ModelError(f"{self.model}: {err} (after retries)")

@@ -20,7 +20,7 @@ from .loader import ROOT, item_folder
 FORMAT = 1
 TIER = "blind"
 SLUG = re.compile(r"[^a-z0-9]+")
-BRACES = re.compile(r"\{([^{}]*)\}")
+BRACES = re.compile(r"\{(\w+)\}")           # only {word} is a placeholder; braces around other things (a JSON payload planted as text) are just text
 TYPES = {"string": str, "number": (int, float)}
 
 

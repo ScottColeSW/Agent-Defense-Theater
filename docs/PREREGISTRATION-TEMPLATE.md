@@ -25,6 +25,8 @@ List each defense and its layer (prevent, detect, contain).
 
 Model names, sizes, and the agent crew. State the hardware limit that capped model size, if any.
 
+Generation settings: the output cap, the per-call timeout and the retry rule (defaults and reasons are in `docs/METHODOLOGY.md`, section 9). Say if this run changes any of them.
+
 ## Sample size
 
 Runs per cell, and the step size that implies.

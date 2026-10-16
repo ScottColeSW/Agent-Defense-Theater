@@ -45,3 +45,18 @@ Report the number of answers per cell and the resulting step size. Ranges are wi
 ## 8. Failures stay in
 
 Ideas that did not work are written up with the same care as ideas that did.
+
+## 9. Generation settings are part of the method
+
+What a local model may output, and how long a call may take, change what a reply can be, so a preregistration names them. The defaults live in `common/adt/models.py`:
+
+| Setting | Default | Why |
+| --- | --- | --- |
+| Output cap, a model not asked to think | 1,024 tokens | The agents answer with a short JSON plan (100 to 200 tokens). A longer reply is a runaway, and an uncapped one can run for minutes at full GPU load |
+| Output cap, a thinking model | 4,096 tokens | Reasoning needs room |
+| Timeout for one request | 120 s (300 s when thinking) | Bounds a stalled call |
+| Retry | Once for an ordinary server error. **None** for a timeout or a repetition abort | At temperature 0 with a fixed seed a repeat would run away the same way |
+
+A reply that hits the cap carries `truncated` on its record. A call that times out or is aborted by Ollama as a repetition loop is recorded as a failed case with `runaway: true` and `model_error_kind`, and is counted with the model errors, never as an attack success.
+
+**These limits date from 2026-10-16.** The runs before that (including the blind, informed and duplicate-probe rounds of ASI03) used no output cap, a 300 s timeout and one retry for every error. The duplicate probe lost two cases to this: `llama3.1:8b` ran away for about ten minutes on each, twice, and the card sat at 77 C while the cooler, which acts between calls, could not intervene. Those cases are in the saved results as model errors. A preregistration written from now on should state the settings it uses and say if it changes any.

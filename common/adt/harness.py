@@ -15,7 +15,7 @@ from pathlib import Path
 
 from . import gpucooler, modelmgr, resources
 from .decisionlog import DecisionLog
-from .models import CachedRunner, ModelError, Reply
+from .models import NO_RETRY, CachedRunner, ModelError, Reply
 from .schema import now, validate
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -131,11 +131,13 @@ def run(scenario, runners: list, out_dir: Path, mode: str = "live", exploratory:
             previous = getattr(runner, "model", None)
             cr = CachedRunner(runner) if mode == "live" else runner
             for i, (case, d) in enumerate(pairs, 1):
+                cut_before = getattr(cr, "truncations", 0)
                 try:
                     res = scenario.run_case(case, d, cr, log)
                 except ModelError as e:
                     # Counted, never hidden: a failed model call is a failed case, flagged so reports can show how many.
-                    res = CaseResult("task_failed", Reply("", 0, 0, 0), {"model_error": str(e)[:200], "attempted": False, "exceeds_tier": False,
+                    res = CaseResult("task_failed", Reply("", 0, 0, 0), {"model_error": str(e)[:200], "model_error_kind": e.kind, "runaway": e.kind in NO_RETRY,
+                                                                        "attempted": False, "exceeds_tier": False,
                                                                         "calls": 0, "denied": 0, "tier_ok": case.data.get("tier_ok", True)})
                     log.append(actor="harness", tier="n/a", delegation=[], action="model call", verdict="error", reason=str(e)[:200],
                                saw={"model": runner.name, "defense": d.name, "case": f"{case.attack}/{case.task}"})
@@ -147,6 +149,8 @@ def run(scenario, runners: list, out_dir: Path, mode: str = "live", exploratory:
                        # latency_ms = model_ms + review_ms + gate_ms. thermal_wait_ms is outside all three.
                        "model_ms": res.reply.latency_ms - res.extra.get("review_ms", 0), "review_ms": res.extra.get("review_ms", 0),
                        "gate_ms": res.gate_ms, **res.extra, **gpucooler.snapshot()}
+                if getattr(cr, "truncations", 0) > cut_before:
+                    rec["truncated"] = True                             # a reply in this case hit the output cap and may be cut off
                 if res.reply.thinking:                                  # a thinking model: count the reasoning, keep its text beside the run
                     rec["thinking_chars"] = len(res.reply.thinking)
                     with (out_dir / f"{run_id}.thinking.jsonl").open("a", encoding="utf-8") as tf:

@@ -46,7 +46,7 @@ Every threshold is a constructor argument (`max_c`, `resume_c`, `soft_c`, `poll_
 
 ## Limits
 
-- **It checks between calls.** One long generation can still push the card past the limit before the next check. The background sampler records the real peak, so the report is honest about it.
+- **It checks between calls.** One long generation can still push the card past the limit before the next check. On 2026-10-16 two runaway calls of about ten minutes each held a card at 77 C under a 64 C limit; the output cap and timeout in `common/adt/models.py` now bound a call, but the cooler itself still cannot interrupt one. The background sampler records the real peak, so the report is honest about it.
 - **It reads temperature only.** It does not set fan curves, clocks or power limits. On some cards, notably laptop GPUs, the power limit cannot be changed from software at all.
 - **Pausing keeps the model loaded.** The card goes idle but video memory stays in use.
 - **NVIDIA only**, through `nvidia-smi`, and the hottest GPU is the one it watches.

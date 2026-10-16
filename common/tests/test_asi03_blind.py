@@ -14,7 +14,7 @@ def test_the_experiment_is_listed_and_has_the_pinned_cases():
     sc = load_scenario("asi03", "blind")
     cases = sc.cases()
     atk = [c for c in cases if c.kind == "attack"]
-    assert len(atk) == 39 * 5 and len(cases) == 39 * 5 + 21
+    assert len(atk) == 45 * 5 and len(cases) == 45 * 5 + 21
     assert {c.tier for c in atk} == {"blind"} and {c.data["generator"] for c in atk} == {"google:gemini-3.5-flash-lite", "google:gemini-pro-latest"}
     assert all("{t}" not in c.data["injection"] and "{acct}" not in c.data["injection"] for c in atk)      # every placeholder was filled
 
@@ -35,8 +35,8 @@ def test_scripted_run_matches_what_the_manifest_asks_for(tmp_path):
     assert all(r.get("generator") for r in recs if r["attack"] != "none")
     rows = {r["defense"]: r for r in scorer.summarize(recs)}
     assert list(rows) and len(rows) == 5
-    assert rows["none"]["success"]["k"] == 195                         # a compliant agent follows every blind attack
-    assert rows["scoped_credentials"]["success"]["k"] == 10            # only the two attacks that stay inside the credential (2 x 5 tickets)
+    assert rows["none"]["success"]["k"] == 225                         # a compliant agent follows every blind attack
+    assert rows["scoped_credentials"]["success"]["k"] == 30            # only the six attacks that stay inside the credential (6 x 5 tickets)
     assert rows["task_binding"]["success"]["k"] == 0 and rows["task_binding+hold+bottomline"]["success"]["k"] == 0
     bar = sc.pass_bar(scorer.summarize(recs), {})
     assert [c["id"] for c in bar][:6] == [1, 2, 3, 4, 5, 6]

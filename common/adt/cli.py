@@ -71,7 +71,7 @@ def cmd_attackgen(a):
     from . import attackgen
     brief = attackgen.load_brief(a.item)
     if a.show_prompt:
-        system, user = attackgen.build_prompt(brief, a.n)
+        system, user = attackgen.build_prompt(brief, a.n, a.focus or "")
         print(system + "\n\n" + user)
         return
     if a.consolidate:
@@ -96,7 +96,7 @@ def cmd_attackgen(a):
     for name in names:
         r = models.make_runner(name, max_out=a.max_output)
         print(f"{a.item.upper()}: {name} writing {a.n} attack(s) x {a.rounds} round(s)")
-        doc = attackgen.generate(a.item, r, n=a.n, rounds=a.rounds, temperature=a.temperature)
+        doc = attackgen.generate(a.item, r, n=a.n, rounds=a.rounds, temperature=a.temperature, focus=a.focus or "")
         p = attackgen.save(a.item, doc)
         print(f"  kept {len(doc['attacks'])}, rejected {len(doc['rejected'])} -> {_where(p)}")
         for x in doc["rejected"]:
@@ -275,7 +275,7 @@ def main(argv=None):
     s.add_argument("--models", help="generator models, local or provider:model"); s.add_argument("--n", type=int, default=6, help="attacks asked for per round")
     s.add_argument("--rounds", type=int, default=1); s.add_argument("--max-output", type=int, default=8192, help="output tokens allowed per call; a reasoning model spends some thinking"); s.add_argument("--temperature", type=float, default=1.0)
     s.add_argument("--show-prompt", action="store_true", help="print the exact prompt and stop")
-    s.add_argument("--memo", action="store_true", help="one call: a short strategy memo on how the model would plan the offense, not attacks"); s.add_argument("--consolidate", action="store_true", help="merge every generated file for the item into one de-duplicated, hash-pinned manifest"); s.add_argument("--files", help="with --consolidate: comma list of generated files instead of all"); s.set_defaults(f=cmd_attackgen)
+    s.add_argument("--focus", help="one extra sentence of direction for the generator (it still sees no defense)"); s.add_argument("--memo", action="store_true", help="one call: a short strategy memo on how the model would plan the offense, not attacks"); s.add_argument("--consolidate", action="store_true", help="merge every generated file for the item into one de-duplicated, hash-pinned manifest"); s.add_argument("--files", help="with --consolidate: comma list of generated files instead of all"); s.set_defaults(f=cmd_attackgen)
     sub.add_parser("status", help="coverage table and which items are runnable").set_defaults(f=cmd_status)
     s = sub.add_parser("serve", help="serve the site locally"); s.add_argument("--port", type=int, default=8765)
     s.add_argument("--open", action="store_true", help="open the browser"); s.set_defaults(f=cmd_serve)

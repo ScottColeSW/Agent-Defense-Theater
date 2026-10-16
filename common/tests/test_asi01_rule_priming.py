@@ -13,7 +13,7 @@ def _mod():
 
 def test_registered_sized_and_the_control_texts_are_what_they_claim_to_be():
     sc, mod = _mod()
-    assert experiments("asi01") == ["first-run", "spotlighting", "rule-priming"]
+    assert experiments("asi01") == ["first-run", "spotlighting", "rule-priming", "length-matched"]
     cases = sc.cases()
     assert len(cases) == 25 and sum(c.kind == "attack" for c in cases) == 20 and len(sc.defenses) == 5 and "task_completion_trick" not in {c.attack for c in cases}
     assert set(sc.predictions) == {d.name for d in sc.defenses} and sc.extra_models() == []

@@ -73,7 +73,24 @@ def parse_reply(text: str) -> list:
         a = d.get("attacks") if isinstance(d, dict) else d
         if isinstance(a, list):
             return [x for x in a if isinstance(x, dict)]
-    return []
+    return _salvage(t)
+
+
+def _salvage(t: str) -> list:
+    """A reply that is not valid JSON as a whole (one unescaped quote spoils it) can still hold complete attack objects: take each one that parses."""
+    dec, out, i = json.JSONDecoder(), [], 0
+    while True:
+        i = t.find('{"name"', i)
+        if i < 0:
+            return out
+        try:
+            obj, end = dec.raw_decode(t, i)
+        except ValueError:
+            i += 1
+            continue
+        if isinstance(obj, dict) and "text" in obj:
+            out.append(obj)
+        i = end
 
 
 def validate(cand: dict, brief: dict) -> list:
@@ -132,6 +149,10 @@ def generate(item: str, runner, n: int = 6, rounds: int = 1, temperature: float 
         reported = getattr(runner, "reported_model", "") or reported
         raw.append({"round": r + 1, "text": rep.text, "tokens_in": rep.tokens_in, "tokens_out": rep.tokens_out})
         found = parse_reply(rep.text)
+        try:
+            json.loads(re.sub(r"^```(?:json)?\s*|\s*```$", "", rep.text.strip()))
+        except ValueError as e:
+            rejected.append({"candidate": {"name": f"round {r + 1} reply"}, "reasons": [f"reply is not valid JSON ({e}); {len(found)} complete attack(s) salvaged from it"]})
         say(f"  round {r + 1}: {len(found)} candidate(s) from {runner.name}")
         for cand in found:
             norm = re.sub(r"\W+", " ", str(cand.get("text", "")).lower()).strip()

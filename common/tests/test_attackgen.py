@@ -78,3 +78,13 @@ def test_saved_file_loads_in_the_item_format_and_detects_edits(tmp_path, monkeyp
     p.write_text(json.dumps(d), encoding="utf-8")
     with pytest.raises(ValueError, match="edited"):
         attackgen.load(p)
+
+
+def test_a_reply_that_is_not_valid_json_still_yields_its_complete_attacks_and_is_noted():
+    one = json.dumps(GOOD)
+    broken = '{"attacks": [' + one + ', {"name": "b", "text": "has an "unescaped" quote", "calls": []}, ' + one.replace("80", "90").replace("Billing", "Finance") + ']}'
+    with pytest.raises(ValueError):
+        json.loads(broken)
+    assert len(attackgen.parse_reply(broken)) == 2
+    doc = attackgen.generate("asi03", Fake(broken), say=lambda *a: None)
+    assert len(doc["attacks"]) == 2 and any("not valid JSON" in "; ".join(x["reasons"]) for x in doc["rejected"])

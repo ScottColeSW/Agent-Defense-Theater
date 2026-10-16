@@ -66,6 +66,28 @@ def cmd_keys(a):
         print(f"{a.model}: replied in {rep.latency_ms} ms, {rep.tokens_in} in / {rep.tokens_out} out. Reported as: {r.describe()['reported_model']}")
 
 
+def cmd_attackgen(a):
+    """Have models that know nothing of the defenses write attacks for an item. Saved unedited; commit the file before a run uses it."""
+    from . import attackgen
+    brief = attackgen.load_brief(a.item)
+    if a.show_prompt:
+        system, user = attackgen.build_prompt(brief, a.n)
+        print(system + "\n\n" + user)
+        return
+    names = [m for m in (a.models or "").split(",") if m]
+    if not names:
+        sys.exit("Name the generator models: --models anthropic:claude-haiku-5-5,openai:gpt-4.1-mini  (or --show-prompt to read what they would be sent)")
+    for name in names:
+        r = models.make_runner(name)
+        print(f"{a.item.upper()}: {name} writing {a.n} attack(s) x {a.rounds} round(s)")
+        doc = attackgen.generate(a.item, r, n=a.n, rounds=a.rounds, temperature=a.temperature)
+        p = attackgen.save(a.item, doc)
+        print(f"  kept {len(doc['attacks'])}, rejected {len(doc['rejected'])} -> {_where(p)}")
+        for x in doc["rejected"]:
+            print(f"    rejected {x['candidate'].get('name', '?')}: {'; '.join(x['reasons'])}")
+        print(f"  attacks_sha256 {doc['attacks_sha256'][:16]}  (cite the full value in the preregistration; do not edit the file)")
+
+
 def cmd_status(a):
     with open(ROOT / "crosswalk" / "coverage.csv", newline="", encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
@@ -233,6 +255,10 @@ def main(argv=None):
     s = sub.add_parser("gpu", help="current GPU temperature against the cooler limit"); s.add_argument("--max-temp", type=int, default=gpucooler.DEFAULT_MAX_C); s.set_defaults(f=cmd_gpu)
     s = sub.add_parser("keys", help="which remote providers have an API key set (keys.ini)"); s.add_argument("--check", action="store_true", help="make one tiny paid call with --model to prove the key works")
     s.add_argument("model", nargs="?", help="with --check: provider:model to try"); s.set_defaults(f=cmd_keys)
+    s = sub.add_parser("attackgen", help="blind attack generation: models that know nothing of the defenses write attacks for an item"); s.add_argument("item")
+    s.add_argument("--models", help="generator models, local or provider:model"); s.add_argument("--n", type=int, default=6, help="attacks asked for per round")
+    s.add_argument("--rounds", type=int, default=1); s.add_argument("--temperature", type=float, default=1.0)
+    s.add_argument("--show-prompt", action="store_true", help="print the exact prompt and stop"); s.set_defaults(f=cmd_attackgen)
     sub.add_parser("status", help="coverage table and which items are runnable").set_defaults(f=cmd_status)
     s = sub.add_parser("serve", help="serve the site locally"); s.add_argument("--port", type=int, default=8765)
     s.add_argument("--open", action="store_true", help="open the browser"); s.set_defaults(f=cmd_serve)

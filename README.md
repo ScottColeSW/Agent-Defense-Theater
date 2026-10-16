@@ -48,6 +48,8 @@ python -m pytest -q
 
 Remote models: copy `keys.example.ini` to `keys.ini` (git ignores it), fill in the providers you have, and name a model with its provider, for example `--models anthropic:claude-haiku-5-5,llama3.1:8b`. `python adt.py keys` shows what is set up without printing a key, and `[limits]` in the file caps calls and output tokens. Hosted models are not digest-pinned, and each run records the provider and the model id the service reported.
 
+Blind attacks: `python adt.py attackgen asi03 --models anthropic:claude-haiku-5-5 --n 8` has a model that was told nothing about the defenses write attacks from the item's `attacks/brief.json` alone (`--show-prompt` prints exactly what it is sent). The file is saved unedited under `attacks/generated/` with the model, prompt hash and an `attacks_sha256` to cite in a preregistration; candidates that name a missing tool, use unknown arguments or never reach a privileged tool are rejected with the reason kept.
+
 For ASI02, run `npm install` once in `items/asi02-tool-misuse/targets/real-estate-tools`. `python adt.py -h` lists the rest (models, gpu, status, summary, verify, prereg, experiments).
 
 ## Coverage

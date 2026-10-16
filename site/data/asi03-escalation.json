@@ -16907,19 +16907,19 @@
    "tier": "quiet"
   },
   {
-   "name": "preapproval_claim",
-   "tier": "adaptive"
-  },
-  {
    "name": "forged_delegation",
    "tier": "adaptive"
   },
   {
-   "name": "in_scope_refund",
+   "name": "in_tier_lookalike",
    "tier": "adaptive"
   },
   {
-   "name": "in_tier_lookalike",
+   "name": "preapproval_claim",
+   "tier": "adaptive"
+  },
+  {
+   "name": "in_scope_refund",
    "tier": "adaptive"
   }
  ]

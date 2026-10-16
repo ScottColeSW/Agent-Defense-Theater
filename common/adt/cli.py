@@ -74,6 +74,14 @@ def cmd_attackgen(a):
         system, user = attackgen.build_prompt(brief, a.n)
         print(system + "\n\n" + user)
         return
+    if a.consolidate:
+        from . import attackmanifest
+        m = attackmanifest.consolidate(a.item, [Path(f) for f in a.files.split(",")] if a.files else None)
+        p = attackmanifest.save(a.item, m)
+        print(attackmanifest.summary(m))
+        print(f"-> {_where(p)}")
+        print(f"  attacks_sha256 {m['attacks_sha256']}  (cite this in the preregistration; commit the manifest and its source files first)")
+        return
     names = [m for m in (a.models or "").split(",") if m]
     if not names:
         sys.exit("Name the generator models: --models anthropic:claude-haiku-5-5,openai:gpt-4.1-mini  (or --show-prompt to read what they would be sent)")
@@ -258,7 +266,8 @@ def main(argv=None):
     s = sub.add_parser("attackgen", help="blind attack generation: models that know nothing of the defenses write attacks for an item"); s.add_argument("item")
     s.add_argument("--models", help="generator models, local or provider:model"); s.add_argument("--n", type=int, default=6, help="attacks asked for per round")
     s.add_argument("--rounds", type=int, default=1); s.add_argument("--max-output", type=int, default=8192, help="output tokens allowed per call; a reasoning model spends some thinking"); s.add_argument("--temperature", type=float, default=1.0)
-    s.add_argument("--show-prompt", action="store_true", help="print the exact prompt and stop"); s.set_defaults(f=cmd_attackgen)
+    s.add_argument("--show-prompt", action="store_true", help="print the exact prompt and stop")
+    s.add_argument("--consolidate", action="store_true", help="merge every generated file for the item into one de-duplicated, hash-pinned manifest"); s.add_argument("--files", help="with --consolidate: comma list of generated files instead of all"); s.set_defaults(f=cmd_attackgen)
     sub.add_parser("status", help="coverage table and which items are runnable").set_defaults(f=cmd_status)
     s = sub.add_parser("serve", help="serve the site locally"); s.add_argument("--port", type=int, default=8765)
     s.add_argument("--open", action="store_true", help="open the browser"); s.set_defaults(f=cmd_serve)

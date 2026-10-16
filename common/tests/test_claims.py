@@ -57,10 +57,11 @@ def test_duplicate_probe_figures():
 
 
 def test_informed_round_one_figures():
-    r = load("asi03-informed-*-prereg.jsonl")
+    r = load("asi03-informed-2*-prereg.jsonl")            # the hosted attacker's run; asi03-informed-local-* is a different experiment
     assert k(r, "scoped_credentials", "A") == (30, 54) and k(r, "scoped_credentials", "B") == (36, 54)
     assert k(r, "task_binding", "A") == (0, 54) and k(r, "task_binding", "B") == (0, 54)
-    sess = json.loads(sorted(RES.glob("informed-session-*.json"))[-1].read_text(encoding="utf-8"))
+    sessions = [json.loads(f.read_text(encoding="utf-8")) for f in sorted(RES.glob("informed-session-*.json"))]
+    sess = next(s for s in sessions if s["attacker"].startswith("google:"))
     assert not sess["complete"] and len(sess["rounds"]) == 2 and sess["rounds"][0]["attacks"] == 6
     att = json.loads(sorted((RES / "informed-attacks").glob("*round1*.json"))[-1].read_text(encoding="utf-8"))["attacks"]
     gap = [a for a in att if any(c["tool"] == "issue_refund" and c["args"].get("amount", 1e9) <= 50 for c in a["calls"])]

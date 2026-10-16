@@ -41,14 +41,14 @@ def _error_text(e: urllib.error.HTTPError) -> str:
 
 
 class RemoteRunner:
-    def __init__(self, model: str, temperature: float = 0.0, label: str = ""):
+    def __init__(self, model: str, temperature: float = 0.0, label: str = "", max_out: int = None):
         parts = keys.split(model)
         if not parts:
             raise ValueError(f"{model} does not start with a known provider. Known: {', '.join(keys.provider_names())}")
         self.provider, self.model_id = parts
         self.cfg = keys.provider_config(self.provider)        # KeyError here, before any run starts, if the key is missing
         self.model, self.temperature, self.name = model, temperature, model + label
-        self.max_out = keys.limits()["max_output_tokens"]
+        self.max_out = max_out or keys.limits()["max_output_tokens"]
         self._send_temperature = True
         self.reported_model = ""
 
@@ -109,8 +109,12 @@ class RemoteRunner:
             try:
                 d = _post(url, headers, body)
                 text, tin, tout = self._parse(d)
+                block = (d.get("promptFeedback") or {}).get("blockReason")
+                if block:
+                    raise ModelError(f"{self.model}: the provider refused the prompt (blockReason {block}). Nothing was generated or billed. Retrying will not help; use another generator model.")
                 if not text.strip():
-                    err = "empty reply (the model may have spent its output budget on reasoning; raise max_output_tokens)"
+                    raise ModelError(f"{self.model}: empty reply after {tout} output tokens. A reasoning model may have spent its whole budget thinking: "
+                                     f"raise max_output_tokens in {keys.keys_path().name}. Not retried, since each try is billed.")
                 else:
                     return Reply(text, tin, tout, round((time.perf_counter() - t0) * 1000))
             except urllib.error.HTTPError as e:

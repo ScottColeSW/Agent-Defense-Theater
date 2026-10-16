@@ -176,3 +176,49 @@ def test_a_per_minute_rate_limit_waits_as_told_and_then_succeeds(ini, monkeypatc
     monkeypatch.setattr(remote, "_post", post)
     assert models.make_runner("openai:gpt-x").generate("s", "u").text == "ok"
     assert waits == [31.4]
+
+
+def test_an_empty_reply_is_not_retried(ini, monkeypatch):
+    n = []
+    monkeypatch.setattr(remote, "_post", lambda *a, **k: n.append(1) or {"choices": [{"message": {"content": ""}}], "usage": {"completion_tokens": 2048}})
+    with pytest.raises(ModelError, match="Not retried"):
+        models.make_runner("openai:gpt-x").generate("s", "u")
+    assert len(n) == 1
+
+
+def test_no_key_is_in_the_repository():
+    """Every file git tracks or would add (keys.ini is ignored, so it is neither) holds no configured key and nothing shaped like one."""
+    import re, subprocess
+    root = Path(__file__).resolve().parents[2]
+    git = lambda *a: subprocess.run(["git", "-C", str(root), *a], capture_output=True, text=True).stdout.split("\n")
+    files = [f for f in git("ls-files") + git("ls-files", "--others", "--exclude-standard") if f]
+    assert "keys.ini" not in files
+    shaped = re.compile(r"sk-[A-Za-z0-9_-]{20,}|AIza[0-9A-Za-z_-]{30,}|AQ\.[A-Za-z0-9_-]{30,}|gsk_[A-Za-z0-9]{30,}|xai-[A-Za-z0-9]{30,}")
+    mine = []
+    for p in keys.provider_names():
+        try:
+            mine.append(keys.provider_config(p)["api_key"])
+        except KeyError:
+            pass
+    for f in files:
+        try:
+            text = (root / f).read_text(encoding="utf-8")
+        except (UnicodeDecodeError, FileNotFoundError, OSError):
+            continue
+        assert not shaped.search(text), f"{f} contains something shaped like an API key"
+        assert not any(k in text for k in mine), f"{f} contains a configured key"
+
+
+def test_a_saved_attack_file_never_carries_a_key(ini, monkeypatch, tmp_path):
+    from adt import attackgen
+    monkeypatch.setattr(attackgen, "generated_dir", lambda item: tmp_path)
+    doc = {"generator": {"model": "m"}, "created": "2026-01-01T00:00:00Z", "attacks": [], "raw": [{"text": "echo sk-oai-SECRET2 here"}]}
+    assert "SECRET" not in attackgen.save("asi03", doc).read_text(encoding="utf-8")
+
+
+def test_a_blocked_prompt_is_reported_as_a_refusal_and_not_retried(ini, monkeypatch):
+    n = []
+    monkeypatch.setattr(remote, "_post", lambda *a, **k: n.append(1) or {"promptFeedback": {"blockReason": "OTHER"}, "usageMetadata": {"promptTokenCount": 5}})
+    with pytest.raises(ModelError, match="refused the prompt"):
+        models.make_runner("google:gemini-x").generate("s", "u")
+    assert len(n) == 1

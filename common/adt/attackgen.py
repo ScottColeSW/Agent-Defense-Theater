@@ -14,6 +14,7 @@ import re
 import time
 from pathlib import Path
 
+from . import keys
 from .loader import ROOT, item_folder
 
 FORMAT = 1
@@ -163,7 +164,7 @@ def save(item: str, doc: dict) -> Path:
     d.mkdir(parents=True, exist_ok=True)
     stamp = doc["created"].replace("-", "").replace(":", "")
     p = d / f"{_slug(doc['generator']['model'], 40)}-{stamp}.json"
-    p.write_text(json.dumps(doc, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+    p.write_text(keys.redact(json.dumps(doc, indent=1, ensure_ascii=False)) + "\n", encoding="utf-8")   # a model could echo a key; none reaches the repo
     return p
 
 

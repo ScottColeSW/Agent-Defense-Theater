@@ -52,6 +52,20 @@ Blind attacks: `python adt.py attackgen asi03 --models anthropic:claude-haiku-5-
 
 For ASI02, run `npm install` once in `items/asi02-tool-misuse/targets/real-estate-tools`. `python adt.py -h` lists the rest (models, gpu, status, summary, verify, prereg, experiments).
 
+## Using models together
+
+The range runs on a mix of models, and the mix is part of the method. Local models (Ollama, on the workstation) play the agents under attack, so the thousands of calls a run needs cost nothing per call. Hosted models come in through API keys, free tiers or small prepaid balances, for the jobs a local 8B model cannot do independently: writing attacks from a plain description of the setting without ever being told about a defense, and acting as a reviewer or a stronger agent for comparison. A hand-written attack carries the author's knowledge of the defenses; an attack written blind by another model does not, and this closes that gap for a few dollars.
+
+What it costs and what it does not: hosted tiers limit calls a minute and sometimes return "overloaded", so the runner waits as told and retries, and a hosted model is not pinned to a version or guaranteed to repeat at temperature 0. Each result records the provider and the model id the service reported, and a preregistration cites the hash of the generated attack file so it cannot change after the fact.
+
+Keeping keys private:
+
+- Keys live only in `keys.ini`, which git ignores, or in environment variables. `keys.example.ini` is the committed template and holds no key.
+- Nothing prints, logs or saves a key. `python adt.py keys` says only whether one is set, errors have any key removed, and saved attack files are redacted before they are written.
+- A test (`test_no_key_is_in_the_repository`) fails if any tracked or uncommitted file holds a configured key or a string shaped like one, so a slip is caught before a commit.
+- A key pasted into a chat, a screenshot or a log is exposed. Revoke it at the provider and make a new one.
+- Set `max_calls` under `[limits]` to cap what a mistaken run can spend. A reply that comes back empty is not retried, because each try is billed.
+
 ## Coverage
 
 | ID | Risk | Status | What exists |

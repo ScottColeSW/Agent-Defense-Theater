@@ -94,7 +94,7 @@ def make_runner(name: str, **kw):
     from . import keys
     if keys.is_remote(name):
         from .remote import RemoteRunner
-        return RemoteRunner(name, **{k: v for k, v in kw.items() if k in ("temperature", "label")})
+        return RemoteRunner(name, **{k: v for k, v in kw.items() if k in ("temperature", "label", "max_out")})
     return OllamaRunner(name, **kw)
 
 

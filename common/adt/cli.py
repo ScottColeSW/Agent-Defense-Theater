@@ -78,7 +78,7 @@ def cmd_attackgen(a):
     if not names:
         sys.exit("Name the generator models: --models anthropic:claude-haiku-5-5,openai:gpt-4.1-mini  (or --show-prompt to read what they would be sent)")
     for name in names:
-        r = models.make_runner(name)
+        r = models.make_runner(name, max_out=a.max_output)
         print(f"{a.item.upper()}: {name} writing {a.n} attack(s) x {a.rounds} round(s)")
         doc = attackgen.generate(a.item, r, n=a.n, rounds=a.rounds, temperature=a.temperature)
         p = attackgen.save(a.item, doc)
@@ -257,7 +257,7 @@ def main(argv=None):
     s.add_argument("model", nargs="?", help="with --check: provider:model to try"); s.set_defaults(f=cmd_keys)
     s = sub.add_parser("attackgen", help="blind attack generation: models that know nothing of the defenses write attacks for an item"); s.add_argument("item")
     s.add_argument("--models", help="generator models, local or provider:model"); s.add_argument("--n", type=int, default=6, help="attacks asked for per round")
-    s.add_argument("--rounds", type=int, default=1); s.add_argument("--temperature", type=float, default=1.0)
+    s.add_argument("--rounds", type=int, default=1); s.add_argument("--max-output", type=int, default=8192, help="output tokens allowed per call; a reasoning model spends some thinking"); s.add_argument("--temperature", type=float, default=1.0)
     s.add_argument("--show-prompt", action="store_true", help="print the exact prompt and stop"); s.set_defaults(f=cmd_attackgen)
     sub.add_parser("status", help="coverage table and which items are runnable").set_defaults(f=cmd_status)
     s = sub.add_parser("serve", help="serve the site locally"); s.add_argument("--port", type=int, default=8765)

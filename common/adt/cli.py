@@ -279,7 +279,13 @@ def main(argv=None):
     s = sub.add_parser("overhead", help="latency our own code adds, measured without a model"); s.add_argument("item"); s.add_argument("--experiment", **EXP)
     s.add_argument("--repeat", type=int, default=5); s.set_defaults(f=cmd_overhead)
     a = p.parse_args(argv)
-    a.f(a)
+    from .remote import AuthError, SpendLimit
+    try:
+        a.f(a)
+    except (AuthError, SpendLimit) as e:
+        sys.exit(f"Stopped: {e}")
+    except KeyError as e:
+        sys.exit(str(e.args[0]))
 
 
 if __name__ == "__main__":

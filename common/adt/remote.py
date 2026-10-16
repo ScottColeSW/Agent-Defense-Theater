@@ -113,6 +113,8 @@ class RemoteRunner:
                 msg = _error_text(e)
                 if e.code in (401, 403):
                     raise AuthError(f"{self.provider} refused the key (HTTP {e.code}). Check {keys.keys_path().name}.") from e
+                if e.code in (402, 429) and any(w in msg.lower() for w in ("insufficient_quota", "credit_balance", "billing")):
+                    raise AuthError(f"{self.provider} accepted the key but the account has no usable credit (HTTP {e.code}). Add credit or a payment method, then try again.") from e
                 if e.code == 400 and self._send_temperature and "temperature" in msg.lower():
                     self._send_temperature = False             # some models fix their own temperature; retry without it
                     continue

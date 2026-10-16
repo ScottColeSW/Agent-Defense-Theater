@@ -152,3 +152,14 @@ def test_describe_marks_the_run_remote(ini, monkeypatch):
     r.generate("s", "u")
     d = r.describe()
     assert d["remote"] and d["provider"] == "openai" and d["reported_model"] == "gpt-x-2026-01-01" and "SECRET" not in repr(d)
+
+
+def test_an_account_with_no_credit_stops_at_once_without_retrying(ini, monkeypatch):
+    n = []
+    def post(*a, **k):
+        n.append(1)
+        raise http_error(429, b'{"error": {"code": "insufficient_quota"}}')
+    monkeypatch.setattr(remote, "_post", post)
+    with pytest.raises(remote.AuthError, match="no usable credit"):
+        models.make_runner("openai:gpt-x").generate("s", "u")
+    assert len(n) == 1

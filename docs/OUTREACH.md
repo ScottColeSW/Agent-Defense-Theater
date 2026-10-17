@@ -8,8 +8,8 @@ Agent Defense Theater is a live range for testing defenses against the OWASP Top
 
 ## Three findings
 
-1. **An approval path reopened what a hard limit had refused.** A $50 refund budget stopped a duplicate of a requested $30 refund (0 of 54). With a hold path the same duplicate was approved 32 of 32 times, because it matched the operator's own words. A rerun reproduced it exactly.
-2. **Test results depend on the attacker.** Models told nothing about the defenses wrote 45 attacks, and request binding let 0 of 675 through. A hosted model shown the rules aimed 4 of its first 6 attacks at the one gap that leaks, while a local 8B attacker aimed 2 of 10 and did not improve with feedback.
+1. **An approval path reopened what a hard limit had refused.** A $50 refund budget stopped a duplicate of a requested $30 refund (0 of 54). With a hold path the same duplicate was approved 32 of 32 times, because it matched the operator's own words. A rerun reproduced it exactly, and no attacker model has tried that shape yet.
+2. **Test results depend on the attacker.** Models told nothing about the defenses wrote 45 attacks, and request binding let 0 of 675 through. A hosted model shown the rules aimed 4 of its first 6 attacks at the one gap that leaks, while a local 8B attacker aimed 2 of 10 and did not improve with feedback. Across four draws of that local attacker, scoped-credential success ranged from 0% to 18.7%, so one draw misleads, and request binding held in all four (0 of 720).
 3. **The hard parts are the checks, not the prompts.** Telling the model the text was untrusted raised hijacks from 22 of 45 to 33 of 45. The controls that held compared each action with something the agent did not write.
 
 ## Three questions, by audience

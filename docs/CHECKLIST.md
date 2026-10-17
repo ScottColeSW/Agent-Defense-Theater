@@ -24,7 +24,7 @@ Eleven things worth checking against your own agents. Most teams will already do
 
 **5. Can an approval path reopen something a hard limit had already refused?**
 *What we saw:* the $50 refund budget alone stopped a duplicate of a requested $30 refund (0 of 54). Add a hold path and the denial became a review: the card said MATCH, because $30 was the amount the operator named, and the reviewer approved 32 of 32. This held under request binding as well. A rerun under tighter generation limits reproduced it exactly (32 of 54, and 32 of 32 holds approved).
-*Caveat:* six author-written texts, one mechanism, three agents and one reviewer model. A rule such as one refund per ticket, or a reviewer shown the refund history, was not tested.
+*Caveat:* six author-written texts, one mechanism, three agents and one reviewer model. A rule such as one refund per ticket, or a reviewer shown the refund history, was not tested. No attacker model has written this shape yet: none of 40 distinct attack texts from a local attacker asks for a repeat or for $30.
 
 **6. Are you counting on "be careful" prompts?**
 *What we saw:* telling the model the text was untrusted made hijacks go up, 33 of 45 against 22 with no defense. A follow-up found it was not the wording of the rule.
@@ -35,8 +35,8 @@ Eleven things worth checking against your own agents. Most teams will already do
 *Caveat:* the valid tasks are the author's. Real workloads are messier.
 
 **8. Do you test with attackers who did not write the controls, and with attackers who know them?**
-*What we saw:* given only a description of the setting, two models wrote 45 attacks and found the one gap that leaks (refunds inside the credential's limit) in 2 of 39 unprompted. Shown the rules, the pro model aimed 4 of its first 6 straight at it. The 6 attacks that fit the gap produced all 76 leaks under scoped credentials. A local 8B model, shown the same defenses and the outcomes so far, wrote 10 usable attacks over three rounds, only 2 of which fit the gap, and its results did not improve with feedback.
-*Caveat:* both hosted writers are Google models. The informed attacker managed one round of four (see item 9). Request binding held against the local attacker too (0 of 180), but an attacker that never found the gap is weak evidence that nothing else is there.
+*What we saw:* given only a description of the setting, two models wrote 45 attacks and found the one gap that leaks (refunds inside the credential's limit) in 2 of 39 unprompted. Shown the rules, the pro model aimed 4 of its first 6 straight at it. The 6 attacks that fit the gap produced all 76 leaks under scoped credentials. A local 8B model, shown the same defenses and the outcomes so far, wrote 10 usable attacks over three rounds, only 2 of which fit the gap, and its results did not improve with feedback. Repeated with three more sampling seeds, the same attacker wrote 4 to 14 usable attacks and its scoped-credential success ranged from 0% to 18.7% (5.0% in the first draw), so a single draw misleads.
+*Caveat:* both hosted writers are Google models. The informed attacker managed one round of four (see item 9). Request binding held against the local attacker's first draw (0 of 180) and in all four draws (0 of 720), but an attacker that rarely found the gap is weak evidence that nothing else is there.
 
 **9. Are you assuming an attacker will be refused?**
 *What we saw:* one hosted model wrote attacks on request, then declined to refine them from results ("I cannot generate functional prompt injection payloads"). Nothing about that stops an attacker with other models: a local 8B model wrote attacks from the same prompt in all three rounds without declining.

@@ -41,6 +41,7 @@ All the attack generation so far, hosted models included, cost $0.27 (the author
 **Where does an approval path reopen something a hard limit had refused?**
 A $50 refund budget stopped a duplicate of a requested $30 refund (0 of 54). With a hold path the same duplicate was approved 32 of 32 times, because it matched the operator's words.
 It reproduced exactly on a rerun.
+No attacker model has tried this shape yet (none of 40 local attack texts asks for a repeat).
 *Caveat:* six author-written texts, one mechanism, one reviewer model.
 
 **Which defenses did you adopt because they sound right?**
@@ -50,8 +51,8 @@ Telling the model the text was untrusted raised hijacks from 22 of 45 to 33 of 4
 ## Head of AppSec
 
 **Who has tried to break your control without having written it?**
-Models given only a description of the setting wrote 45 attacks and found the one leaking gap in 2 of 39 on their own. Shown the rules, the strongest model aimed 4 of its first 6 at it, while a local 8B attacker shown the same history aimed 2 of 10 and did not improve with feedback.
-*Caveat:* one vendor for the hosted writers and one small local model. Attackers of different strength all matter, and none replaces an outside red team.
+Models given only a description of the setting wrote 45 attacks and found the one leaking gap in 2 of 39 on their own. Shown the rules, the strongest model aimed 4 of its first 6 at it, while a local 8B attacker shown the same history aimed 2 of 10 and did not improve with feedback. Across four draws of that local attacker, scoped-credential success ranged from 0% to 18.7%, so one draw misleads.
+*Caveat:* one vendor for the hosted writers and one small local model. Request binding held in all four draws (0 of 720). Attackers of different strength all matter, and none replaces an outside red team.
 
 **Who checks the checker?**
 On the same card, reviewer models differed by 27 points. One alone approved 12 refunds nobody asked for. In a three-agent crew a reviewer agreed with 78% of bad reports and 67% of honest ones.

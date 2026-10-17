@@ -12,7 +12,7 @@ def _cal():
 
 
 def test_experiments_are_registered_in_order():
-    assert experiments("asi03") == ["first-run", "escalation", "bottom-line", "thinking-agents", "reviewer-calibration", "blind", "informed", "duplicate-probe", "duplicate-probe-replicate", "informed-local"]
+    assert experiments("asi03") == ["first-run", "escalation", "bottom-line", "thinking-agents", "reviewer-calibration", "blind", "informed", "duplicate-probe", "duplicate-probe-replicate", "informed-local", "informed-local-replicate"]
 
 
 def test_every_card_has_the_answer_the_system_comparison_gives():

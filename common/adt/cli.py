@@ -157,7 +157,7 @@ def cmd_informed(a):
         if keys_is_remote(a.local_attacker):
             sys.exit("--local-attacker takes a local Ollama model, not provider:model")
         attacker, victims, mode = models.make_runner(a.local_attacker, num_predict=3000, temperature=0.7), [models.make_runner(n) for n in names], "live"
-        kw.update(scenario_name="informed-local", settle_before_attacker=True)
+        kw.update(scenario_name=getattr(a, "experiment", None) or "informed-local", settle_before_attacker=True)
     else:
         if not names or not a.attacker:
             sys.exit("Name the victims and the attacker: --models llama3.1:8b,qwen2.5:7b,phi4-mini:3.8b --attacker google:gemini-pro-latest")
@@ -355,6 +355,7 @@ def main(argv=None):
     s = sub.add_parser("informed", help="informed-attacker rounds: a hosted model shown the defenses writes attacks and learns from outcomes"); s.add_argument("item")
     s.add_argument("--attacker", help="hosted attacker, provider:model"); s.add_argument("--models", help="local victim models")
     s.add_argument("--local-attacker", help="a local Ollama model as the attacker (instead of a hosted one)")
+    s.add_argument("--experiment", help="with --local-attacker: the experiment to run it as (default informed-local, or informed-local-replicate)")
     s.add_argument("--resume-from", metavar="SESSION_FILE", help="continue a saved session: its attacks and outcomes become the history, and rounds start after its last")
     s.add_argument("--max-temp", type=int, default=64, help="pause live model calls above this many C; 0 turns the cooler off")
     s.add_argument("--settle-temp", type=int, default=None, help="cool to this many C before a run and between models (default: the resume point)")

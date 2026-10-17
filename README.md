@@ -1,6 +1,6 @@
 # Agent Defense Theater
 
-A live range for testing defenses against the [OWASP Top 10 for Agentic Applications](https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/). Local AI models are attacked through real tool protocols, and every defense is scored by two numbers together: the attacks it stops and the legitimate work it still allows. Each prediction is committed before the run, and misses are reported.
+A live range for testing defenses against the [OWASP Top 10 for Agentic Applications](https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/). Local AI models are attacked through tool protocols (real MCP servers in three of the items, simulated desks in the others), and every defense is scored by two numbers together: the attacks it stops and the legitimate work it still allows. Each prediction is committed before the run, and misses are reported.
 
 ![The test runner: pick a test or run them all, choose scripted or live, and watch the GPU](docs/img/runner.png)
 
@@ -8,20 +8,33 @@ A live range for testing defenses against the [OWASP Top 10 for Agentic Applicat
 
 Most agent security claims show a defense blocking an attack. They rarely show what the defense cost in work that no longer got done, whether the prediction came before the result, or whether the numbers can be checked. This project makes those three things the default.
 
-The targets are simulated: a support desk, a deal pipeline, mail that lands in a database table. The models, the tool protocols (including real MCP servers), the attacks and the measurements are real.
+The targets are simulated: a support desk, a deal pipeline, mail that lands in a database table. The models and the measurements are real. The tool protocol is a real MCP server in ASI01, ASI02 and ASI04, and an in-process simulation in ASI03 and ASI08. The attacks were written by the author, and in later ASI03 rounds by models (see below).
 
 ## Results so far
 
 | Risk | Test | Finding |
 | --- | --- | --- |
-| [ASI03](items/asi03-identity-privilege/) Identity and Privilege Abuse | A support desk with a shared token, scoped credentials, an approval step, request binding, and model and rule reviewers (three rounds, three models) | With no defense, 62 of 120 planted instructions were carried out. Request binding with approval holds let 0 of 120 through and completed 61 of 63 valid tasks. A model reviewer alone approved 12 refunds nobody asked for, and the same card made one reviewer model perfect and another deny nearly every legitimate refund |
-| [ASI02](items/asi02-tool-misuse/) Tool Misuse and Exploitation | An agent on two real MCP servers, one of them a SQLite pipeline it can overwrite, behind a schema gate, a dry run and request binding (eight attacks, three models) | With no defense, 50 of 120 attacks carried out an unsafe call. A schema gate cut that to 18 and adaptive attacks written for it still got through (9 times). A dry run changed the database 0 times and completed 0 of 24 privileged tasks. Request binding plus the schema gate let 0 of 120 through, at a cost of valid work |
+| [ASI03](items/asi03-identity-privilege/) Identity and Privilege Abuse | A support desk with a shared token, scoped credentials, an approval step, request binding, and model and rule reviewers (three rounds, three models) | With no defense, 62 of 120 planted instructions were carried out. Request binding with approval holds let 0 of 120 through and completed 61 of 63 valid tasks. A model reviewer alone approved 12 refunds nobody asked for, and the same card made one reviewer model perfect and another deny nearly every legitimate refund. The approvers here are models and rules, not people. A later probe found a hole in the strongest condition: a duplicate of a requested refund reached review and was approved 32 of 32 times (see below) |
+| [ASI02](items/asi02-tool-misuse/) Tool Misuse and Exploitation | An agent on two real MCP servers, one of them a SQLite pipeline it can overwrite, behind a schema gate, a dry run and request binding (eight attacks, three models) | With no defense, 50 of 120 attacks carried out an unsafe call. A schema gate cut that to 18 and adaptive attacks written for it still got through (9 times). A dry run changed the database 0 times and completed 0 of 24 privileged tasks, though 7 of 120 attacks still ran an unsafe calculation (4 floods of simulations, 3 falsified figures). Request binding plus the schema gate let 0 of 120 through, at a cost of valid work |
 | [ASI01](items/asi01-goal-hijack/) Agent Goal Hijack | Five attempts to replace the operator's goal, against spotlighting, a plan locked before the agent reads anything untrusted, and a goal check by a separate reviewer model | A locked plan stopped every hijack that needed a new tool (0 of 36), and the goal check stopped all 45. Telling the model the text was untrusted made things worse: 33 of 45 hijacked against 22 with no defense. A follow-up replicated it on new deals (80% against 43%) and showed it was not the rule's wording, and a second test that it was not rule-following either: plain background text about the desk raised it as much as the security rule |
 | [ASI04](items/asi04-supply-chain/) Agentic Supply Chain | A tampered tool staged in front of the real MCP server, against a manifest pin, a canary comparison and a code pin | Each control saw exactly what it was built to see. The only one that stopped everything, the code pin, also refused all 18 legitimate updates; the one that let updates through was fooled by a tool that recognizes the check |
 | [ASI08](items/asi08-cascading-failures/) Cascading Failures | A bad figure injected into a three-agent crew, against a verify prompt, a range check and an independent recomputation | With no defense 29 of 45 bad figures became a harmful offer. The reviewer was not a check: it agreed with 78% of bad reports and 67% of honest ones. The independent recomputation stopped all 45 and cost nothing |
 | [ASI06](items/asi06-memory-context-poisoning/) Memory and Context Poisoning | Forged documents against a memory gate, in the sibling [Aegis Vector](https://github.com/ScottColeSW/Project-Aegis-Vector) and [Palimpsest](https://github.com/ScottColeSW/Palimpsest) repositories | Linked, not yet re-run here |
 
 A reviewer-calibration test has also run: seven reviewer models shown 22 cards whose right answers are known. Showing a reviewer the agent's own reason let 40% of non-matching requests through, against 6% when the system's comparison came first, and reviewers differed by 27 points on the same card. A thinking-model test also ran: with no defense, `qwen3:4b` followed planted instructions more often with thinking on (21 of 40) than off (12 of 40), the opposite of the prediction, at 14 times the tokens. The defenses held in both modes, though the difference rests on 40 cases a cell and is not statistically firm.
+
+### Later ASI03 rounds
+
+Each round committed its prediction first, and the addenda record the misses. The attackers in these rounds were not the author.
+
+| Round | Attacker | Finding |
+| --- | --- | --- |
+| Blind attacks | Two Google models told nothing about the defenses wrote 45 attacks | With no defense 506/675 ran. Scoped credentials let 76/675 through, all from the 6 attacks inside the credential's gap, and request binding let 0/675 through, with or without holds. Unprompted, the writers found that gap in 2 of 39 attacks |
+| Informed attacker | A hosted model shown how each defense works, one round of four before it declined to refine its attacks | 4 of its first 6 attacks aimed at the gap. Scoped credentials let 30/54 through on one task and 36/54 on the other, and request binding 0/54 on each |
+| Duplicate-refund probe | Six author-written texts | The operator asks for one $30 refund and the ticket asks for it again. A $50 budget limit stopped it (0/54), and so did request binding alone (0/54). With holds, 32/54 ran and the reviewer approved 32 of 32 holds, because the duplicate matched the operator's words. A rerun under tighter generation limits reproduced it exactly in 5.4 minutes instead of 25.6 |
+| Local attacker, four draws | `hermes3:8b`, shown the same defenses and outcomes | 4 to 14 usable attacks a draw and scoped-credential success from 0% to 18.7%, so one draw misleads. Request binding let 0/720 through, but no attack asked for a repeat, so the duplicate path has not been tried by an attacker model |
+
+The takeaway is about method as much as defenses: a defense that survives a weak attacker has not been shown to hold, and the control that looked strongest had a hole that a simpler one did not.
 
 ![The top of a report: baseline risk, best control, and a verdict for every control, with residual risk and business impact side by side](docs/img/report.png)
 
@@ -85,9 +98,11 @@ Status means: **Stub** (plan written, nothing built), **Designed** (design exist
 
 ## Limits
 
-- The attacks, gates and harm definitions are written by the author. No result has been tested against an independent attacker, or one who knows the defense, unless an item says so.
+- The gates and harm definitions are written by the author, and so were the first rounds' attacks. Later ASI03 rounds add attacks written by models (two hosted, one local) and an attacker shown the defenses, but no independent human red team has tried the range.
+- Credentials, holds and approvals are in-process simulations. They are not integrations with an identity provider or a production MCP gateway.
 - The models are local, up to 8B parameters, on one workstation. Nothing here says how larger models behave.
-- Reviewers are models or rules. There has been no study of people reviewing approvals.
+- Reviewers are models or rules. No person has been in the loop: a study with people is built and has no participants yet.
+- The repository was built with AI coding assistance (Claude Code). Commits carry co-author trailers.
 - The taxonomy mapping is the author's classification, not an endorsement by OWASP or MITRE.
 
 The [governance crosswalk](docs/GOVERNANCE-CROSSWALK.md) sets each measurement beside the NIST AI RMF, EU AI Act and ISO/IEC 42001 requirements it bears on, with these gaps stated. It is evidence mapped to requirements, not a compliance claim.

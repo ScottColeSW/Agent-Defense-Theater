@@ -142,7 +142,7 @@ def run(item: str, attacker, victims: list, mode: str = "live", rounds: int = RO
                "started": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "informed_brief_sha256": attackgen.sha(informed), "brief_sha256": attackgen.sha(brief),
                "limits": {"attacker_calls": MAX_ATTACKER_CALLS, "provider_requests": MAX_PROVIDER_REQUESTS, "max_output_tokens": MAX_OUTPUT_TOKENS,
                           "max_input_tokens": MAX_INPUT_TOKENS},
-               "scenario": scenario_name, "start_round": start_round, "resumed_from": resumed_from, "attacker_local": settle_before_attacker,
+               "scenario": scenario_name, "attacker_seed": getattr(attacker, "seed", None), "start_round": start_round, "resumed_from": resumed_from, "attacker_local": settle_before_attacker,
                "rounds": [], "complete": False, "stopped_because": "", "spend": {"attacker_calls": 0, "provider_requests": 0, "tokens_in": 0, "tokens_out": 0}}
     history, calls_made, last_stamp = list(history or []), 0, ""
     seen = [attackmanifest._words(a["text"]) for _, a, _ in history]             # an attack that repeats an earlier session's is rejected too

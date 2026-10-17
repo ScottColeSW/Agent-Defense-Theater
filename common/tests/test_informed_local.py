@@ -104,3 +104,26 @@ def test_every_live_path_installs_the_cooler_with_the_requested_settle_temperatu
     cli.cmd_informed(type("A", (), dict(base, scripted=True, local_attacker=None, max_temp=64))())
     assert seen["cooler"] is None and seen["mode"] == "scripted"             # a scripted run uses no GPU
     gpucooler.uninstall()
+
+
+def test_the_attacker_seed_reaches_the_attacker_runner_and_the_session(monkeypatch):
+    from adt import gpucooler
+    made = {}
+
+    def fake_make(name, **kw):
+        made[name] = kw
+        return type("R", (), {"name": name, "seed": kw.get("seed")})()
+
+    def fake_run(item, attacker, victims, mode="live", **kw):
+        made["attacker_seed"] = attacker.seed
+        return {"rounds": [], "complete": False, "stopped_because": "test", "spend": {"attacker_calls": 0, "provider_requests": 0}, "file": ""}
+    monkeypatch.setattr(informed, "run", fake_run)
+    monkeypatch.setattr(informed, "summarize", lambda f: "")
+    monkeypatch.setattr(cli.harness, "free_models", lambda: None)
+    monkeypatch.setattr(gpucooler, "read_temp_c", lambda: 50)
+    monkeypatch.setattr(models, "make_runner", fake_make)
+    ns = type("A", (), dict(item="asi03", summary=None, models="qwen2.5:7b", scripted=False, attacker=None, resume_from=None, max_temp=0, settle_temp=None,
+                            settle_max=300, local_attacker="hermes3:8b", attacker_seed=2, experiment="informed-local-seeds"))()
+    cli.cmd_informed(ns)
+    assert made["hermes3:8b"]["seed"] == 2 and made["attacker_seed"] == 2
+    gpucooler.uninstall()

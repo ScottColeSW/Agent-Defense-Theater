@@ -95,3 +95,34 @@ def test_no_em_dashes_and_every_checklist_item_has_a_caveat():
     c = DOCS["CHECKLIST.md"]
     items = re.findall(r"^\*\*(\d+)\. ", c, flags=re.M)
     assert items == [str(i) for i in range(1, 12)] and c.count("*Caveat:*") == 11 and c.count("*What we saw:*") == 11
+
+
+def test_local_attacker_figures():
+    sessions = [json.loads(f.read_text(encoding="utf-8")) for f in sorted(RES.glob("informed-session-*.json"))]
+    s = next(x for x in sessions if x["attacker"] == "hermes3:8b")
+    assert s["complete"] and [r["attacks"] for r in s["rounds"]] == [5, 3, 2] and s["spend"]["provider_requests"] == 0
+    atts = [a for r in s["rounds"] for a in json.loads((RES / "informed-attacks" / r["file"]).read_text(encoding="utf-8"))["attacks"]]
+    assert len(atts) == 10 and sum(any(c["tool"] == "issue_refund" and c["args"].get("amount", 1e9) <= 50 for c in a["calls"]) for a in atts) == 2
+    recs = [json.loads(l) for r in s["rounds"] for l in (RES / f"{r['run_id']}.jsonl").read_text(encoding="utf-8").splitlines()]
+    assert k(recs, "none") == (117, 180) and k(recs, "scoped_credentials") == (9, 180) and k(recs, "task_binding") == (0, 180) and k(recs, "task_binding+hold+bottomline") == (0, 180)
+    for name in ("CHECKLIST.md", "ROLE-QUESTIONS.md", "OUTREACH.md"):
+        text = (ROOT / "docs" / name).read_text(encoding="utf-8")
+        assert "2 of 10" in text or name == "CHECKLIST.md", name
+    says(DOCS["CHECKLIST.md"], "10 usable attacks", "(0 of 180)", "only 2 of which fit the gap")
+
+
+def test_replicate_figures():
+    probe = json.loads(sorted(RES.glob("asi03-duplicate-probe-2*-prereg.meta.json"))[-1].read_text(encoding="utf-8"))
+    rep = json.loads(sorted(RES.glob("asi03-duplicate-probe-replicate-*-prereg.meta.json"))[-1].read_text(encoding="utf-8"))
+    assert round(probe["seconds"] / 60, 1) == 25.6 and round(rep["seconds"] / 60, 1) == 5.4
+    recs = load("asi03-duplicate-probe-replicate-*-prereg.jsonl")
+    assert k(recs, "hold+bottomline") == (32, 54) and round(max(r["latency_ms"] for r in recs) / 1000, 1) == 16.8
+    says(DOCS["CHECKLIST.md"], "5.4 minutes instead of 25.6", "16.8 seconds", "reproduced it exactly (32 of 54")
+    says(DOCS["ROLE-QUESTIONS.md"], "reproduced exactly on a rerun")
+
+
+def test_outreach_page_figures_and_voice():
+    t = (ROOT / "docs" / "OUTREACH.md").read_text(encoding="utf-8")
+    says(t, "0 of 54", "32 of 32", "0 of 675", "4 of its first 6", "2 of 10", "22 of 45 to 33 of 45", "$0.27", "not a compliance claim")
+    assert "\u2014" not in t and "\u2013" not in t
+    assert not re.search(r"\bI (built|developed|created|designed|wrote)\b", t)       # verb-first voice, not first-person boasting

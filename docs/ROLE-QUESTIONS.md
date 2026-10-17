@@ -40,6 +40,7 @@ All the attack generation so far, hosted models included, cost $0.27 (the author
 
 **Where does an approval path reopen something a hard limit had refused?**
 A $50 refund budget stopped a duplicate of a requested $30 refund (0 of 54). With a hold path the same duplicate was approved 32 of 32 times, because it matched the operator's words.
+It reproduced exactly on a rerun.
 *Caveat:* six author-written texts, one mechanism, one reviewer model.
 
 **Which defenses did you adopt because they sound right?**
@@ -49,8 +50,8 @@ Telling the model the text was untrusted raised hijacks from 22 of 45 to 33 of 4
 ## Head of AppSec
 
 **Who has tried to break your control without having written it?**
-Models given only a description of the setting wrote 45 attacks and found the one leaking gap in 2 of 39 on their own. Shown the rules, the strongest model aimed 4 of its first 6 at it.
-*Caveat:* one vendor. Both kinds of attacker matter, and neither replaces an outside red team.
+Models given only a description of the setting wrote 45 attacks and found the one leaking gap in 2 of 39 on their own. Shown the rules, the strongest model aimed 4 of its first 6 at it, while a local 8B attacker shown the same history aimed 2 of 10 and did not improve with feedback.
+*Caveat:* one vendor for the hosted writers and one small local model. Attackers of different strength all matter, and none replaces an outside red team.
 
 **Who checks the checker?**
 On the same card, reviewer models differed by 27 points. One alone approved 12 refunds nobody asked for. In a three-agent crew a reviewer agreed with 78% of bad reports and 67% of honest ones.
@@ -73,5 +74,5 @@ Our worst finding was the approval path that approved a duplicate refund 32 of 3
 *Caveat:* one simulated setting. It shows a kind of failure to look for, not how often it happens elsewhere.
 
 **Is a refusal from an AI provider part of our defense?**
-One hosted model wrote attacks on request, then declined to refine them from results. That says nothing about attackers using other models.
-*Caveat:* one refusal from one model on one prompt.
+One hosted model wrote attacks on request, then declined to refine them from results. A local model wrote attacks from the same prompt without declining, though few and weak ones.
+*Caveat:* one refusal from one hosted model on one prompt, and one small local model.

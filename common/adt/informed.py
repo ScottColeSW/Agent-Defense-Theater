@@ -195,20 +195,27 @@ def run(item: str, attacker, victims: list, mode: str = "live", rounds: int = RO
     session["complete"] = len(session["rounds"]) == rounds - start_round + 1 and not session["stopped_because"]
     session["spend"]["provider_requests"] = remote._calls - start_requests
     session["finished"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
-    p = out_dir / f"informed-session-{time.strftime('%Y%m%dT%H%M%S', time.gmtime())}.json"
+    stamp, n = time.strftime("%Y%m%dT%H%M%S", time.gmtime()), 1
+    p = out_dir / f"informed-session-{stamp}.json"
+    while p.exists():                                  # two sessions in one second must not overwrite each other
+        n += 1
+        p = out_dir / f"informed-session-{stamp}-{n}.json"
     p.write_text(json.dumps(session, indent=1), encoding="utf-8")
     session["file"] = str(p)
     return session
 
 
-def merged_records(session_file) -> tuple:
-    """(session, every record of its rounds)."""
+def merged_records(session_file, _seen=None) -> tuple:
+    """(session, every record of its rounds, the earlier session's first when this one continues it)."""
     p = Path(session_file)
+    _seen = (_seen or set()) | {str(p.resolve())}
     s = json.loads(p.read_text(encoding="utf-8"))
     files = [p.parent / f"{rid}.jsonl" for rid in dict.fromkeys(r["run_id"] for r in s["rounds"] if r.get("run_id"))]
     recs = scorer.load_records(files, live_only=(s["mode"] == "live"))
     if s.get("resumed_from"):                                  # a continued session: the earlier rounds' records come first
-        _, earlier = merged_records(s["resumed_from"])
+        if str(Path(s["resumed_from"]).resolve()) in _seen:
+            raise ValueError(f"{p.name} continues itself: a session cannot be resumed from a file that continues it")
+        _, earlier = merged_records(s["resumed_from"], _seen)
         recs = earlier + recs
     return s, recs
 
@@ -218,12 +225,11 @@ def summarize(session_file) -> str:
     s0 = json.loads(Path(session_file).read_text(encoding="utf-8"))
     sc = load_scenario(s0["item"].lower(), s0.get("scenario", "informed"))
     s, recs = merged_records(session_file)
-    evaluate = sys.modules[sc.__class__.__module__].evaluate          # the pass bar lives beside the scenario that was preregistered
     lines = [f"{s['item']} informed attacker: {s['attacker']} against {', '.join(s['victims'])}; {len(s['rounds'])} round(s), "
              f"{'complete' if s['complete'] else 'INCOMPLETE: ' + s['stopped_because']}; {len(recs)} records",
              f"Spend: {s['spend']['attacker_calls']} attacker calls, {s['spend']['provider_requests']} provider requests, {s['spend']['tokens_in']} tokens in, {s['spend']['tokens_out']} out", ""]
     defs = sorted({r["defense"] for r in recs}, key=lambda d: [x.name for x in sc.defenses].index(d))
-    rounds = sorted({r.get("round") for r in recs if r["attack"] not in ("none", "")})
+    rounds = sorted({r["round"] for r in recs if r["attack"] not in ("none", "") and r.get("round") is not None})        # a failed model call has no round
     lines.append(f"{'defense':<30}{'task':<6}" + "".join(f"{'round ' + str(r):>12}" for r in rounds) + f"{'all':>14}")
     for d in defs:
         for label in ("A", "B"):
@@ -235,5 +241,5 @@ def summarize(session_file) -> str:
             allr = [x for x in recs if x["defense"] == d and x.get("task_label") == label]
             row += f"{(str(sum(x['outcome'] == 'attack_succeeded' for x in allr)) + '/' + str(len(allr))):>14}"
             lines.append(row)
-    lines += ["", "Pass bar:"] + [f"  {c['id']} {c['status'].upper():<13}{c['text']}  [{c['result']}]" for c in evaluate(recs, {"spend": s["spend"], "session": s})]
+    lines += ["", "Pass bar:"] + [f"  {c['id']} {c['status'].upper():<13}{c['text']}  [{c['result']}]" for c in sc.pass_bar(None, {"records": recs, "spend": s["spend"], "session": s})]
     return "\n".join(lines)

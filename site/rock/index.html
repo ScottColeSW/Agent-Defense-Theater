@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Defense Rock</title>
+<meta name="description" content="A cartoon with songs about three kinds of attacker and the defenses that stop them. Every number is read from a saved run, and the failures get their own scene.">
+<link rel="stylesheet" href="../assets/app.css">
+<link rel="stylesheet" href="rock.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <nav class="site-nav" id="nav" aria-label="Site"></nav>
+
+  <header class="hero">
+    <h1>Defense <span style="color:var(--blue)">Rock</span></h1>
+    <p class="muted lede">Three attackers, three songs, one rule: show the failures too. Every number in the show is read from a saved run. Scenes say whether they are a replay, a scripted line, or computed in your browser.</p>
+  </header>
+
+  <div class="episodes" id="episodes" role="tablist" aria-label="Episodes"></div>
+
+  <section class="show" aria-live="polite">
+    <div class="screen card" id="screen"></div>
+    <div class="controls">
+      <button class="btn ghost" id="prev" aria-label="Previous scene">Back</button>
+      <button class="btn" id="play" aria-pressed="false">Autoplay</button>
+      <button class="btn ghost" id="next" aria-label="Next scene">Next</button>
+      <button class="btn ghost" id="sound" aria-pressed="false" title="A small tune plays during the songs">Sound off</button>
+      <span class="dots" id="dots" role="tablist" aria-label="Scenes"></span>
+    </div>
+  </section>
+
+  <section class="small muted fine" id="fine"></section>
+</div>
+<footer id="foot"></footer>
+
+<script src="../assets/app.js"></script>
+<script src="rock.js"></script>
+</body>
+</html>

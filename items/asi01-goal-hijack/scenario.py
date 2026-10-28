@@ -63,7 +63,7 @@ class Asi01:
         spot = "spotlighting" in name
         return (gg.SPOTLIGHT if spot else ""), spot
 
-    def configure(self, reviewer=None, strong=None):
+    def configure(self, reviewer=None, **kw):
         if reviewer:
             self.reviewer_model = reviewer
 

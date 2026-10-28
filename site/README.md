@@ -14,6 +14,7 @@ python adt.py serve --open        # then open http://localhost:8765/start.html
 | --- | --- |
 | [`start.html`](start.html) | The runner. Choose scripted, live preregistered, or live exploratory. Run every test or one. Watch progress, a live per-condition scoreboard, and the GPU cooldown panel. Cancel at any point. |
 | [`report.html?run=<run_id>`](report.html) | The detailed report for one run: integrity of the decision log, summary by condition, prediction against result with the pass bar, where the time goes, the GPU timeline, where it held and where it did not, every reviewer decision with its request card, and every record. |
+| [`rock/index.html`](rock/index.html) | Defense Rock: a cartoon with songs about three kinds of attacker (a forger, an impersonator, a hijacker). Each episode replays saved runs, shows the failures in their own scenes, and ends in a report card with the cost and the caveat. The Gate Lab runs the real ASI03 gate rules in the browser. Where the local runner is connected, an episode can also start a scripted or exploratory run. Its numbers come from `data/rock.json`, built by `python tools/build_rock.py` |
 
 For live runs the start page shows a models table: size, what each model needs in memory, whether it fits the GPU, spills into system RAM, or will not fit, what is loaded now (with an Unload button), and a plan that updates as you tick models, with how many model swaps to expect. See [`../common/README.md`](../common/README.md).
 

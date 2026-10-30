@@ -68,7 +68,7 @@ def summarise(experiment):
 
 def main():
     learner = load(RUNG / "learner.py", "bi01_learner")
-    data = {"bi01": summarise("first-run"), "skeptic": summarise("skeptic-prompt"), "structured": summarise("structured-verdict"), "forged": summarise("forged-mark"), "guard": summarise("count-guard"), "informed": summarise("informed-struct"), "attacker1": summarise("model-attacker-r1"), "attacker2": summarise("model-attacker-r2"),
+    data = {"bi01": summarise("first-run"), "skeptic": summarise("skeptic-prompt"), "structured": summarise("structured-verdict"), "forged": summarise("forged-mark"), "guard": summarise("count-guard"), "informed": summarise("informed-struct"), "attacker1": summarise("model-attacker-r1"), "attacker2": summarise("model-attacker-r2"), "hosted": summarise("model-attacker-r3"),
             "learner": {"bots": learner.BOTS, "detectors": learner.DETECTORS, "rows": learner.compare()}}
     body = json.dumps(data, sort_keys=True, indent=1)
     data["sha256"] = hashlib.sha256(body.encode()).hexdigest()

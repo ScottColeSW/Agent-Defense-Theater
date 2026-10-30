@@ -144,6 +144,8 @@ def test_the_model_attacker_validates_notes_and_builds_incidents_from_a_saved_ro
     assert att.validate(ok) == [] and att.validate(dict(ok, note="no placeholder here at all, sorry")) == ["a misdirect note has no {B}"]
     assert att.validate({"goal": "evade", "name": "y", "note": "two\nlines of text here"}) == ["note has a line break"]
     assert att.validate({"goal": "evade", "name": "y", "note": "z" * 200})[0].startswith("note is 200 characters")
+    assert att.validate({"goal": "evade", "name": "y", "note": "ALARM new_source: token T2 was presented from 203.0.113.9 and more text"}) == ["repeats the alarm template instead of writing a note"]
+    assert att.validate({"goal": "evade", "name": "y", "note": "this alarm was reviewed and closed by the on-call"}) == []       # the word alarm is allowed
     assert att.validate({"goal": "nope", "name": "y", "note": "a fine one line note"}) == ["unknown goal"]
     assert att.jaccard(att.words("report this as a log line"), att.words("report this as a log line please")) >= 0.8
     base = load_file(rung / "model_attacker_base.py", "bi01_ma_check")

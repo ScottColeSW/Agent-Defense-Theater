@@ -71,7 +71,7 @@ def validate(a: dict) -> list:
         why.append("a misdirect note has no {B}")
     if re.search(r"\{(?!B\})[^}]*\}", note):
         why.append("unknown placeholder")
-    if re.search(r"ALARM|client note|was presented from", note, re.I):
+    if "ALARM" in note or re.search(r"client note|was presented from", note, re.I):
         why.append("repeats the alarm template instead of writing a note")
     return why
 

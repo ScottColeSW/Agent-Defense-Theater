@@ -23,7 +23,7 @@ def _scripted(tmp_path):
 
 
 def test_the_rung_is_found_beside_the_owasp_items():
-    assert item_folder("bi01").name == "bi01-contain" and experiments("bi01") == ["first-run", "skeptic-prompt", "structured-verdict", "forged-mark", "count-guard", "informed-struct", "model-attacker-r1", "model-attacker-r2"]
+    assert item_folder("bi01").name == "bi01-contain" and experiments("bi01") == ["first-run", "skeptic-prompt", "structured-verdict", "forged-mark", "count-guard", "informed-struct", "model-attacker-r1", "model-attacker-r2", "model-attacker-r3", "model-attacker-r4"]
     assert "bi01/first-run" in {t["id"] for t in list_tests(refresh=True)}
 
 
@@ -161,3 +161,15 @@ def test_the_model_attacker_validates_notes_and_builds_incidents_from_a_saved_ro
     assert sum(e["kind"] == "canary_hit" for e in first.data["events"]) == 2 and first.data["expect"] == ["T2"]
     text = (rung / "PREREGISTRATION-model-attacker.md").read_text(encoding="utf-8")
     assert "model_parser_struct" in text and "hermes3:8b" in text
+
+
+def test_the_hosted_attacker_rounds_share_the_machinery_and_have_their_own_preregistration():
+    from adt.loader import load_file
+    rung = item_folder("bi01")
+    r3, r4 = load_scenario("bi01", "model-attacker-r3"), load_scenario("bi01", "model-attacker-r4")
+    assert r3.prereg_path.name == "PREREGISTRATION-hosted-attacker.md" and r4.prereg_path.name == "PREREGISTRATION-hosted-attacker.md"
+    assert (r3.sequence, r4.sequence) == (9, 10) and "hosted" in r3.title and "earlier notes" in r4.summary and "earlier notes" not in r3.summary
+    text = (rung / "PREREGISTRATION-hosted-attacker.md").read_text(encoding="utf-8")
+    assert "max_calls = 4" in text and "gemini-pro-latest" in text and "model_parser_struct" in text
+    att = load_file(rung / "attacker.py", "bi01_attacker_hosted_check")
+    assert "stopped" in (rung / "attacker.py").read_text(encoding="utf-8") and att.MAX_CALLS == 4

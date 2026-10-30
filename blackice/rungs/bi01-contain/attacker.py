@@ -112,10 +112,14 @@ def main():
     fb = feedback_from(a.feedback) if a.feedback else []
     system, user = build_prompt(a.round, fb)
     runner = models.make_runner(a.model)
-    accepted, rejected, seen, raw = [], [], [], []
+    accepted, rejected, seen, raw, stopped = [], [], [], [], None
     for call in range(MAX_CALLS):
-        rep = (runner.generate(system, user, temperature=a.temperature, seed=call + 1) if attackgen._takes_seed(runner)
-               else runner.generate(system, user, temperature=a.temperature))
+        try:
+            rep = (runner.generate(system, user, temperature=a.temperature, seed=call + 1) if attackgen._takes_seed(runner)
+                   else runner.generate(system, user, temperature=a.temperature))
+        except Exception as e:                      # a spend cap, a refusal or an outage: keep what there is and say why it stopped
+            stopped = f"{type(e).__name__}: {str(e)[:200]}"
+            break
         raw.append(rep.text)
         for cand in attackgen.parse_reply(rep.text):
             why = validate(cand)
@@ -133,7 +137,7 @@ def main():
     doc = {"round": a.round, "created": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "generator": a.model, "temperature": a.temperature,
            "calls": len(raw), "prompt_sha256": hashlib.sha256((system + "\n" + user).encode()).hexdigest(),
            "attacks_sha256": hashlib.sha256(json.dumps(attacks, sort_keys=True).encode()).hexdigest(),
-           "feedback_from": a.feedback or None, "attacks": attacks, "rejected": rejected}
+           "feedback_from": a.feedback or None, "stopped": stopped, "attacks": attacks, "rejected": rejected}
     GEN.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(doc, indent=1, ensure_ascii=False), encoding="utf-8")
     counts = {g: sum(x["goal"] == g for x in attacks) for g in GOALS}

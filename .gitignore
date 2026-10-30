@@ -227,3 +227,6 @@ node_modules/
 # Local API keys for remote models (copy keys.example.ini to keys.ini)
 keys.ini
 *.keys.ini
+
+# Canary registry (fingerprints only, but local state)
+canaries.json

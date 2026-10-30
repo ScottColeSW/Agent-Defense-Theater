@@ -333,6 +333,41 @@ def cmd_overhead(a):
     print("\nA model reviewer's time is not here: it is the model's, recorded as review_ms in live runs.")
 
 
+def cmd_loosekeys(a):
+    """Loose-key detection and countermeasures. Tokens are never printed in full."""
+    from . import loosekeys as lk
+    reg = lk.CanaryRegistry(a.registry)
+    if a.action == "scan":
+        found = lk.scan_paths(a.target or ["."], reg.fingerprints) + ([] if a.no_env else lk.scan_env(canaries=reg.fingerprints))
+        for f in found:
+            print(f"{f.exposure:7} {f.kind:14} {f.where}:{f.line}  {f.preview}  fp={f.fingerprint}" + ("  CANARY" if f.canary else ""))
+        print(f"{len(found)} token-shaped strings. Rotate any that are live; the fingerprint lets you match one to a provider's grant list.")
+        sys.exit(1 if found else 0)
+    if a.action == "audit":
+        if not a.target:
+            sys.exit("Give an inventory file: a JSON list of grants (id, app, kind, scopes, created, last_used, expires, scopes_used).")
+        audit = lk.audit_grants(json.loads(Path(a.target[0]).read_text(encoding="utf-8")), lk.Policy(idle_days=a.idle_days))
+        for r in audit:
+            print(f"{r['score']:3}  {r['action']:13} {str(r['id']):20} {','.join(r['flags']) or '-'}")
+        print(json.dumps(lk.plan_countermeasures(audit), indent=1))
+        return
+    if a.action == "canary":
+        where = a.target[0] if a.target else "(unplaced)"
+        token = reg.plant(a.kind, where, a.label)
+        print(f"Planted a {a.kind} canary (fingerprint {lk.fingerprint(token)}). Put this where a scavenger looks, once:\n{token}")
+        return
+    if a.action == "watch":
+        hits = []
+        for p in a.target or []:
+            hits += [{**h, "file": p} for h in lk.check_events(Path(p).read_text(encoding="utf-8", errors="replace").splitlines(), reg.fingerprints)]
+        print(json.dumps(hits, indent=1) if hits else "No canary presented.")
+        sys.exit(2 if hits else 0)
+    print("Scripted and synthetic: a fleet of 120 grants over 180 days, five seeds, a scavenger bot. Not a measurement of any real system.\n")
+    for inside in (0.0, 0.25):
+        print(f"Bot attempts from inside the owner's network: {int(inside * 100)}%")
+        print(lk.format_table(lk.compare(inside=inside)) + "\n")
+
+
 def cmd_prereg(a):
     sc = load_scenario(a.item, a.experiment)
     ok, msg, info = harness.check_prereg(sc.prereg_path, sc.code_dirs)
@@ -380,6 +415,10 @@ def main(argv=None):
     s = sub.add_parser("verify", help="verify decision-log hash chains"); s.add_argument("log", nargs="?"); s.set_defaults(f=cmd_verify)
     s = sub.add_parser("demo", help="scripted ASI03 run, then verify its log"); s.add_argument("--experiment", **EXP); s.set_defaults(f=cmd_demo)
     s = sub.add_parser("prereg", help="check an item's prediction is committed"); s.add_argument("item"); s.add_argument("--experiment", **EXP); s.set_defaults(f=cmd_prereg)
+    s = sub.add_parser("loosekeys", help="find loose tokens, audit a grant inventory, plant canaries, compare countermeasures"); s.add_argument("action", choices=["scan", "audit", "canary", "watch", "demo"])
+    s.add_argument("target", nargs="*", help="scan: folders (default .). audit: an inventory .json. canary: where it is planted. watch: log files")
+    s.add_argument("--registry", default=str(ROOT / "canaries.json")); s.add_argument("--kind", default="github", choices=["github", "slack", "llm_api_key", "google_access"])
+    s.add_argument("--label", default=""); s.add_argument("--idle-days", type=int, default=30); s.add_argument("--no-env", action="store_true"); s.set_defaults(f=cmd_loosekeys)
     sub.add_parser("experiments", help="list runnable experiments").set_defaults(f=cmd_experiments)
     sub.add_parser("study", help="summary of the reviewer study (people approving the calibration cards), beside the model reviewers").set_defaults(f=cmd_study)
     s = sub.add_parser("overhead", help="latency our own code adds, measured without a model"); s.add_argument("item"); s.add_argument("--experiment", **EXP)

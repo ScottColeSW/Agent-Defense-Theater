@@ -120,6 +120,7 @@ The [governance crosswalk](docs/GOVERNANCE-CROSSWALK.md) sets each measurement b
 | [`docs/CHECKLIST.md`](docs/CHECKLIST.md), [`docs/ROLE-QUESTIONS.md`](docs/ROLE-QUESTIONS.md), [`docs/OUTREACH.md`](docs/OUTREACH.md) | An eleven-item agent security checklist, open questions by role, and a one-page outreach summary, each answer with its caveat. A test recomputes every quoted number from the saved results |
 | `crosswalk/` | Coverage and governance mapping data |
 | `theater/`, `greenroom/` | The governance model (earned trust, three oversight speeds) and the adversarial arena spec the project builds on |
+| [`blackice/`](blackice/) | Black ICE, a design for defensive counter-intrusion kept apart from the OWASP items: detect, contain, deceive, record and report on your own systems, never retaliation. Designed, not yet built |
 | `integrations/` | Sibling projects used or linked |
 
 ## Related projects

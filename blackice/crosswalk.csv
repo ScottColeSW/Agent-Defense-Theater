@@ -1,0 +1,6 @@
+rung,what_it_supports,items,how
+Detect,Finding what is exposed and noticing use,ASI03 ASI04 ASI10,Loose-token scan and grant audit find ambient credentials; canary alarms notice a scavenger; an agent's outcome history feeds the Theater classification
+Contain,Shrinking what a stolen credential or a bad agent can do at once,ASI03 ASI08 ASI10,Quarantine and source binding narrow a credential; a circuit breaker stops a cascade; demotion contains a rogue agent
+Deceive,Wasting an intruder's time and learning their method,ASI01 ASI02 ASI06,Decoy tools and fake data show which injected goals and unsafe calls an intruder tries; planted documents show who reads and trusts memory
+Record and report,Evidence others can check and a report people can act on,ASI09 ASI10,Hash-chained log and human-signed reports are the audit trail and the approval step; reports go to the credential issuer and the host
+Out of scope: retaliate,Attacking the attacker's systems,none,Not built. Illegal in most places, attribution is weak, the trigger can be forged

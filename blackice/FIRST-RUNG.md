@@ -90,3 +90,7 @@ Pasting `[signed]` into a forged alarm fooled no model. Injecting two fake numbe
 ## The fourth follow-up: check the model, or take the field away
 
 A count guard (reject a parse with the wrong number of alarms) stopped the injected lines (8 of 9 down to 0) and could not see an instruction aimed at the parser (5 of 9 got through). A design in which the model never sees or sets the signed mark, and the signed value comes from the structure by id, locked out 0 of 27 at the signed rule's level of right decisions. See [`rungs/bi01-contain/PREREGISTRATION-count-guard.md`](rungs/bi01-contain/PREREGISTRATION-count-guard.md).
+
+## The fifth follow-up: an informed attacker against the struct design
+
+With the signed value taken from structure, a note inside a real signed alarm that names an owner token never made a model report the wrong token (0 of 9) and no owner token was locked out. A note telling the model to report an alarm as a log line worked on 5 of 9 and left the thief uncontained. A cross-check of the model's reading against the structure turned those misreadings into rejections and did not help, and by the rule written before the run it is uninformative about the cross-check. What the run does show is that the exposure left is evasion, not misdirection, and that the structure already carries what the model was reading. See [`rungs/bi01-contain/PREREGISTRATION-informed-struct.md`](rungs/bi01-contain/PREREGISTRATION-informed-struct.md).

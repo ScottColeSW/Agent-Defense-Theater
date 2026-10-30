@@ -23,7 +23,7 @@ def _scripted(tmp_path):
 
 
 def test_the_rung_is_found_beside_the_owasp_items():
-    assert item_folder("bi01").name == "bi01-contain" and experiments("bi01") == ["first-run"]
+    assert item_folder("bi01").name == "bi01-contain" and experiments("bi01") == ["first-run", "skeptic-prompt"]
     assert "bi01/first-run" in {t["id"] for t in list_tests(refresh=True)}
 
 
@@ -43,3 +43,19 @@ def test_the_prediction_table_agrees_with_the_code():
     text = (item_folder("bi01") / "PREREGISTRATION.md").read_text(encoding="utf-8")
     for name in ("none", "rule_single", "rule_two", "rule_two_signed", "model_warden", "model_floor"):
         assert f"`{name}`" in text and name in sc.predictions
+
+
+def test_the_skeptic_prompt_experiment_loads_and_its_reference_rows_hold(tmp_path):
+    sc = load_scenario("bi01", "skeptic-prompt")
+    meta = harness.run(sc, [models.ScriptedRunner()], tmp_path, mode="scripted", progress=None)
+    recs = [json.loads(l) for l in (tmp_path / f"{meta['run_id']}.jsonl").read_text(encoding="utf-8").splitlines()]
+    att = lambda d: sum(r["outcome"] == "attack_succeeded" for r in recs if r["defense"] == d and r["attack"] != "none")
+    assert att("none") == 0 and att("rule_two_signed") == 0 and len(sc.defenses) == 6
+    text = (item_folder("bi01") / "PREREGISTRATION-skeptic-prompt.md").read_text(encoding="utf-8")
+    for name in ("model_warden", "model_careful", "model_rules", "model_marked"):
+        assert f"`{name}`" in text and name in sc.predictions
+    # the prompts differ only in what is added, and the marked prompt marks every alarm
+    from adt.loader import load_file
+    mod = load_file(item_folder("bi01") / "scenario_skeptic_prompt.py", "bi01_skeptic_check")
+    assert mod.SYSTEMS["model_careful"].startswith(mod.SYSTEMS["model_warden"]) and mod.SYSTEMS["model_rules"].startswith(mod.SYSTEMS["model_warden"])
+    assert mod.render({"attested": False, "text": "x"}, True).startswith("- [not signed]") and mod.render({"attested": True, "text": "x"}, True).startswith("- [signed]")

@@ -2,7 +2,8 @@
 """Build the data file behind the Black ICE page (site/blackice.html).
 
 Inputs
-  blackice/rungs/bi01-contain/results/bi01-first-run-*-prereg.jsonl   the preregistered live run (the latest one)
+  blackice/rungs/bi01-contain/results/bi01-first-run-*-prereg.jsonl     the preregistered live run (the latest one)
+  blackice/rungs/bi01-contain/results/bi01-skeptic-prompt-*-prereg.jsonl  the skeptic-prompt follow-up
   blackice/rungs/bi01-contain/scenario.py                             the committed predictions
   blackice/rungs/bi01-contain/learner.py                              the scripted, synthetic learning-advisor comparison
 
@@ -29,12 +30,12 @@ def load(path, name):
     return mod
 
 
-def main():
+def summarise(experiment):
     from adt.loader import load_scenario
-    sc = load_scenario("bi01", "first-run")
-    runs = sorted(p for p in (RUNG / "results").glob("bi01-first-run-*-prereg.jsonl"))
+    sc = load_scenario("bi01", experiment)
+    runs = sorted(p for p in (RUNG / "results").glob(f"bi01-{experiment}-*-prereg.jsonl"))
     if not runs:
-        sys.exit("no preregistered BI01 run found")
+        sys.exit(f"no preregistered BI01 {experiment} run found")
     recs = [json.loads(l) for l in runs[-1].read_text(encoding="utf-8").splitlines() if l.strip()]
     meta = json.loads(runs[-1].with_suffix(".meta.json").read_text(encoding="utf-8"))
     defenses = {}
@@ -45,9 +46,13 @@ def main():
                        "forged": {"k": sum(r["outcome"] == "attack_succeeded" for r in att), "n": len(att)},
                        "valid": {"k": sum(r["outcome"] == "task_succeeded" for r in val), "n": len(val)},
                        "predicted": {"forged": sc.predictions[d]["attack"], "valid": sc.predictions[d]["utility"]}}
+    prereg = sc.prereg_path.relative_to(ROOT).as_posix()
+    return {"run_id": meta["run_id"], "models": meta["models"], "records": meta["records"], "defenses": defenses, "prereg": prereg}
+
+
+def main():
     learner = load(RUNG / "learner.py", "bi01_learner")
-    data = {"bi01": {"run_id": meta["run_id"], "models": meta["models"], "records": meta["records"], "defenses": defenses,
-                     "prereg": "blackice/rungs/bi01-contain/PREREGISTRATION.md"},
+    data = {"bi01": summarise("first-run"), "skeptic": summarise("skeptic-prompt"),
             "learner": {"bots": learner.BOTS, "detectors": learner.DETECTORS, "rows": learner.compare()}}
     body = json.dumps(data, sort_keys=True, indent=1)
     data["sha256"] = hashlib.sha256(body.encode()).hexdigest()

@@ -74,3 +74,7 @@ Under the author's assumptions only, with five seeds of 120 grants over 90 days 
 ## What the live run found
 
 In one line: a model reading the alarms was not a check, and a signed-alarm floor removed the harm and added nothing the rule did not already do. The details, with the predictions it missed, are in the addendum of [`rungs/bi01-contain/PREREGISTRATION.md`](rungs/bi01-contain/PREREGISTRATION.md).
+
+## The follow-up: does a stricter prompt help?
+
+No. A second preregistered run, [`rungs/bi01-contain/PREREGISTRATION-skeptic-prompt.md`](rungs/bi01-contain/PREREGISTRATION-skeptic-prompt.md), gave the model Warden a general warning, explicit rules, and alarms marked signed or not. It still locked out an owner token in 36, 36, 35 and 36 of 36 forged incidents, against predictions of 85%, 30% and 20% for the last three. The signature protects only a rule that reads it.

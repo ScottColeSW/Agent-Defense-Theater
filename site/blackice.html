@@ -52,6 +52,14 @@
   </section>
 
   <section>
+    <h2>Does a stricter prompt make a model a check? <span class="tag live">Preregistered live run</span></h2>
+    <p class="muted small" id="skepnote"></p>
+    <div class="card"><div class="grid" id="skeptic"></div>
+      <div class="key"><span><b style="color:var(--red-ink)">Red</b> = forged incidents that locked out an owner token (lower is better)</span><span><b style="color:var(--green-ink)">Green</b> = right decisions (higher is better)</span></div>
+      <p class="take" id="skeptake"></p></div>
+  </section>
+
+  <section>
     <h2>Comparison view: does a learning advisor earn a place? <span class="tag scripted">Scripted, synthetic</span></h2>
     <p class="muted small" style="max-width:820px">A bot with a foothold inside the owner's network uses leaked tokens from the owner's own addresses, so "new source" never fires. What is left is how much each token is used. The owner changes honestly too: a four-day surge, and a permanent move to three times the volume.</p>
     <div class="card">
@@ -69,7 +77,7 @@
 <script>
 const E = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
 const ORDER = ["none", "rule_single", "rule_two", "rule_two_signed", "model_warden", "model_floor"];
-const NAMES = {none: "No containment", rule_single: "One alarm quarantines", rule_two: "Two alarms required", rule_two_signed: "Two alarms, gateway-signed", model_warden: "A model decides", model_floor: "A model under a signed floor"};
+const NAMES = {model_careful: "A model, told to be careful", model_rules: "A model, given explicit rules", model_marked: "A model, alarms marked signed or not", none: "No containment", rule_single: "One alarm quarantines", rule_two: "Two alarms required", rule_two_signed: "Two alarms, gateway-signed", model_warden: "A model decides", model_floor: "A model under a signed floor"};
 const BOT = {burst: "Burst (10x at once)", slow_ramp: "Slow ramp (8% a day)", low_and_slow: "Low and slow (1.5x)", mimic: "Mimic (takes a share, total unchanged)", none: "No bot (false alerts only)"};
 const DET = {none: "Nothing", fixed_cap: "Fixed cap (3x day-zero)", learned_naive: "Learned, unbounded", learned_capped: "Learned, bounded", learned_verified: "Learned, bounded, quiet days only"};
 const pctOf = x => Math.round(100 * x.k / (x.n || 1));
@@ -84,6 +92,15 @@ function drawLive() {
     return `<div class="row"><div class="name">${NAMES[k]}<small>predicted ${Math.round(100 * d.predicted.forged)}% locked out</small></div><div class="bars">${bar("att", d.forged, "locked out")}${bar("ok", d.valid, "right")}</div></div>`; }).join("");
   const m = b.defenses.model_warden, f = b.defenses.model_floor;
   $("livetake").innerHTML = `A model reading the alarms locked out an owner token in ${m.forged.k} of ${m.forged.n} forged incidents, against a prediction of ${Math.round(100 * m.predicted.forged)}%. Under a signed floor it locked out ${f.forged.k}, and its right decisions equalled the signed rule's (${f.valid.k} of ${f.valid.n}). The signed rule alone did the work.`;
+}
+
+function drawSkeptic() {
+  const b = D.skeptic, ord = ["none", "rule_two_signed", "model_warden", "model_careful", "model_rules", "model_marked"];
+  $("skepnote").innerHTML = `Run <code>${E(b.run_id)}</code>, ${b.records} records on ${b.models.map(E).join(", ")}. The same incidents as above, with the model's prompt changed (<a href="https://github.com/ScottColeSW/Agent-Defense-Theater/blob/main/${b.prereg}">preregistration and addendum</a>).`;
+  $("skeptic").innerHTML = ord.map(k => { const d = b.defenses[k];
+    return `<div class="row"><div class="name">${NAMES[k]}<small>predicted ${Math.round(100 * d.predicted.forged)}% locked out</small></div><div class="bars">${bar("att", d.forged, "locked out")}${bar("ok", d.valid, "right")}</div></div>`; }).join("");
+  const w = b.defenses.model_warden, r = b.defenses.model_rules, m = b.defenses.model_marked;
+  $("skeptake").innerHTML = `No prompt helped: ${w.forged.k}, ${b.defenses.model_careful.forged.k}, ${r.forged.k} and ${m.forged.k} of ${w.forged.n} forged incidents locked out an owner token. The rules prompt made the model more useful on real work (${r.valid.k} of ${r.valid.n} right) and no safer. Telling the model every unsigned alarm was fake did not stop it acting on them. The signature protects only a rule that reads it.`;
 }
 
 function drawCompare() {
@@ -111,7 +128,7 @@ function drawCompare() {
   $("bot").innerHTML = ["burst", "slow_ramp", "low_and_slow", "mimic", "none"].map(b => `<option value="${b}">${E(BOT[b])}</option>`).join("");
   $("bot").value = "slow_ramp";
   $("learn").addEventListener("change", drawCompare); $("bot").addEventListener("change", drawCompare);
-  drawLive(); drawCompare();
+  drawLive(); drawSkeptic(); drawCompare();
 })();
 </script>
 </body>

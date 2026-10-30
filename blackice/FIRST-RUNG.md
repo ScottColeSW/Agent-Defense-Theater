@@ -86,3 +86,7 @@ A model that only reports facts about each alarm, with a rule deciding from them
 ## The third follow-up: can the mark be forged?
 
 Pasting `[signed]` into a forged alarm fooled no model. Injecting two fake numbered, signed lines through one log entry fooled all of them (9 of 9 on a text parser), and putting the mark in a separate JSON field with the text escaped did not stop it (8 of 9). The rule that reads the gateway's own signature locked out 0 of 36. A model is a reader, not a boundary. See [`rungs/bi01-contain/PREREGISTRATION-forged-mark.md`](rungs/bi01-contain/PREREGISTRATION-forged-mark.md). The cheap guard to try next: reject any parse with more alarms than the structure contains.
+
+## The fourth follow-up: check the model, or take the field away
+
+A count guard (reject a parse with the wrong number of alarms) stopped the injected lines (8 of 9 down to 0) and could not see an instruction aimed at the parser (5 of 9 got through). A design in which the model never sees or sets the signed mark, and the signed value comes from the structure by id, locked out 0 of 27 at the signed rule's level of right decisions. See [`rungs/bi01-contain/PREREGISTRATION-count-guard.md`](rungs/bi01-contain/PREREGISTRATION-count-guard.md).

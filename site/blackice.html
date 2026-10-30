@@ -76,6 +76,14 @@
   </section>
 
   <section>
+    <h2>Check the model against the structure <span class="tag live">Preregistered live run</span></h2>
+    <p class="muted small" id="gdnote"></p>
+    <div class="card"><div class="grid" id="guard"></div>
+      <div class="key"><span><b style="color:var(--red-ink)">Red</b> = forged incidents that locked out an owner token (lower is better)</span><span><b style="color:var(--green-ink)">Green</b> = right decisions (higher is better)</span></div>
+      <p class="take" id="gdtake"></p></div>
+  </section>
+
+  <section>
     <h2>Comparison view: does a learning advisor earn a place? <span class="tag scripted">Scripted, synthetic</span></h2>
     <p class="muted small" style="max-width:820px">A bot with a foothold inside the owner's network uses leaked tokens from the owner's own addresses, so "new source" never fires. What is left is how much each token is used. The owner changes honestly too: a four-day surge, and a permanent move to three times the volume.</p>
     <div class="card">
@@ -93,7 +101,7 @@
 <script>
 const E = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
 const ORDER = ["none", "rule_single", "rule_two", "rule_two_signed", "model_warden", "model_floor"];
-const NAMES = {model_parser_json: "A model reads a separate signed field", model_judge: "A model gives a verdict on each alarm", model_parser: "A model only reads, a rule decides", model_careful: "A model, told to be careful", model_rules: "A model, given explicit rules", model_marked: "A model, alarms marked signed or not", none: "No containment", rule_single: "One alarm quarantines", rule_two: "Two alarms required", rule_two_signed: "Two alarms, gateway-signed", model_warden: "A model decides", model_floor: "A model under a signed floor"};
+const NAMES = {model_parser_json_guard: "Parser, rejected if the alarm count is wrong", model_parser_struct: "The model never sees or sets the mark", model_parser_json: "A model reads a separate signed field", model_judge: "A model gives a verdict on each alarm", model_parser: "A model only reads, a rule decides", model_careful: "A model, told to be careful", model_rules: "A model, given explicit rules", model_marked: "A model, alarms marked signed or not", none: "No containment", rule_single: "One alarm quarantines", rule_two: "Two alarms required", rule_two_signed: "Two alarms, gateway-signed", model_warden: "A model decides", model_floor: "A model under a signed floor"};
 const BOT = {burst: "Burst (10x at once)", slow_ramp: "Slow ramp (8% a day)", low_and_slow: "Low and slow (1.5x)", mimic: "Mimic (takes a share, total unchanged)", none: "No bot (false alerts only)"};
 const DET = {none: "Nothing", fixed_cap: "Fixed cap (3x day-zero)", learned_naive: "Learned, unbounded", learned_capped: "Learned, bounded", learned_verified: "Learned, bounded, quiet days only"};
 const pctOf = x => Math.round(100 * x.k / (x.n || 1));
@@ -137,6 +145,15 @@ function drawForged() {
   $("fortake").innerHTML = `Pasting "[signed]" into a forged alarm fooled no model. Injecting fake numbered, signed lines through one log entry fooled them every time (${t.invented} alarms invented), and escaping the text in a separate JSON field did not stop it (${j.invented} invented again). The rule that takes the signature from the gateway's own field was untouched. A model is a reader, not a boundary: it believes whatever the text says. The decision has to take its facts from structure the attacker cannot write.`;
 }
 
+function drawGuard() {
+  const b = D.guard, ord = ["none", "rule_two_signed", "model_parser_json", "model_parser_json_guard", "model_parser_struct"];
+  $("gdnote").innerHTML = `Run <code>${E(b.run_id)}</code>, ${b.records} records on ${b.models.map(E).join(", ")}. Attacks: injected fake lines, and an instruction aimed at the parser that leaves the alarm count right (<a href="https://github.com/ScottColeSW/Agent-Defense-Theater/blob/main/${b.prereg}">preregistration and addendum</a>).`;
+  $("guard").innerHTML = ord.map(k => { const d = b.defenses[k];
+    return `<div class="row"><div class="name">${NAMES[k]}<small>predicted ${Math.round(100 * d.predicted.forged)}% locked out</small></div><div class="bars">${bar("att", d.forged, "locked out")}${bar("ok", d.valid, "right")}</div></div>`; }).join("");
+  const g = b.defenses.model_parser_json_guard, s = b.defenses.model_parser_struct, j = b.defenses.model_parser_json;
+  $("gdtake").innerHTML = `A guard that rejects a parse with the wrong number of alarms stopped the injected lines and could not see the instruction (${j.forged.k} of ${j.forged.n} locked out, down to ${g.forged.k}). Taking the signed value from the structure and never letting the model see or set it stopped everything (${s.forged.k} of ${s.forged.n}) at no cost in right decisions. The model reads the kind and the subject, and the decision takes the facts it depends on from fields the attacker cannot write.`;
+}
+
 function drawCompare() {
   const on = $("learn").checked, bot = $("bot").value, rows = D.learner.rows[bot];
   const pick = (det, mode) => rows.find(r => r.detector === det && r.mode === mode);
@@ -162,7 +179,7 @@ function drawCompare() {
   $("bot").innerHTML = ["burst", "slow_ramp", "low_and_slow", "mimic", "none"].map(b => `<option value="${b}">${E(BOT[b])}</option>`).join("");
   $("bot").value = "slow_ramp";
   $("learn").addEventListener("change", drawCompare); $("bot").addEventListener("change", drawCompare);
-  drawLive(); drawSkeptic(); drawStructured(); drawForged(); drawCompare();
+  drawLive(); drawSkeptic(); drawStructured(); drawForged(); drawGuard(); drawCompare();
 })();
 </script>
 </body>

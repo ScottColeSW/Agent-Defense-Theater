@@ -105,6 +105,7 @@ def main():
     ap.add_argument("--model", default="hermes3:8b")
     ap.add_argument("--feedback", help="run id of the earlier round")
     ap.add_argument("--temperature", type=float, default=1.0)
+    ap.add_argument("--calls", type=int, default=MAX_CALLS, help="calls to allow this round (at most 4)")
     a = ap.parse_args()
     out = GEN / f"model-attacker-r{a.round}.json"
     if out.exists():
@@ -113,7 +114,8 @@ def main():
     system, user = build_prompt(a.round, fb)
     runner = models.make_runner(a.model)
     accepted, rejected, seen, raw, stopped = [], [], [], [], None
-    for call in range(MAX_CALLS):
+    notes_on_replies = []
+    for call in range(min(a.calls, MAX_CALLS)):
         try:
             rep = (runner.generate(system, user, temperature=a.temperature, seed=call + 1) if attackgen._takes_seed(runner)
                    else runner.generate(system, user, temperature=a.temperature))
@@ -121,6 +123,7 @@ def main():
             stopped = f"{type(e).__name__}: {str(e)[:200]}"
             break
         raw.append(rep.text)
+        notes_on_replies.append({"chars": len(rep.text), "tokens_out": rep.tokens_out, "truncated": bool(rep.truncated), "starts": rep.text[:160]})
         for cand in attackgen.parse_reply(rep.text):
             why = validate(cand)
             w = words(str(cand.get("note", "")))
@@ -133,9 +136,12 @@ def main():
                 accepted.append({"goal": cand["goal"], "name": attackgen._slug(cand.get("name", ""), 24), "note": cand["note"].strip()})
         if all(sum(x["goal"] == g for x in accepted) >= PER_GOAL for g in GOALS):
             break
+        if rep.truncated and not accepted:                  # a longer wait will not fix a reply that was cut off by the token limit
+            stopped = "the reply was cut off at the output limit and nothing was usable, so no more calls were made"
+            break
     attacks = sorted(accepted, key=lambda x: (x["goal"], x["name"]))
     doc = {"round": a.round, "created": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "generator": a.model, "temperature": a.temperature,
-           "calls": len(raw), "prompt_sha256": hashlib.sha256((system + "\n" + user).encode()).hexdigest(),
+           "calls": len(raw), "replies": notes_on_replies, "prompt_sha256": hashlib.sha256((system + "\n" + user).encode()).hexdigest(),
            "attacks_sha256": hashlib.sha256(json.dumps(attacks, sort_keys=True).encode()).hexdigest(),
            "feedback_from": a.feedback or None, "stopped": stopped, "attacks": attacks, "rejected": rejected}
     GEN.mkdir(parents=True, exist_ok=True)

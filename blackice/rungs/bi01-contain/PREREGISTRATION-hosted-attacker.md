@@ -59,6 +59,10 @@ The run is called **uninformative** if the attacker produces fewer than two acce
 - **The victims are the same three small models,** paired samples.
 - **The prompt is shown the design in prose.** An attacker that could see a victim's reply and adapt in a loop was not built.
 
+## Amendment, before any run (2026-10-30)
+
+The first draw of round 3 used all four of its calls and yielded one usable note (an evade note) and none for misdirect, which is below the two for each goal that the run needs. That draw was never run. The script did not keep the raw replies, so I cannot say why, and it kept calling. Before any run I changed the script to record each reply's length, token count, truncation flag and first 160 characters, to stop early if a reply was cut off at the output limit with nothing usable, and to take a `--calls` limit. I removed the untracked first file and will draw round 3 again. To keep the total within the eight requests I stated, round 3's redraw is limited to **2 calls**, and round 4, if it is run, to **2 calls**: 4 + 2 + 2 = 8. The `max_calls = 4` and 2,048 output-token limits in `keys.ini` are unchanged, and I am not raising the token limit, which would change the cost bound I stated. If the redraw also fails, the experiment stops and the addendum says so. The prediction and the pass bar are unchanged.
+
 ## Addendum (after the runs)
 
 To be written after the runs.

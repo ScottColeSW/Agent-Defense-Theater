@@ -65,6 +65,10 @@ Not criteria, reported in the addendum: results by reader model, and which note 
 - **The "would mislead" measure is a word and token check,** not a person reading the summary.
 - **Three harmless notes, five attack notes, one prompt,** paired samples, so the pooled percentages carry wide uncertainty.
 
+## Amendment, before any run (2026-10-30)
+
+The first launch stopped before any model call, with no output kept: the harness reads the name `mistral:7b` as the hosted Mistral provider (its prefix is a provider name) and asked for an API key I have not set, so nothing was sent anywhere. The model is the same local `mistral:7b` already in Ollama. I gave it a second tag, `mistral-local:7b` (`ollama cp`, same digest `6577803aa9a0`, no download), and the run uses that name. Everything else, the prediction and the pass bar, is unchanged. The code changed in one place, the name used for the added readers in criterion 6.
+
 ## Addendum (after the run)
 
 To be written after the run.

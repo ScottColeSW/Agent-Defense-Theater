@@ -197,7 +197,7 @@ class Bi01FreeTextReader:
         hon = [r for r in rd if r["attack"] == "none" and r.get("noted")]
         share = lambda rs, k: (sum(bool(r[k]) for r in rs) / len(rs)) if rs else 0.0
         parser = [r for r in recs if r["defense"] == "model_parser_struct" and r["attack"] != "none"]
-        added = ("mistral:7b", "hermes3:8b")
+        added = ("mistral-local:7b", "hermes3:8b")
         added_rows = [r for r in parser if r.get("model") in added]
         added_wrong = (sum(r["outcome"] == "attack_succeeded" for r in added_rows) / len(added_rows)) if added_rows else 0.0
         kept = [r for r in recs if r["defense"] in ("structure_only_reader", "model_parser_struct")]

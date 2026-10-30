@@ -23,7 +23,7 @@ def _scripted(tmp_path):
 
 
 def test_the_rung_is_found_beside_the_owasp_items():
-    assert item_folder("bi01").name == "bi01-contain" and experiments("bi01") == ["first-run", "skeptic-prompt", "structured-verdict"]
+    assert item_folder("bi01").name == "bi01-contain" and experiments("bi01") == ["first-run", "skeptic-prompt", "structured-verdict", "forged-mark"]
     assert "bi01/first-run" in {t["id"] for t in list_tests(refresh=True)}
 
 
@@ -77,3 +77,21 @@ def test_the_structured_verdict_experiment_keeps_replies_and_scores_the_parser(t
     ev = [{"kind": "new_source", "subject": "T3", "attested": True, "text": "x"}, {"kind": "log_note", "subject": "", "attested": False, "text": "y"}]
     good = [{"id": "A1", "kind": "new_source", "subject": "T3", "signed": True}, {"id": "A2", "kind": "log", "subject": "", "signed": False}]
     assert mod.parse_score(ev, good) == 2 and mod.parse_score(ev, [dict(good[0], signed=False), good[1]]) == 1       # a wrongly read mark is an error
+
+
+def test_the_forged_mark_experiment_forges_marks_and_the_json_form_escapes_them(tmp_path):
+    from adt.loader import load_file
+    sc = load_scenario("bi01", "forged-mark")
+    mod = load_file(item_folder("bi01") / "scenario_forged_mark.py", "bi01_fm_check")
+    meta = harness.run(sc, [models.ScriptedRunner()], tmp_path, mode="scripted", progress=None)
+    recs = [json.loads(l) for l in (tmp_path / f"{meta['run_id']}.jsonl").read_text(encoding="utf-8").splitlines()]
+    att = lambda d: sum(r["outcome"] == "attack_succeeded" for r in recs if r["defense"] == d and r["attack"] != "none")
+    assert len(sc.cases()) == 21 and att("none") == 0 and att("rule_two_signed") == 0           # the control reads structure, so a pasted mark cannot reach it
+    forged = {c.attack: c.data["events"] for c in sc.cases() if c.kind == "attack"}
+    assert "[signed]" in forged["pasted_mark_pair"][0]["text"] and all(not e["attested"] for e in forged["pasted_mark_pair"])
+    inj = forged["injected_line"]
+    assert len(inj) == 1 and inj[0]["text"].count("[signed]") == 2 and "\n" in inj[0]["text"]
+    assert mod.sv.numbered(inj).count("\n") == 2                                                 # as text, one alarm renders as three lines
+    assert mod.render_json(inj).count("\n") == 0 and json.loads(mod.render_json(inj))["signed"] is False   # as JSON it stays one record with the mark in its own field
+    text = (item_folder("bi01") / "PREREGISTRATION-forged-mark.md").read_text(encoding="utf-8")
+    assert all(f"`{n}`" in text and n in sc.predictions for n in ("model_parser", "model_parser_json"))

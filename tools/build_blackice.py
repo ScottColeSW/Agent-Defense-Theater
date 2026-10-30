@@ -4,6 +4,7 @@
 Inputs
   blackice/rungs/bi01-contain/results/bi01-first-run-*-prereg.jsonl     the preregistered live run (the latest one)
   blackice/rungs/bi01-contain/results/bi01-skeptic-prompt-*-prereg.jsonl  the skeptic-prompt follow-up
+  blackice/rungs/bi01-contain/results/bi01-structured-verdict-*-prereg.jsonl  the structured-verdict follow-up
   blackice/rungs/bi01-contain/scenario.py                             the committed predictions
   blackice/rungs/bi01-contain/learner.py                              the scripted, synthetic learning-advisor comparison
 
@@ -47,12 +48,16 @@ def summarise(experiment):
                        "valid": {"k": sum(r["outcome"] == "task_succeeded" for r in val), "n": len(val)},
                        "predicted": {"forged": sc.predictions[d]["attack"], "valid": sc.predictions[d]["utility"]}}
     prereg = sc.prereg_path.relative_to(ROOT).as_posix()
-    return {"run_id": meta["run_id"], "models": meta["models"], "records": meta["records"], "defenses": defenses, "prereg": prereg}
+    out = {"run_id": meta["run_id"], "models": meta["models"], "records": meta["records"], "defenses": defenses, "prereg": prereg}
+    parsed = [r for r in recs if r["defense"] == "model_parser" and "parse_ok" in r]
+    if parsed:
+        out["parser"] = {"ok": sum(r["parse_ok"] for r in parsed), "n": sum(r["alarms"] for r in parsed)}
+    return out
 
 
 def main():
     learner = load(RUNG / "learner.py", "bi01_learner")
-    data = {"bi01": summarise("first-run"), "skeptic": summarise("skeptic-prompt"),
+    data = {"bi01": summarise("first-run"), "skeptic": summarise("skeptic-prompt"), "structured": summarise("structured-verdict"),
             "learner": {"bots": learner.BOTS, "detectors": learner.DETECTORS, "rows": learner.compare()}}
     body = json.dumps(data, sort_keys=True, indent=1)
     data["sha256"] = hashlib.sha256(body.encode()).hexdigest()

@@ -78,3 +78,7 @@ In one line: a model reading the alarms was not a check, and a signed-alarm floo
 ## The follow-up: does a stricter prompt help?
 
 No. A second preregistered run, [`rungs/bi01-contain/PREREGISTRATION-skeptic-prompt.md`](rungs/bi01-contain/PREREGISTRATION-skeptic-prompt.md), gave the model Warden a general warning, explicit rules, and alarms marked signed or not. It still locked out an owner token in 36, 36, 35 and 36 of 36 forged incidents, against predictions of 85%, 30% and 20% for the last three. The signature protects only a rule that reads it.
+
+## The second follow-up: a model as the reader
+
+A model that only reports facts about each alarm, with a rule deciding from them, locked out 0 of 36 owner tokens and read 96% of alarms right, where the same model deciding for itself locked out 36 of 36. A verdict on each alarm helped little (31 of 36). The kept replies show the model takes what an alarm says as true and does not ask whether it is genuine. See [`rungs/bi01-contain/PREREGISTRATION-structured-verdict.md`](rungs/bi01-contain/PREREGISTRATION-structured-verdict.md). The attack to try next is a forged alarm that pastes its own signed mark.

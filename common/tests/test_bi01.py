@@ -23,7 +23,7 @@ def _scripted(tmp_path):
 
 
 def test_the_rung_is_found_beside_the_owasp_items():
-    assert item_folder("bi01").name == "bi01-contain" and experiments("bi01") == ["first-run", "skeptic-prompt"]
+    assert item_folder("bi01").name == "bi01-contain" and experiments("bi01") == ["first-run", "skeptic-prompt", "structured-verdict"]
     assert "bi01/first-run" in {t["id"] for t in list_tests(refresh=True)}
 
 
@@ -59,3 +59,21 @@ def test_the_skeptic_prompt_experiment_loads_and_its_reference_rows_hold(tmp_pat
     mod = load_file(item_folder("bi01") / "scenario_skeptic_prompt.py", "bi01_skeptic_check")
     assert mod.SYSTEMS["model_careful"].startswith(mod.SYSTEMS["model_warden"]) and mod.SYSTEMS["model_rules"].startswith(mod.SYSTEMS["model_warden"])
     assert mod.render({"attested": False, "text": "x"}, True).startswith("- [not signed]") and mod.render({"attested": True, "text": "x"}, True).startswith("- [signed]")
+
+
+def test_the_structured_verdict_experiment_keeps_replies_and_scores_the_parser(tmp_path):
+    sc = load_scenario("bi01", "structured-verdict")
+    meta = harness.run(sc, [models.ScriptedRunner()], tmp_path, mode="scripted", progress=None)
+    recs = [json.loads(l) for l in (tmp_path / f"{meta['run_id']}.jsonl").read_text(encoding="utf-8").splitlines()]
+    assert all(r.get("reply") for r in recs if r["defense"] in ("model_warden", "model_judge", "model_parser"))
+    parser = [r for r in recs if r["defense"] == "model_parser"]
+    assert all("parse_ok" in r and r["parse_ok"] <= r["alarms"] for r in parser)
+    att = lambda d: sum(r["outcome"] == "attack_succeeded" for r in recs if r["defense"] == d and r["attack"] != "none")
+    assert att("none") == 0 and att("rule_two_signed") == 0
+    text = (item_folder("bi01") / "PREREGISTRATION-structured-verdict.md").read_text(encoding="utf-8")
+    assert all(f"`{n}`" in text and n in sc.predictions for n in ("model_warden", "model_judge", "model_parser"))
+    from adt.loader import load_file
+    mod = load_file(item_folder("bi01") / "scenario_structured_verdict.py", "bi01_sv_check")
+    ev = [{"kind": "new_source", "subject": "T3", "attested": True, "text": "x"}, {"kind": "log_note", "subject": "", "attested": False, "text": "y"}]
+    good = [{"id": "A1", "kind": "new_source", "subject": "T3", "signed": True}, {"id": "A2", "kind": "log", "subject": "", "signed": False}]
+    assert mod.parse_score(ev, good) == 2 and mod.parse_score(ev, [dict(good[0], signed=False), good[1]]) == 1       # a wrongly read mark is an error

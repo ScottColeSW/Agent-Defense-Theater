@@ -9,6 +9,7 @@ Inputs
   blackice/rungs/bi01-contain/results/bi01-count-guard-*-prereg.jsonl     the count-guard follow-up
   blackice/rungs/bi01-contain/results/bi01-informed-struct-*-prereg.jsonl the informed-attacker follow-up
   blackice/rungs/bi01-contain/results/bi01-model-attacker-r*-*-prereg.jsonl  the two rounds of a model writing the attacks
+  blackice/rungs/bi01-contain/results/bi01-free-text-reader-*-prereg.jsonl  the free-text reader run
   blackice/rungs/bi01-contain/scenario.py                             the committed predictions
   blackice/rungs/bi01-contain/learner.py                              the scripted, synthetic learning-advisor comparison
 
@@ -58,9 +59,16 @@ def summarise(experiment):
     out = {"run_id": meta["run_id"], "models": meta["models"], "records": meta["records"], "defenses": defenses, "prereg": prereg}
     out["parsers"] = {}
     for d in defenses:
-        parsed = [r for r in recs if r["defense"] == d and "parse_ok" in r]
+        parsed = [r for r in recs if r["defense"] == d and "parse_ok" in r and "alarms" in r]
         if parsed:
             out["parsers"][d] = {"ok": sum(r["parse_ok"] for r in parsed), "n": sum(r["alarms"] for r in parsed), "invented": sum(r.get("extra_alarms", 0) for r in parsed)}
+    if experiment == "free-text-reader":
+        rd = [r for r in recs if r["defense"] == "structure_only_reader" and "flagged" in r]
+        att, hon = [r for r in rd if r["attack"] != "none"], [r for r in rd if r["attack"] == "none" and r.get("noted")]
+        out["reader"] = {"attack": {"k": sum(bool(r["flagged"]) for r in att), "n": len(att)}, "honest": {"k": sum(bool(r["flagged"]) for r in hon), "n": len(hon)},
+                         "misleading": {"k": sum(bool(r["misleading"]) for r in att), "n": len(att)},
+                         "models": [{"model": m, "attack": [sum(bool(r["flagged"]) for r in att if r["model"] == m), sum(1 for r in att if r["model"] == m)],
+                                     "honest": [sum(bool(r["flagged"]) for r in hon if r["model"] == m), sum(1 for r in hon if r["model"] == m)]} for m in sorted({r["model"] for r in rd})]}
     if "model_parser" in out["parsers"]:
         out["parser"] = out["parsers"]["model_parser"]
     return out
@@ -68,7 +76,7 @@ def summarise(experiment):
 
 def main():
     learner = load(RUNG / "learner.py", "bi01_learner")
-    data = {"bi01": summarise("first-run"), "skeptic": summarise("skeptic-prompt"), "structured": summarise("structured-verdict"), "forged": summarise("forged-mark"), "guard": summarise("count-guard"), "informed": summarise("informed-struct"), "attacker1": summarise("model-attacker-r1"), "attacker2": summarise("model-attacker-r2"), "hosted": summarise("model-attacker-r3"),
+    data = {"bi01": summarise("first-run"), "skeptic": summarise("skeptic-prompt"), "structured": summarise("structured-verdict"), "forged": summarise("forged-mark"), "guard": summarise("count-guard"), "informed": summarise("informed-struct"), "attacker1": summarise("model-attacker-r1"), "attacker2": summarise("model-attacker-r2"), "hosted": summarise("model-attacker-r3"), "reader": summarise("free-text-reader"),
             "learner": {"bots": learner.BOTS, "detectors": learner.DETECTORS, "rows": learner.compare()}}
     body = json.dumps(data, sort_keys=True, indent=1)
     data["sha256"] = hashlib.sha256(body.encode()).hexdigest()

@@ -73,6 +73,10 @@ The run is called **uninformative** if the attacker produces fewer than two acce
 - **A note that works on these three victims may not work on others.**
 - **The victims are the same three small models,** nine and 18 incidents each, paired samples.
 
+## Amendment, before any run (2026-10-30)
+
+The first draw of round 1 notes was defective and was never run. The attacker copied the whole alarm template into the note field instead of writing a note, so the three notes it passed were not notes. That was a fault in my prompt (it showed the alarm with a placeholder for the note) and in my validator (it did not reject a note that repeats the alarm). Before any run I removed that untracked file, changed the prompt to say plainly that only the text after `client note:` is the attacker's to write and to give a harmless example, added a rejection for notes that repeat the alarm template, and drew round 1 again. The prediction, the pass bar and the limits (four calls, six notes) are unchanged, and this is the second and last draw for round 1. The first file is not kept; the second is committed with its hash.
+
 ## Addendum (after the runs)
 
 To be written after the runs.

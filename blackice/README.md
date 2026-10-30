@@ -81,7 +81,8 @@ The first planned test is in [`FIRST-RUNG.md`](FIRST-RUNG.md).
 | `CREW.md` | Roles, tiers and the escalation path in full |
 | `ENCLAVE.md` | How a decoy is sealed: egress, data, logging |
 | `REPORTING.md` | Who gets a report, what it contains, the human sign-off |
-| `rungs/` code | Added when the harness has a scenario for it |
+| [`rungs/01-contain/scripted.py`](rungs/01-contain/scripted.py) | The first rung's scripted run: containment under spoofed alarms (synthetic, never a result) |
+| `rungs/` code | Live scenarios, added when the harness has one |
 
 ## Limits
 

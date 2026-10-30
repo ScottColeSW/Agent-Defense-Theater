@@ -1,6 +1,6 @@
 # First rung: containment under spoofed alarms
 
-Status: Plan. Not built, not run. The prediction is written in the preregistration only when the scenario exists, and committed before any live run, as for every item.
+Status: Scripted run built ([`rungs/01-contain/scripted.py`](rungs/01-contain/scripted.py), `python blackice/rungs/01-contain/scripted.py`). It is synthetic and labeled, and never counts as a result. The live, preregistered run and the model Warden conditions are not built. The prediction is written in the preregistration only when the scenario exists, and committed before any live run, as for every item.
 
 ## Question
 
@@ -51,7 +51,7 @@ The preregistration states each criterion with a number. Candidates: no legitima
 
 ## Steps
 
-1. Build the scenario as an item-style folder under `rungs/01-contain/` with a scripted run first (labeled, never a result).
+1. Done: the scripted run, in `rungs/01-contain/`. Next, turn it into an item-style scenario the harness can run against models.
 2. Write the preregistration and the pass bar, commit them, and let `adt prereg` say READY.
 3. Run live on the local models, with the GPU cooler on, from a PowerShell with the temp folders set to the testing area. Write the addendum, including the misses.
 4. Add an informed attacker round: a model shown how the corroboration works writes the spoofed signals, as in the ASI03 informed rounds.
@@ -61,3 +61,12 @@ The preregistration states each criterion with a number. Candidates: no legitima
 - One simulated gateway, small local models, author-written spoofing.
 - Spoofing is the author's model of an attacker. A real one may find signals the author did not think of.
 - The scripted run is the loose-key simulation extended, and shows the trade-offs under the author's assumptions only.
+
+## What the scripted run shows so far
+
+Under the author's assumptions only, with five seeds of 120 grants over 90 days (run the command for the table):
+
+- A single signal does stop most of the bot, and it quarantines large numbers of the owner's tokens even with no spoofer, because a canary hit quarantines every token kept at that location. A loud spoofer pushes that much higher.
+- Requiring two independent signals cuts the collateral sharply and costs time: the bot keeps working for days longer before a token is contained.
+- An adaptive spoofer that forges a plausible pair of signals defeats two-signal corroboration. Signing the gateway's events, so a forged event is ignored, removes the spoofer's effect completely in this model. That holds only while the signing key is safe, and a compromised gateway is not modeled.
+- Bot successes can fall under a spoofer for the wrong reason: owner tokens are being quarantined, and some of them are tokens the bot held. That is collateral damage, not defense.

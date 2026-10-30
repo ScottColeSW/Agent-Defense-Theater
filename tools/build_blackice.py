@@ -8,6 +8,7 @@ Inputs
   blackice/rungs/bi01-contain/results/bi01-forged-mark-*-prereg.jsonl     the forged-mark follow-up
   blackice/rungs/bi01-contain/results/bi01-count-guard-*-prereg.jsonl     the count-guard follow-up
   blackice/rungs/bi01-contain/results/bi01-informed-struct-*-prereg.jsonl the informed-attacker follow-up
+  blackice/rungs/bi01-contain/results/bi01-model-attacker-r*-*-prereg.jsonl  the two rounds of a model writing the attacks
   blackice/rungs/bi01-contain/scenario.py                             the committed predictions
   blackice/rungs/bi01-contain/learner.py                              the scripted, synthetic learning-advisor comparison
 
@@ -67,7 +68,7 @@ def summarise(experiment):
 
 def main():
     learner = load(RUNG / "learner.py", "bi01_learner")
-    data = {"bi01": summarise("first-run"), "skeptic": summarise("skeptic-prompt"), "structured": summarise("structured-verdict"), "forged": summarise("forged-mark"), "guard": summarise("count-guard"), "informed": summarise("informed-struct"),
+    data = {"bi01": summarise("first-run"), "skeptic": summarise("skeptic-prompt"), "structured": summarise("structured-verdict"), "forged": summarise("forged-mark"), "guard": summarise("count-guard"), "informed": summarise("informed-struct"), "attacker1": summarise("model-attacker-r1"), "attacker2": summarise("model-attacker-r2"),
             "learner": {"bots": learner.BOTS, "detectors": learner.DETECTORS, "rows": learner.compare()}}
     body = json.dumps(data, sort_keys=True, indent=1)
     data["sha256"] = hashlib.sha256(body.encode()).hexdigest()

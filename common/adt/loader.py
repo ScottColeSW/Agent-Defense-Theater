@@ -6,6 +6,12 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 ITEMS = ROOT / "items"
+RUNGS = ROOT / "blackice" / "rungs"        # Black ICE rungs (bi01-contain, ...) load like items but are not OWASP items
+
+
+def item_folders() -> list:
+    """Every item folder: the OWASP items (asiNN-slug) and the Black ICE rungs (biNN-slug)."""
+    return sorted(ITEMS.glob("asi*-*")) + sorted(RUNGS.glob("bi*-*"))
 
 
 def results_dir(item: str, sub: str = "") -> Path:
@@ -25,9 +31,9 @@ def load_file(path, name: str):
 
 
 def item_folder(item: str) -> Path:
-    hits = sorted(ITEMS.glob(f"{item.lower()}-*"))
+    hits = sorted(ITEMS.glob(f"{item.lower()}-*")) + sorted(RUNGS.glob(f"{item.lower()}-*"))
     if not hits:
-        raise SystemExit(f"No folder for {item}. Items: " + ", ".join(p.name for p in sorted(ITEMS.glob("asi*-*"))))
+        raise SystemExit(f"No folder for {item}. Items: " + ", ".join(p.name for p in item_folders()))
     return hits[0]
 
 
@@ -50,5 +56,5 @@ def load_scenario(item: str, experiment: str = None):
         have = experiments(item)
         raise SystemExit(f"{folder.name} has no experiment {exp!r}. " + (f"Available: {', '.join(have)}" if have else
                          "No scenario yet (status: stub). Built items: " +
-                         ", ".join(p.parent.name for p in sorted(ITEMS.glob("asi*-*/scenario.py")))))
+                         ", ".join(p.name for p in item_folders() if (p / "scenario.py").exists())))
     return load_file(path, f"adt_scenario_{item.lower()}_{exp.replace('-', '_')}").SCENARIO

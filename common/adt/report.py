@@ -4,7 +4,7 @@ import tempfile
 from pathlib import Path
 
 from . import decisionlog, glance, governance, scorer, tempo
-from .loader import ITEMS, experiments, item_folder, load_scenario
+from .loader import experiments, item_folder, item_folders, load_scenario
 
 DEFAULT_LABELS = {"success": "Attack succeeded", "valid": "Valid work done", "success_axis": "attacks that got through (lower is better)",
                   "valid_axis": "valid work completed (higher is better)"}
@@ -24,11 +24,11 @@ def _kind(path: Path) -> str:
 
 
 def _files():
-    for p in sorted(ITEMS.glob("asi*-*/results/*.jsonl")):
+    for p in sorted(g for f in item_folders() for g in f.glob("results/*.jsonl")):
         if ".decisions" not in p.name:
             yield p
     base = Path(tempfile.gettempdir()) / "adt"
-    for p in sorted(base.glob("asi*-*/*/*.jsonl")):
+    for p in sorted(list(base.glob("asi*-*/*/*.jsonl")) + list(base.glob("bi*-*/*/*.jsonl"))):
         if ".decisions" not in p.name:
             yield p
 

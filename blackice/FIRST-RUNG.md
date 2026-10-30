@@ -1,6 +1,6 @@
 # First rung: containment under spoofed alarms
 
-Status: Scripted run built ([`rungs/01-contain/scripted.py`](rungs/01-contain/scripted.py), `python blackice/rungs/01-contain/scripted.py`). It is synthetic and labeled, and never counts as a result. The live, preregistered run and the model Warden conditions are not built. The prediction is written in the preregistration only when the scenario exists, and committed before any live run, as for every item.
+Status: Scripted run built ([`rungs/bi01-contain/scripted.py`](rungs/bi01-contain/scripted.py), `python blackice/rungs/bi01-contain/scripted.py`). It is synthetic and labeled, and never counts as a result. The live, preregistered run and the model Warden conditions are not built. The prediction is written in the preregistration only when the scenario exists, and committed before any live run, as for every item.
 
 ## Question
 
@@ -51,7 +51,7 @@ The preregistration states each criterion with a number. Candidates: no legitima
 
 ## Steps
 
-1. Done: the scripted run, in `rungs/01-contain/`. Next, turn it into an item-style scenario the harness can run against models.
+1. Done: the scripted run, in `rungs/bi01-contain/`. Next, turn it into an item-style scenario the harness can run against models.
 2. Write the preregistration and the pass bar, commit them, and let `adt prereg` say READY.
 3. Run live on the local models, with the GPU cooler on, from a PowerShell with the temp folders set to the testing area. Write the addendum, including the misses.
 4. Add an informed attacker round: a model shown how the corroboration works writes the spoofed signals, as in the ASI03 informed rounds.

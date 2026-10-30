@@ -8,7 +8,7 @@ Question: an automatic quarantine stops a thief the moment it is noticed, and gi
 defense quarantines the owner's tokens. Which policies keep the bot out without letting a spoofer lock out legitimate work?
 
 Usage
-  python blackice/rungs/01-contain/scripted.py
+  python blackice/rungs/bi01-contain/scripted.py
 """
 import hashlib
 import hmac

@@ -1,9 +1,9 @@
-"""Black ICE rung 2, scripted: the headline relations of blackice/rungs/01-contain/scripted.py. Scripted and synthetic, never a result."""
+"""Black ICE rung 2, scripted: the headline relations of blackice/rungs/bi01-contain/scripted.py. Scripted and synthetic, never a result."""
 import importlib.util
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-spec = importlib.util.spec_from_file_location("contain_scripted", ROOT / "blackice" / "rungs" / "01-contain" / "scripted.py")
+spec = importlib.util.spec_from_file_location("contain_scripted", ROOT / "blackice" / "rungs" / "bi01-contain" / "scripted.py")
 mod = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(mod)
 

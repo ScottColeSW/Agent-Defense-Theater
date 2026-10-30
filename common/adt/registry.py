@@ -2,7 +2,7 @@
 import time
 
 from . import harness, modelmgr
-from .loader import ITEMS, ROOT, experiments, load_scenario, results_dir
+from .loader import ROOT, experiments, item_folders, load_scenario, results_dir
 
 _cache = {"at": 0.0, "tests": None}
 TTL_S = 5.0          # check_prereg shells out to git, so do not do it on every request
@@ -27,7 +27,7 @@ def list_tests(refresh: bool = False) -> list:
     if not refresh and _cache["tests"] is not None and time.time() - _cache["at"] < TTL_S:
         return _cache["tests"]
     out = []
-    for folder in sorted(ITEMS.glob("asi*-*")):
+    for folder in item_folders():
         item = folder.name.split("-")[0]
         for exp in experiments(item):
             sc = load_scenario(item, exp)

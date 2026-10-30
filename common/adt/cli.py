@@ -13,7 +13,7 @@ import webbrowser
 from pathlib import Path
 
 from . import resources, decisionlog, gpucooler, harness, models, scorer
-from .loader import ITEMS, ROOT, experiments, item_folder, load_scenario, results_dir
+from .loader import ITEMS, ROOT, experiments, item_folder, item_folders, load_scenario, results_dir
 
 TAG = {"prereg": "prereg", "exploratory": "exploratory", "scripted": "scripted"}
 
@@ -107,7 +107,7 @@ def cmd_attackgen(a):
 def cmd_status(a):
     with open(ROOT / "crosswalk" / "coverage.csv", newline="", encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
-    built = {p.parent.name.split("-")[0].upper() for p in ITEMS.glob("asi*-*/scenario.py")}
+    built = {p.name.split("-")[0].upper() for p in item_folders() if (p / "scenario.py").exists()}
     for r in rows:
         print(f"{r['id']}  {r['status']:<22} {r['name']}" + ("   [runnable: adt run " + r["id"].lower() + "]" if r["id"] in built else ""))
 
@@ -283,7 +283,7 @@ def cmd_summary(a):
 
 
 def cmd_verify(a):
-    paths = [Path(a.log)] if a.log else (sorted(ITEMS.glob("asi*-*/results/**/*.decisions.jsonl")) +
+    paths = [Path(a.log)] if a.log else (sorted(g for f in item_folders() for g in f.glob("results/**/*.decisions.jsonl")) +
                                          sorted((Path(tempfile.gettempdir()) / "adt").glob("*/*/*.decisions.jsonl")))
     if not paths:
         sys.exit("No decision logs found.")
@@ -309,7 +309,7 @@ def cmd_demo(a):
 
 
 def cmd_experiments(a):
-    for p in sorted(ITEMS.glob("asi*-*")):
+    for p in item_folders():
         for e in experiments(p.name.split("-")[0]):
             sc = load_scenario(p.name.split("-")[0], e)
             print(f"{sc.item.lower()}  {e:<12} {len(sc.cases())} cases x {len(sc.defenses)} defenses   adt run {sc.item.lower()} --experiment {e}")

@@ -82,3 +82,7 @@ No. A second preregistered run, [`rungs/bi01-contain/PREREGISTRATION-skeptic-pro
 ## The second follow-up: a model as the reader
 
 A model that only reports facts about each alarm, with a rule deciding from them, locked out 0 of 36 owner tokens and read 96% of alarms right, where the same model deciding for itself locked out 36 of 36. A verdict on each alarm helped little (31 of 36). The kept replies show the model takes what an alarm says as true and does not ask whether it is genuine. See [`rungs/bi01-contain/PREREGISTRATION-structured-verdict.md`](rungs/bi01-contain/PREREGISTRATION-structured-verdict.md). The attack to try next is a forged alarm that pastes its own signed mark.
+
+## The third follow-up: can the mark be forged?
+
+Pasting `[signed]` into a forged alarm fooled no model. Injecting two fake numbered, signed lines through one log entry fooled all of them (9 of 9 on a text parser), and putting the mark in a separate JSON field with the text escaped did not stop it (8 of 9). The rule that reads the gateway's own signature locked out 0 of 36. A model is a reader, not a boundary. See [`rungs/bi01-contain/PREREGISTRATION-forged-mark.md`](rungs/bi01-contain/PREREGISTRATION-forged-mark.md). The cheap guard to try next: reject any parse with more alarms than the structure contains.

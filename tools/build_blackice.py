@@ -5,6 +5,7 @@ Inputs
   blackice/rungs/bi01-contain/results/bi01-first-run-*-prereg.jsonl     the preregistered live run (the latest one)
   blackice/rungs/bi01-contain/results/bi01-skeptic-prompt-*-prereg.jsonl  the skeptic-prompt follow-up
   blackice/rungs/bi01-contain/results/bi01-structured-verdict-*-prereg.jsonl  the structured-verdict follow-up
+  blackice/rungs/bi01-contain/results/bi01-forged-mark-*-prereg.jsonl     the forged-mark follow-up
   blackice/rungs/bi01-contain/scenario.py                             the committed predictions
   blackice/rungs/bi01-contain/learner.py                              the scripted, synthetic learning-advisor comparison
 
@@ -49,15 +50,19 @@ def summarise(experiment):
                        "predicted": {"forged": sc.predictions[d]["attack"], "valid": sc.predictions[d]["utility"]}}
     prereg = sc.prereg_path.relative_to(ROOT).as_posix()
     out = {"run_id": meta["run_id"], "models": meta["models"], "records": meta["records"], "defenses": defenses, "prereg": prereg}
-    parsed = [r for r in recs if r["defense"] == "model_parser" and "parse_ok" in r]
-    if parsed:
-        out["parser"] = {"ok": sum(r["parse_ok"] for r in parsed), "n": sum(r["alarms"] for r in parsed)}
+    out["parsers"] = {}
+    for d in defenses:
+        parsed = [r for r in recs if r["defense"] == d and "parse_ok" in r]
+        if parsed:
+            out["parsers"][d] = {"ok": sum(r["parse_ok"] for r in parsed), "n": sum(r["alarms"] for r in parsed), "invented": sum(r.get("extra_alarms", 0) for r in parsed)}
+    if "model_parser" in out["parsers"]:
+        out["parser"] = out["parsers"]["model_parser"]
     return out
 
 
 def main():
     learner = load(RUNG / "learner.py", "bi01_learner")
-    data = {"bi01": summarise("first-run"), "skeptic": summarise("skeptic-prompt"), "structured": summarise("structured-verdict"),
+    data = {"bi01": summarise("first-run"), "skeptic": summarise("skeptic-prompt"), "structured": summarise("structured-verdict"), "forged": summarise("forged-mark"),
             "learner": {"bots": learner.BOTS, "detectors": learner.DETECTORS, "rows": learner.compare()}}
     body = json.dumps(data, sort_keys=True, indent=1)
     data["sha256"] = hashlib.sha256(body.encode()).hexdigest()

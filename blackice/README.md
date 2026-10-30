@@ -78,6 +78,7 @@ The first planned test is in [`FIRST-RUNG.md`](FIRST-RUNG.md).
 | [`MYTHS-VS-REALITY.md`](MYTHS-VS-REALITY.md) | What popular culture and some vendors imply versus what the law and the evidence say |
 | [`FIRST-RUNG.md`](FIRST-RUNG.md) | The first measured test: containment under spoofed alarms |
 | [`crosswalk.csv`](crosswalk.csv) | Which OWASP items each rung supports |
+| [`rungs/bi01-contain/learner.py`](rungs/bi01-contain/learner.py) | A scripted, synthetic comparison of a learned baseline against a fixed cap and a bot that tries to poison it. Shown as an optional view on [`site/blackice.html`](../site/blackice.html) |
 | `CREW.md` | Roles, tiers and the escalation path in full |
 | `ENCLAVE.md` | How a decoy is sealed: egress, data, logging |
 | `REPORTING.md` | Who gets a report, what it contains, the human sign-off |
@@ -90,3 +91,7 @@ The first planned test is in [`FIRST-RUNG.md`](FIRST-RUNG.md).
 - The legal summary is general and not specific to your country.
 - A defense that works against the author's bot may not work against an adaptive one. Each rung needs an informed attacker before any claim about it holds.
 - The crew would run on local models of 8B parameters or smaller at first. Nothing here says how larger models behave.
+
+## What the learner comparison says so far
+
+Scripted and synthetic, under the author's assumptions. An unbounded learner is quiet and adapts to honest change, and a slow ramp poisons it: its baseline ends near ten times the truth and the bot gets about a million calls. Bounding the baseline's growth and its spread catches the ramp, at the price of more false alerts while it adapts. Learning only from quiet days is the noisiest, because it never learns an honest change. Nothing catches a bot that takes a share of the owner's volume and leaves the total unchanged. As an advisor it is worth testing, with authority it is not, and it has no live run yet.

@@ -1,0 +1,628 @@
+{
+ "bi01": {
+  "defenses": {
+   "model_floor": {
+    "description": "A model decides, but only among tokens that already pass the signed two-alarm rule",
+    "forged": {
+     "k": 0,
+     "n": 36
+    },
+    "predicted": {
+     "forged": 0.0,
+     "valid": 0.55
+    },
+    "valid": {
+     "k": 18,
+     "n": 27
+    }
+   },
+   "model_warden": {
+    "description": "A model reads the alarms and the inventory and decides what to quarantine",
+    "forged": {
+     "k": 36,
+     "n": 36
+    },
+    "predicted": {
+     "forged": 0.5,
+     "valid": 0.6
+    },
+    "valid": {
+     "k": 17,
+     "n": 27
+    }
+   },
+   "none": {
+    "description": "No containment: the Warden does nothing",
+    "forged": {
+     "k": 0,
+     "n": 36
+    },
+    "predicted": {
+     "forged": 0.0,
+     "valid": 0.33
+    },
+    "valid": {
+     "k": 9,
+     "n": 27
+    }
+   },
+   "rule_single": {
+    "description": "One alarm quarantines: a new-source alarm the token, a bait alarm every token in that store",
+    "forged": {
+     "k": 27,
+     "n": 36
+    },
+    "predicted": {
+     "forged": 0.75,
+     "valid": 0.33
+    },
+    "valid": {
+     "k": 9,
+     "n": 27
+    }
+   },
+   "rule_two": {
+    "description": "A token is quarantined only if a new-source alarm names it and a bait alarm names its store",
+    "forged": {
+     "k": 9,
+     "n": 36
+    },
+    "predicted": {
+     "forged": 0.25,
+     "valid": 0.67
+    },
+    "valid": {
+     "k": 18,
+     "n": 27
+    }
+   },
+   "rule_two_signed": {
+    "description": "Two alarms as above, and only alarms the gateway signed count",
+    "forged": {
+     "k": 0,
+     "n": 36
+    },
+    "predicted": {
+     "forged": 0.0,
+     "valid": 0.67
+    },
+    "valid": {
+     "k": 18,
+     "n": 27
+    }
+   }
+  },
+  "models": [
+   "llama3.1:8b",
+   "qwen2.5:7b",
+   "phi4-mini:3.8b"
+  ],
+  "prereg": "blackice/rungs/bi01-contain/PREREGISTRATION.md",
+  "records": 378,
+  "run_id": "bi01-first-run-20261030T194549-prereg"
+ },
+ "learner": {
+  "bots": [
+   "none",
+   "burst",
+   "slow_ramp",
+   "low_and_slow",
+   "mimic"
+  ],
+  "detectors": [
+   "none",
+   "fixed_cap",
+   "learned_naive",
+   "learned_capped",
+   "learned_verified"
+  ],
+  "rows": {
+   "burst": [
+    {
+     "avg_days_to_alert": null,
+     "baseline_vs_truth": null,
+     "bot_calls": 1699290,
+     "bot_tokens": 49,
+     "detected_pct": 0,
+     "detector": "none",
+     "false_alerts_per_1000_token_days": 0.0,
+     "mode": "advisor",
+     "owner_interruptions": null
+    },
+    {
+     "avg_days_to_alert": 0.0,
+     "baseline_vs_truth": null,
+     "bot_calls": null,
+     "bot_tokens": 49,
+     "detected_pct": 100,
+     "detector": "fixed_cap",
+     "false_alerts_per_1000_token_days": 47.0,
+     "mode": "advisor",
+     "owner_interruptions": null
+    },
+    {
+     "avg_days_to_alert": 0.0,
+     "baseline_vs_truth": null,
+     "bot_calls": 18881,
+     "bot_tokens": 49,
+     "detected_pct": 100,
+     "detector": "fixed_cap",
+     "false_alerts_per_1000_token_days": 42.6,
+     "mode": "authority",
+     "owner_interruptions": 1583
+    },
+    {
+     "avg_days_to_alert": 0.0,
+     "baseline_vs_truth": 10.21,
+     "bot_calls": null,
+     "bot_tokens": 49,
+     "detected_pct": 100,
+     "detector": "learned_naive",
+     "false_alerts_per_1000_token_days": 2.0,
+     "mode": "advisor",
+     "owner_interruptions": null
+    },
+    {
+     "avg_days_to_alert": 0.0,
+     "baseline_vs_truth": 1.21,
+     "bot_calls": 18881,
+     "bot_tokens": 49,
+     "detected_pct": 100,
+     "detector": "learned_naive",
+     "false_alerts_per_1000_token_days": 2.0,
+     "mode": "authority",
+     "owner_interruptions": 120
+    },
+    {
+     "avg_days_to_alert": 0.0,
+     "baseline_vs_truth": 4.0,
+     "bot_calls": null,
+     "bot_tokens": 49,
+     "detected_pct": 100,
+     "detector": "learned_capped",
+     "false_alerts_per_1000_token_days": 30.3,
+     "mode": "advisor",
+     "owner_interruptions": null
+    },
+    {
+     "avg_days_to_alert": 0.0,
+     "baseline_vs_truth": 1.2,
+     "bot_calls": 18881,
+     "bot_tokens": 49,
+     "detected_pct": 100,
+     "detector": "learned_capped",
+     "false_alerts_per_1000_token_days": 23.9,
+     "mode": "authority",
+     "owner_interruptions": 909
+    },
+    {
+     "avg_days_to_alert": 0.0,
+     "baseline_vs_truth": 1.0,
+     "bot_calls": null,
+     "bot_tokens": 49,
+     "detected_pct": 100,
+     "detector": "learned_verified",
+     "false_alerts_per_1000_token_days": 74.0,
+     "mode": "advisor",
+     "owner_interruptions": null
+    },
+    {
+     "avg_days_to_alert": 0.0,
+     "baseline_vs_truth": 1.03,
+     "bot_calls": 18881,
+     "bot_tokens": 49,
+     "detected_pct": 100,
+     "detector": "learned_verified",
+     "false_alerts_per_1000_token_days": 72.7,
+     "mode": "authority",
+     "owner_interruptions": 2666
+    }
+   ],
+   "low_and_slow": [
+    {
+     "avg_days_to_alert": null,
+     "baseline_vs_truth": null,
+     "bot_calls": 94590,
+     "bot_tokens": 49,
+     "detected_pct": 0,
+     "detector": "none",
+     "false_alerts_per_1000_token_days": 0.0,
+     "mode": "advisor",
+     "owner_interruptions": null
+    },
+    {
+     "avg_days_to_alert": null,
+     "baseline_vs_truth": null,
+     "bot_calls": null,
+     "bot_tokens": 49,
+     "detected_pct": 0,
+     "detector": "fixed_cap",
+     "false_alerts_per_1000_token_days": 46.4,
+     "mode": "advisor",
+     "owner_interruptions": null
+    },
+    {
+     "avg_days_to_alert": null,
+     "baseline_vs_truth": null,
+     "bot_calls": 87015,
+     "bot_tokens": 49,
+     "detected_pct": 0,
+     "detector": "fixed_cap",
+     "false_alerts_per_1000_token_days": 42.7,
+     "mode": "authority",
+     "owner_interruptions": 1537
+    },
+    {
+     "avg_days_to_alert": 0.1,
+     "baseline_vs_truth": 1.72,
+     "bot_calls": null,
+     "bot_tokens": 49,
+     "detected_pct": 27,
+     "detector": "learned_naive",
+     "false_alerts_per_1000_token_days": 2.1,
+     "mode": "advisor",
+     "owner_interruptions": null
+    },
+    {
+     "avg_days_to_alert": 0.1,
+     "baseline_vs_truth": 1.52,
+     "bot_calls": 54768,
+     "bot_tokens": 49,
+     "detected_pct": 27,
+     "detector": "learned_naive",
+     "false_alerts_per_1000_token_days": 2.1,
+     "mode": "authority",
+     "owner_interruptions": 90
+    },
+    {
+     "avg_days_to_alert": 0.1,
+     "baseline_vs_truth": 1.71,
+     "bot_calls": null,
+     "bot_tokens": 49,
+     "detected_pct": 22,
+     "detector": "learned_capped",
+     "false_alerts_per_1000_token_days": 23.5,
+     "mode": "advisor",
+     "owner_interruptions": null
+    },
+    {
+     "avg_days_to_alert": 0.1,
+     "baseline_vs_truth": 1.54,
+     "bot_calls": 59218,
+     "bot_tokens": 49,
+     "detected_pct": 22,
+     "detector": "learned_capped",
+     "false_alerts_per_1000_token_days": 22.9,
+     "mode": "authority",
+     "owner_interruptions": 836
+    },
+    {
+     "avg_days_to_alert": 0.1,
+     "baseline_vs_truth": 1.54,
+     "bot_calls": null,
+     "bot_tokens": 49,
+     "detected_pct": 22,
+     "detector": "learned_verified",
+     "false_alerts_per_1000_token_days": 72.7,
+     "mode": "advisor",
+     "owner_interruptions": null
+    },
+    {
+     "avg_days_to_alert": 0.1,
+     "baseline_vs_truth": 1.43,
+     "bot_calls": 59218,
+     "bot_tokens": 49,
+     "detected_pct": 22,
+     "detector": "learned_verified",
+     "false_alerts_per_1000_token_days": 71.1,
+     "mode": "authority",
+     "owner_interruptions": 2571
+    }
+   ],
+   "mimic": [
+    {
+     "avg_days_to_alert": null,
+     "baseline_vs_truth": null,
+     "bot_calls": 64834,
+     "bot_tokens": 49,
+     "detected_pct": 0,
+     "detector": "none",
+     "false_alerts_per_1000_token_days": 0.0,
+     "mode": "advisor",
+     "owner_interruptions": null
+    },
+    {
+     "avg_days_to_alert": null,
+     "baseline_vs_truth": null,
+     "bot_calls": null,
+     "bot_tokens": 49,
+     "detected_pct": 0,
+     "detector": "fixed_cap",
+     "false_alerts_per_1000_token_days": 42.6,
+     "mode": "advisor",
+     "owner_interruptions": null
+    },
+    {
+     "avg_days_to_alert": null,
+     "baseline_vs_truth": null,
+     "bot_calls": 52840,
+     "bot_tokens": 49,
+     "detected_pct": 0,
+     "detector": "fixed_cap",
+     "false_alerts_per_1000_token_days": 42.6,
+     "mode": "authority",
+     "owner_interruptions": 1534
+    },
+    {
+     "avg_days_to_alert": null,
+     "baseline_vs_truth": 1.21,
+     "bot_calls": null,
+     "bot_tokens": 49,
+     "detected_pct": 0,
+     "detector": "learned_naive",
+     "false_alerts_per_1000_token_days": 2.1,
+     "mode": "advisor",
+     "owner_interruptions": null
+    },
+    {
+     "avg_days_to_alert": null,
+     "baseline_vs_truth": 1.21,
+     "bot_calls": 52612,
+     "bot_tokens": 49,
+     "detected_pct": 0,
+     "detector": "learned_naive",
+     "false_alerts_per_1000_token_days": 2.1,
+     "mode": "authority",
+     "owner_interruptions": 77
+    },
+    {
+     "avg_days_to_alert": null,
+     "baseline_vs_truth": 1.2,
+     "bot_calls": null,
+     "bot_tokens": 49,
+     "detected_pct": 0,
+     "detector": "learned_capped",
+     "false_alerts_per_1000_token_days": 23.9,
+     "mode": "advisor",
+     "owner_interruptions": null
+    },
+    {
+     "avg_days_to_alert": null,
+     "baseline_vs_truth": 1.2,
+     "bot_calls": 52612,
+     "bot_tokens": 49,
+     "detected_pct": 0,
+     "detector": "learned_capped",
+     "false_alerts_per_1000_token_days": 23.9,
+     "mode": "authority",
+     "owner_interruptions": 861
+    },
+    {
+     "avg_days_to_alert": null,
+     "baseline_vs_truth": 1.03,
+     "bot_calls": null,
+     "bot_tokens": 49,
+     "detected_pct": 0,
+     "detector": "learned_verified",
+     "false_alerts_per_1000_token_days": 72.7,
+     "mode": "advisor",
+     "owner_interruptions": null
+    },
+    {
+     "avg_days_to_alert": null,
+     "baseline_vs_truth": 1.03,
+     "bot_calls": 52612,
+     "bot_tokens": 49,
+     "detected_pct": 0,
+     "detector": "learned_verified",
+     "false_alerts_per_1000_token_days": 72.7,
+     "mode": "authority",
+     "owner_interruptions": 2617
+    }
+   ],
+   "none": [
+    {
+     "avg_days_to_alert": null,
+     "baseline_vs_truth": null,
+     "bot_calls": 0,
+     "bot_tokens": 0,
+     "detected_pct": null,
+     "detector": "none",
+     "false_alerts_per_1000_token_days": 0.0,
+     "mode": "advisor",
+     "owner_interruptions": null
+    },
+    {
+     "avg_days_to_alert": null,
+     "baseline_vs_truth": null,
+     "bot_calls": null,
+     "bot_tokens": 0,
+     "detected_pct": null,
+     "detector": "fixed_cap",
+     "false_alerts_per_1000_token_days": 33.2,
+     "mode": "advisor",
+     "owner_interruptions": null
+    },
+    {
+     "avg_days_to_alert": null,
+     "baseline_vs_truth": null,
+     "bot_calls": 0,
+     "bot_tokens": 0,
+     "detected_pct": null,
+     "detector": "fixed_cap",
+     "false_alerts_per_1000_token_days": 33.2,
+     "mode": "authority",
+     "owner_interruptions": 1195
+    },
+    {
+     "avg_days_to_alert": null,
+     "baseline_vs_truth": null,
+     "bot_calls": null,
+     "bot_tokens": 0,
+     "detected_pct": null,
+     "detector": "learned_naive",
+     "false_alerts_per_1000_token_days": 2.1,
+     "mode": "advisor",
+     "owner_interruptions": null
+    },
+    {
+     "avg_days_to_alert": null,
+     "baseline_vs_truth": null,
+     "bot_calls": 0,
+     "bot_tokens": 0,
+     "detected_pct": null,
+     "detector": "learned_naive",
+     "false_alerts_per_1000_token_days": 2.1,
+     "mode": "authority",
+     "owner_interruptions": 77
+    },
+    {
+     "avg_days_to_alert": null,
+     "baseline_vs_truth": null,
+     "bot_calls": null,
+     "bot_tokens": 0,
+     "detected_pct": null,
+     "detector": "learned_capped",
+     "false_alerts_per_1000_token_days": 19.6,
+     "mode": "advisor",
+     "owner_interruptions": null
+    },
+    {
+     "avg_days_to_alert": null,
+     "baseline_vs_truth": null,
+     "bot_calls": 0,
+     "bot_tokens": 0,
+     "detected_pct": null,
+     "detector": "learned_capped",
+     "false_alerts_per_1000_token_days": 19.6,
+     "mode": "authority",
+     "owner_interruptions": 706
+    },
+    {
+     "avg_days_to_alert": null,
+     "baseline_vs_truth": null,
+     "bot_calls": null,
+     "bot_tokens": 0,
+     "detected_pct": null,
+     "detector": "learned_verified",
+     "false_alerts_per_1000_token_days": 55.8,
+     "mode": "advisor",
+     "owner_interruptions": null
+    },
+    {
+     "avg_days_to_alert": null,
+     "baseline_vs_truth": null,
+     "bot_calls": 0,
+     "bot_tokens": 0,
+     "detected_pct": null,
+     "detector": "learned_verified",
+     "false_alerts_per_1000_token_days": 55.8,
+     "mode": "authority",
+     "owner_interruptions": 2007
+    }
+   ],
+   "slow_ramp": [
+    {
+     "avg_days_to_alert": null,
+     "baseline_vs_truth": null,
+     "bot_calls": 1307606,
+     "bot_tokens": 49,
+     "detected_pct": 0,
+     "detector": "none",
+     "false_alerts_per_1000_token_days": 0.0,
+     "mode": "advisor",
+     "owner_interruptions": null
+    },
+    {
+     "avg_days_to_alert": 14.6,
+     "baseline_vs_truth": null,
+     "bot_calls": null,
+     "bot_tokens": 49,
+     "detected_pct": 98,
+     "detector": "fixed_cap",
+     "false_alerts_per_1000_token_days": 47.0,
+     "mode": "advisor",
+     "owner_interruptions": null
+    },
+    {
+     "avg_days_to_alert": 14.6,
+     "baseline_vs_truth": null,
+     "bot_calls": 28042,
+     "bot_tokens": 49,
+     "detected_pct": 96,
+     "detector": "fixed_cap",
+     "false_alerts_per_1000_token_days": 42.6,
+     "mode": "authority",
+     "owner_interruptions": 1581
+    },
+    {
+     "avg_days_to_alert": 7.5,
+     "baseline_vs_truth": 10.2,
+     "bot_calls": null,
+     "bot_tokens": 49,
+     "detected_pct": 4,
+     "detector": "learned_naive",
+     "false_alerts_per_1000_token_days": 2.1,
+     "mode": "advisor",
+     "owner_interruptions": null
+    },
+    {
+     "avg_days_to_alert": 7.5,
+     "baseline_vs_truth": 9.12,
+     "bot_calls": 1180049,
+     "bot_tokens": 49,
+     "detected_pct": 4,
+     "detector": "learned_naive",
+     "false_alerts_per_1000_token_days": 2.1,
+     "mode": "authority",
+     "owner_interruptions": 76
+    },
+    {
+     "avg_days_to_alert": 12.7,
+     "baseline_vs_truth": 4.0,
+     "bot_calls": null,
+     "bot_tokens": 49,
+     "detected_pct": 100,
+     "detector": "learned_capped",
+     "false_alerts_per_1000_token_days": 30.3,
+     "mode": "advisor",
+     "owner_interruptions": null
+    },
+    {
+     "avg_days_to_alert": 12.6,
+     "baseline_vs_truth": 1.2,
+     "bot_calls": 17367,
+     "bot_tokens": 49,
+     "detected_pct": 98,
+     "detector": "learned_capped",
+     "false_alerts_per_1000_token_days": 23.2,
+     "mode": "authority",
+     "owner_interruptions": 885
+    },
+    {
+     "avg_days_to_alert": 12.6,
+     "baseline_vs_truth": 1.35,
+     "bot_calls": null,
+     "bot_tokens": 49,
+     "detected_pct": 100,
+     "detector": "learned_verified",
+     "false_alerts_per_1000_token_days": 74.0,
+     "mode": "advisor",
+     "owner_interruptions": null
+    },
+    {
+     "avg_days_to_alert": 12.6,
+     "baseline_vs_truth": 1.08,
+     "bot_calls": 17367,
+     "bot_tokens": 49,
+     "detected_pct": 98,
+     "detector": "learned_verified",
+     "false_alerts_per_1000_token_days": 70.6,
+     "mode": "authority",
+     "owner_interruptions": 2591
+    }
+   ]
+  }
+ },
+ "sha256": "fa398ccdf356ca822e546ae03cd8695bcd5e98282e0ca1d3380b70c309322b08"
+}

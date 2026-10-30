@@ -1,6 +1,6 @@
 # Black ICE: defensive counter-intrusion
 
-Status: Designed. Nothing in this folder runs yet. The first piece it will reuse already exists: the loose-key toolkit in [`../common/adt/loosekeys.py`](../common/adt/loosekeys.py) ([`../docs/LOOSE-KEYS.md`](../docs/LOOSE-KEYS.md)).
+Status: Designed, with the first rung run (containment under spoofed alarms, [`rungs/bi01-contain/`](rungs/bi01-contain/)). The rest does not run yet. The first piece it reuses is the loose-key toolkit in [`../common/adt/loosekeys.py`](../common/adt/loosekeys.py) ([`../docs/LOOSE-KEYS.md`](../docs/LOOSE-KEYS.md)).
 
 The name comes from fiction: ICE (intrusion countermeasures electronics) that pushes back against whoever breaks in. Here it means one thing. Defenses that **push back inside your own walls**: detect, contain, deceive, record and report. It never reaches out to the attacker's systems.
 
@@ -81,7 +81,7 @@ The first planned test is in [`FIRST-RUNG.md`](FIRST-RUNG.md).
 | `CREW.md` | Roles, tiers and the escalation path in full |
 | `ENCLAVE.md` | How a decoy is sealed: egress, data, logging |
 | `REPORTING.md` | Who gets a report, what it contains, the human sign-off |
-| [`rungs/bi01-contain/scripted.py`](rungs/bi01-contain/scripted.py) | The first rung's scripted run: containment under spoofed alarms (synthetic, never a result) |
+| [`rungs/bi01-contain/`](rungs/bi01-contain/) | The first rung: a preregistered live test (`adt run bi01`), its addendum, and the synthetic 90-day comparison `scripted.py` (never a result) |
 | `rungs/` code | Live scenarios, added when the harness has one |
 
 ## Limits

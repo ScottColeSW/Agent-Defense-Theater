@@ -1,6 +1,6 @@
 # First rung: containment under spoofed alarms
 
-Status: Scripted run built ([`rungs/bi01-contain/scripted.py`](rungs/bi01-contain/scripted.py), `python blackice/rungs/bi01-contain/scripted.py`). It is synthetic and labeled, and never counts as a result. The live, preregistered run and the model Warden conditions are not built. The prediction is written in the preregistration only when the scenario exists, and committed before any live run, as for every item.
+Status: Run (2026-10-30). The preregistered live run is in [`rungs/bi01-contain/`](rungs/bi01-contain/) with its addendum, and `python blackice/rungs/bi01-contain/scripted.py` is the synthetic 90-day comparison that came first. The informed-attacker round and the skeptic-prompt condition are not built.
 
 ## Question
 
@@ -51,9 +51,9 @@ The preregistration states each criterion with a number. Candidates: no legitima
 
 ## Steps
 
-1. Done: the scripted run, in `rungs/bi01-contain/`. Next, turn it into an item-style scenario the harness can run against models.
-2. Write the preregistration and the pass bar, commit them, and let `adt prereg` say READY.
-3. Run live on the local models, with the GPU cooler on, from a PowerShell with the temp folders set to the testing area. Write the addendum, including the misses.
+1. Done: the scripted run, then the item-style scenario `bi01` the harness runs against models (`python adt.py run bi01`).
+2. Done: the preregistration and pass bar were committed before the run (`795eb84`).
+3. Done: the live run on three local models, and the addendum with its misses. A model Warden locked out an owner token in 36 of 36 forged incidents, against a predicted 50%.
 4. Add an informed attacker round: a model shown how the corroboration works writes the spoofed signals, as in the ASI03 informed rounds.
 
 ## Limits
@@ -70,3 +70,7 @@ Under the author's assumptions only, with five seeds of 120 grants over 90 days 
 - Requiring two independent signals cuts the collateral sharply and costs time: the bot keeps working for days longer before a token is contained.
 - An adaptive spoofer that forges a plausible pair of signals defeats two-signal corroboration. Signing the gateway's events, so a forged event is ignored, removes the spoofer's effect completely in this model. That holds only while the signing key is safe, and a compromised gateway is not modeled.
 - Bot successes can fall under a spoofer for the wrong reason: owner tokens are being quarantined, and some of them are tokens the bot held. That is collateral damage, not defense.
+
+## What the live run found
+
+In one line: a model reading the alarms was not a check, and a signed-alarm floor removed the harm and added nothing the rule did not already do. The details, with the predictions it missed, are in the addendum of [`rungs/bi01-contain/PREREGISTRATION.md`](rungs/bi01-contain/PREREGISTRATION.md).

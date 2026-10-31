@@ -201,13 +201,13 @@ function drawAttacker() {
 
 function drawReader() {
   const R = D.reader, d = R.defenses, rd = R.reader;
-  $("rdnote").innerHTML = `Run <code>${E(R.run_id)}</code> (<a href="https://github.com/ScottColeSW/Agent-Defense-Theater/blob/main/${R.prereg}">preregistration and addendum</a>). The hosted attacker's five notes, five local readers, nothing above 8B. The rule decides from structure; the model only reads the free text and can raise a flag for a person.`;
+  $("rdnote").innerHTML = `Run <code>${E(R.run_id)}</code> (<a href="https://github.com/ScottColeSW/Agent-Defense-Theater/blob/main/${R.prereg}">preregistration and addendum</a>). The hosted attacker's five notes, six local readers (five up to 8B, in one run, and a 14B model in a second run, split across the CPU and the GPU). The rule decides from structure; the model only reads the free text and can raise a flag for a person.`;
   const rows = [["Exposed design (model reads kind and subject)", d.model_parser_struct], ["Structure decides, model reads the notes", d.structure_only_reader], ["Structure only (the control)", d.rule_two_signed]];
   $("rdgrid").innerHTML = rows.map(([n, x]) => `<div class="row"><div class="name">${E(n)}<small>predicted ${Math.round(100 * x.predicted.forged)}%</small></div><div class="bars">${bar("att", x.forged, "wrong")}${bar("ok", x.valid, "right")}</div></div>`).join("");
   $("rdtab").innerHTML = `<thead><tr><th>Reader</th><th>Attack notes flagged</th><th>Harmless notes flagged</th></tr></thead><tbody>` +
     rd.models.map(m => `<tr><td>${E(m.model)}</td><td>${m.attack[0]}/${m.attack[1]}</td><td>${m.honest[0]}/${m.honest[1]}</td></tr>`).join("") +
     `<tr><td><b>All</b></td><td><b>${rd.attack.k}/${rd.attack.n}</b></td><td><b>${rd.honest.k}/${rd.honest.n}</b></td></tr></tbody>`;
-  $("rdtake").innerHTML = `With containment decided from structure, none of ${d.structure_only_reader.forged.n} attack incidents was contained wrongly, against ${d.model_parser_struct.forged.k} for the exposed design. As a gate on the notes the model was no use: it flagged ${rd.honest.k} of ${rd.honest.n} harmless notes and ${rd.attack.k} of ${rd.attack.n} attack notes, so a flag says almost nothing. Show the note to a person as quoted, untrusted text, and keep every decision out of the model's hands. A larger model was not tested.`;
+  $("rdtake").innerHTML = `With containment decided from structure, none of ${d.structure_only_reader.forged.n} attack incidents was contained wrongly, against ${d.model_parser_struct.forged.k} for the exposed design. As a gate on the notes the model was no use: it flagged ${rd.honest.k} of ${rd.honest.n} harmless notes and ${rd.attack.k} of ${rd.attack.n} attack notes, so a flag says almost nothing. Show the note to a person as quoted, untrusted text, and keep every decision out of the model's hands. The 14B model separated them a little better and still flagged harmless notes.`;
 }
 
 function drawCompare() {

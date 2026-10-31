@@ -44,6 +44,13 @@ def summarise(experiment):
         sys.exit(f"no preregistered BI01 {experiment} run found")
     recs = [json.loads(l) for l in runs[-1].read_text(encoding="utf-8").splitlines() if l.strip()]
     meta = json.loads(runs[-1].with_suffix(".meta.json").read_text(encoding="utf-8"))
+    if experiment == "free-text-reader":                # one experiment, run twice: the five readers up to 8B, then a 14B reader
+        recs, ids, models = [], [], []
+        for p in runs:
+            recs += [json.loads(l) for l in p.read_text(encoding="utf-8").splitlines() if l.strip()]
+            m = json.loads(p.with_suffix(".meta.json").read_text(encoding="utf-8"))
+            ids.append(m["run_id"]); models += m["models"]
+        meta = dict(meta, run_id=" + ".join(ids), models=models, records=len(recs))
     defenses = {}
     for d in [x.name for x in sc.defenses]:
         att = [r for r in recs if r["defense"] == d and r["attack"] != "none"]

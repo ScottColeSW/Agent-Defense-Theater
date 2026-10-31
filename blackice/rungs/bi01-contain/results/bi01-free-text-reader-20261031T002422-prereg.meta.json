@@ -1,0 +1,57 @@
+{
+ "run_id": "bi01-free-text-reader-20261031T002422-prereg",
+ "item": "BI01",
+ "experiment": "free-text-reader",
+ "mode": "live",
+ "exploratory": false,
+ "models": [
+  "qwen2.5:14b"
+ ],
+ "defenses": [
+  "none",
+  "rule_two_signed",
+  "structure_only_reader",
+  "model_parser_struct"
+ ],
+ "cases": 33,
+ "records": 132,
+ "seconds": 875.0,
+ "decision_log_head": "de2b9805a37fd2b5a6b6c470129a9a190f652c28fa529d5a0e50812d18311f72",
+ "decision_log_entries": 74,
+ "hardware_note": "One workstation, RTX 2080 Super 8 GB. Local models up to 8B parameters.",
+ "prereg_commit": "bdcfacdc17922c355f3467783e668e0c641136c5",
+ "harness_commit": "bdcfacdc17922c355f3467783e668e0c641136c5",
+ "gpu": {
+  "max_c": 72,
+  "resume_c": 60,
+  "soft_c": 66,
+  "peak_c": 68,
+  "pauses": 0,
+  "paused_s": 0.0,
+  "eased": 0,
+  "eased_s": 0.0,
+  "settled_s": 0.1,
+  "settle_c": 60,
+  "available": true
+ },
+ "model_info": {
+  "qwen2.5:14b": {
+   "name": "qwen2.5:14b",
+   "digest": "7cdf5a0187d5c58cc5d369b255592f7841d1c4696d45a8c8a9489440385b22f6",
+   "capabilities": [
+    "completion",
+    "tools"
+   ],
+   "family": "qwen2",
+   "params": "14.8B",
+   "quant": "Q4_K_M",
+   "context": 32768,
+   "think": null,
+   "temperature": 0.0,
+   "seed": 0,
+   "num_predict": 1024,
+   "timeout_s": 120
+  }
+ },
+ "started": "2026-10-31T00:38:57Z"
+}

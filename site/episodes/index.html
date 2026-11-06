@@ -4,8 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Reviewer Calibration: the episode player</title>
-<meta name="description" content="Six real episodes from the ASI03 reviewer-calibration run: an agent pitching its own self-written reason to a reviewer model, against the system's own comparison doing the talking instead. Every line is a real card and a real verdict.">
+<meta name="description" content="Six real scenes from the ASI03 reviewer-calibration run: an agent pitching its own self-written reason to a reviewer model, against the system's own comparison doing the talking instead. Every bubble is a real card, a real verdict and a real reason.">
 <link rel="stylesheet" href="../assets/app.css">
+<link rel="stylesheet" href="../rock/rock.css">
 <link rel="stylesheet" href="episodes.css">
 <script src="../assets/theme.js"></script>
 </head>
@@ -14,16 +15,23 @@
   <nav class="site-nav" id="nav" aria-label="Site"></nav>
 
   <header class="hero">
-    <h1>Reviewer Calibration<span class="slash" style="color:var(--blue)">/</span>Episodes</h1>
-    <p class="muted lede">Seven local models were shown 22 request cards whose right answer is known. In one style the card carries the agent's own self-written reason for wanting to act; in another the system's own comparison speaks first, and the agent's reasoning is never shown. These six episodes replay what each reviewer actually did, card by card, from the real run.</p>
-    <p class="replay-note" id="replay-note">loading run info&hellip;</p>
+    <h1>Reviewer Calibration<span style="color:var(--blue)">/</span>Episodes</h1>
+    <p class="muted lede">Seven local models were shown 22 request cards whose right answer is known. In one style the card carries the agent's own self-written reason for wanting to act; in another the system's own comparison speaks first, and the agent's reasoning is never shown. Six scripted scenes, no invented lines: every bubble below is a real card, a real verdict and a real reason, read from the saved run.</p>
   </header>
 
-  <div class="ep-tabs" id="tabs" role="tablist" aria-label="Episodes"></div>
+  <div class="episodes" id="episodes" role="tablist" aria-label="Episodes"></div>
 
-  <section class="card screen" id="screen" aria-live="polite">loading episodes&hellip;</section>
+  <section class="show" aria-live="polite">
+    <div class="screen card" id="screen"></div>
+    <div class="controls">
+      <button class="btn ghost" id="prev" aria-label="Previous scene">Back</button>
+      <button class="btn" id="play" aria-pressed="false">Autoplay</button>
+      <button class="btn ghost" id="next" aria-label="Next scene">Next</button>
+      <span class="dots" id="dots" role="tablist" aria-label="Scenes"></span>
+    </div>
+  </section>
 
-  <p class="caption" id="src" style="margin-top:14px"></p>
+  <section class="small muted fine" id="fine"></section>
 </div>
 <footer id="foot"></footer>
 

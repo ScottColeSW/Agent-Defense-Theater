@@ -1,8 +1,12 @@
 # Reviewer calibration: the episode player
 
-A side-by-side player for the ASI03 reviewer-calibration finding, in the spirit of [Flatline
+A scene-by-scene player for the ASI03 reviewer-calibration finding, built on the same episode/scene
+shape as this repository's own [Defense Rock](../rock/) cartoon (episode tabs, a scene screen,
+Back/Autoplay/Next and scene dots), in the spirit of [Flatline
 Ledger](https://github.com/ScottColeSW/Flatline-Ledger)'s own "Black Hat vs White Hat" episode
-player. Six episodes, each built from the real, already-saved run
+player. Unlike Defense Rock, there are no characters, no songs and no invented lines: every bubble
+is a real card, verdict or reason, never a scripted one. Six episodes, each built from the real,
+already-saved run
 [`asi03-reviewer-calibration-20261014T230536-prereg`](../../items/asi03-identity-privilege/results/):
 a reviewer model is shown a request card whose right answer is known by construction, in two
 contrasting styles, and its real verdict and real reasoning are shown exactly as recorded. No

@@ -127,6 +127,14 @@ The [governance crosswalk](docs/GOVERNANCE-CROSSWALK.md) sets each measurement b
 
 [Palimpsest](https://github.com/ScottColeSW/Palimpsest) (the memory gate), [Aegis Vector](https://github.com/ScottColeSW/Project-Aegis-Vector) (forgery testbed and episode player), [Void-Marauders](https://github.com/ScottColeSW/Void-Marauders) (outcome-sensitive trust between agents), [Evo](https://github.com/ScottColeSW/Evo) (multi-agent simulation with a benchmark harness).
 
+## External citations
+
+Results from this repository have been cited in the OWASP GenAI Security Project's [GenAI-LLM-Top10](https://github.com/GenAI-Security-Project/GenAI-LLM-Top10) repository.
+
+- [Issue #150](https://github.com/GenAI-Security-Project/GenAI-LLM-Top10/issues/150#issuecomment-6690877315), on monotonic scope attenuation across delegation hops and single-use commit-point approval binding: cites the ASI03 round 2/3 results for request binding and a one-shot credential bound to the call (0 of 120 attack cases carried out, 61 of 63 legitimate tasks completed). Posted.
+- [Issue #137](https://github.com/GenAI-Security-Project/GenAI-LLM-Top10/issues/137#issuecomment-6691381836), on evaluator trust boundaries in judge verdict extraction: cites the ASI03 reviewer-calibration test, where showing a reviewer model the agent's own self-written reason approved non-matching requests 40.2% of the time (45/112), against 6.2% (7/112) when the reviewer saw the system's own independent comparison first. Posted.
+- [Issue #133](https://github.com/GenAI-Security-Project/GenAI-LLM-Top10/issues/133#issuecomment-6691384710), proposing a machine-readable attack-scenario and verification schema: cites [`common/RESULTS-SCHEMA.md`](common/RESULTS-SCHEMA.md) as a working reference implementation of a similar schema. Posted.
+
 ## Author and license
 
 Built by Scott A. Cole ([GitHub](https://github.com/ScottColeSW), [About](site/about.html)). MIT license, see [LICENSE](LICENSE).

@@ -56,6 +56,7 @@ Python 3.10 or newer, standard library only. [Ollama](https://ollama.com) is nee
 python adt.py serve --open     # the runner and the reports, at http://localhost:8765/start.html
 python adt.py demo             # a scripted ASI03 run, then verify its decision log
 python tools/build_rock.py      # rebuild the data behind the Defense Rock cartoon, then open /rock/ on the same server
+python tools/build_reviewer_episodes.py  # rebuild the ASI03 reviewer-calibration episode player, then open /episodes/ on the same server
 python adt.py loosekeys demo     # find loose OAuth tokens, plant canaries, compare countermeasures (docs/LOOSE-KEYS.md)
 python adt.py run asi03 --models llama3.1:8b,qwen2.5:7b,phi4-mini:3.8b
 python -m pytest -q

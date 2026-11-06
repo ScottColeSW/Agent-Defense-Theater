@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reviewer Calibration: the episode player</title>
+<meta name="description" content="Six real episodes from the ASI03 reviewer-calibration run: an agent pitching its own self-written reason to a reviewer model, against the system's own comparison doing the talking instead. Every line is a real card and a real verdict.">
+<link rel="stylesheet" href="../assets/app.css">
+<link rel="stylesheet" href="episodes.css">
+<script src="../assets/theme.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <nav class="site-nav" id="nav" aria-label="Site"></nav>
+
+  <header class="hero">
+    <h1>Reviewer Calibration<span class="slash" style="color:var(--blue)">/</span>Episodes</h1>
+    <p class="muted lede">Seven local models were shown 22 request cards whose right answer is known. In one style the card carries the agent's own self-written reason for wanting to act; in another the system's own comparison speaks first, and the agent's reasoning is never shown. These six episodes replay what each reviewer actually did, card by card, from the real run.</p>
+    <p class="replay-note" id="replay-note">loading run info&hellip;</p>
+  </header>
+
+  <div class="ep-tabs" id="tabs" role="tablist" aria-label="Episodes"></div>
+
+  <section class="card screen" id="screen" aria-live="polite">loading episodes&hellip;</section>
+
+  <p class="caption" id="src" style="margin-top:14px"></p>
+</div>
+<footer id="foot"></footer>
+
+<script src="episodes.js"></script>
+</body>
+</html>

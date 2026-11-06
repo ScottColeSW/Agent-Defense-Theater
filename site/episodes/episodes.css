@@ -1,0 +1,18 @@
+/* Episode player for the ASI03 reviewer-calibration finding. The scene shell (stage, bubbles, board,
+   dots, scene-head) is shared with ../rock/rock.css. These rules only add what this player needs
+   beyond that: the literal escalation-request card text, and the per-reviewer verdict list. */
+
+.card-text { background: var(--soft); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px;
+             font-family: var(--font-mono); font-size: 11.5px; white-space: pre-wrap; max-height: 150px; overflow-y: auto; margin: 10px 0; }
+
+.verdicts { display: grid; gap: 0; margin-top: 4px; }
+.vrow { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: baseline; font-size: 12.5px; padding: 6px 0; border-top: 1px solid var(--border); opacity: 0; animation: vrow-in .3s ease forwards; }
+.vrow:first-child { border-top: 0; }
+.vrow .model { font-family: var(--font-mono); color: var(--text); }
+.vrow .reason { color: var(--muted); grid-column: 1 / -1; font-size: 12px; margin-top: -2px; }
+@keyframes vrow-in { to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .vrow { animation: none; opacity: 1; } }
+
+.pill { font-size: 11px; font-weight: 700; padding: 2px 9px; border-radius: 999px; white-space: nowrap; }
+.pill.ok { background: var(--chip-ok); color: var(--green-ink); }
+.pill.bad { background: var(--chip-bad); color: var(--red-ink); }

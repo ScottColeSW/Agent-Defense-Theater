@@ -37,14 +37,44 @@ async function begin() {
   i = 0; card();
 }
 
+function fact(label, value, opts) {
+  opts = opts || {};
+  const style = opts.highlight ? "margin-top:10px;padding:10px 12px;background:var(--soft);border-radius:8px" : "margin-top:10px";
+  return `<div style="${style}"><b>${esc(label)}</b> ${esc(value)}</div>`;
+}
+
+function cardBody(f) {
+  let body = fact("The agent wants to:", f.agent_wants, {highlight: true});
+  if (f.style === "agent_card") {
+    body += fact("The agent's own reason:", f.agent_reason);
+    return body;
+  }
+  body += fact('What the operator actually asked for, word for word:', `"${f.operator_request}"`, {highlight: true});
+  body += fact("Why this needs sign-off:", f.held_reason);
+  if (f.checks && f.checks.length) {
+    body += `<div style="margin-top:12px"><b class="small muted" style="letter-spacing:.04em">FACTS THE SYSTEM CHECKED</b>
+      <ul class="small" style="margin:6px 0 0;padding-left:20px;line-height:1.6">${f.checks.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>`;
+  }
+  if (f.style === "bottomline") {
+    const tone = f.verdict_match ? "ok" : "bad";
+    const head = f.verdict_match ? "MATCH" : "NO MATCH";
+    body = `<div class="notice ${tone}" style="margin-bottom:14px"><b>${head}.</b> ${esc(f.verdict_text)}</div>` + body;
+  }
+  return body;
+}
+
 function card() {
-  const c = S.cards[i], total = S.cards.length;
+  const c = S.cards[i], total = S.cards.length, f = c.fields;
   $("page").innerHTML = `<header style="padding:24px 0 0"><div class="muted small" style="font-weight:700;letter-spacing:.06em">REQUEST ${i + 1} OF ${total}</div>
       <div style="height:6px;background:var(--soft);border-radius:4px;margin:8px 0 18px"><div style="height:100%;width:${Math.round(i / total * 100)}%;background:var(--accent-blue);border-radius:4px"></div></div></header>
-    <section><div class="card"><pre style="white-space:pre-wrap;font-size:15px;line-height:1.5;margin:0;font-family:var(--font-mono)">${esc(c.card)}</pre></div>
+    <section><div class="card">
+      <p class="muted small" style="font-weight:700;letter-spacing:.04em;margin-top:0">TICKET ${esc(f.ticket_id)} &middot; ${esc(f.customer)}</p>
+      <h3 style="margin:2px 0 14px">Would you approve this?</h3>
+      ${cardBody(f)}
+    </div>
     <div style="display:flex;gap:14px;margin-top:18px;flex-wrap:wrap"><button class="btn primary" id="yes" style="min-width:180px;font-size:16px;padding:14px 22px">Approve <span class="muted small">(A)</span></button>
       <button class="btn" id="no" style="min-width:180px;font-size:16px;padding:14px 22px">Deny <span class="muted small">(D)</span></button></div>
-    <p class="muted small" style="margin-top:14px">Approve only what the operator actually asked for.</p></section>`;
+    <p class="muted small" style="margin-top:14px">Approve only if it is something the operator actually asked for. If it goes beyond that, deny it, however reasonable it sounds.</p></section>`;
   shown = performance.now();
   $("yes").onclick = () => decide("approve");
   $("no").onclick = () => decide("deny");

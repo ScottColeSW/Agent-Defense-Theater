@@ -61,13 +61,13 @@ class Study:
             d = cases[i]
             style = STYLES[(i + rotation) % len(STYLES)]
             items.append({"n": n, "family": d["family"], "ticket": d["ticket"], "style": style, "truth": d["truth"],
-                          "card": self._mod.build_card(style, d["family"], d["ticket"])})
+                          "fields": self._mod.build_card_fields(style, d["family"], d["ticket"])})
         with self._lock:
             self.sessions[pid] = {"items": items, "answered": {}}
             self.dir.mkdir(parents=True, exist_ok=True)
             with (self.dir / "participants.jsonl").open("a", encoding="utf-8") as f:
                 f.write(json.dumps({"participant": pid, "rotation": rotation, "started": round(self._clock())}) + "\n")
-        return {"participant": pid, "instructions": INSTRUCTIONS, "cards": [{"n": x["n"], "card": x["card"]} for x in items]}
+        return {"participant": pid, "instructions": INSTRUCTIONS, "cards": [{"n": x["n"], "fields": x["fields"]} for x in items]}
 
     def answer(self, pid, n, decision, ms) -> dict:
         s = self.sessions.get(pid)

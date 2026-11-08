@@ -90,7 +90,7 @@ Keeping keys private:
 | [ASI02](items/asi02-tool-misuse/) | Tool Misuse and Exploitation | Measured | Real MCP servers, three gates, eight attacks; first preregistered live run |
 | [ASI03](items/asi03-identity-privilege/) | Identity and Privilege Abuse | Measured | Three preregistered live rounds |
 | [ASI04](items/asi04-supply-chain/) | Agentic Supply Chain Vulnerabilities | Measured | A tampered MCP tool staged in front of the real server, and three load-time controls; one preregistered live run |
-| [ASI05](items/asi05-code-execution/) | Unexpected Code Execution | Stub | Plan written |
+| [ASI05](items/asi05-code-execution/) | Unexpected Code Execution | Built | A data agent's generated code runs in a disposable Docker container; six attacks against an audit-hook block and a wall-clock cap; no live preregistered run yet |
 | [ASI06](items/asi06-memory-context-poisoning/) | Memory and Context Poisoning | Measured elsewhere | Palimpsest and Aegis Vector |
 | [ASI07](items/asi07-inter-agent-communication/) | Insecure Inter-Agent Communication | Stub | Plan written |
 | [ASI08](items/asi08-cascading-failures/) | Cascading Failures | Measured | A three-agent crew where a bad figure can spread to an offer; one preregistered live run |

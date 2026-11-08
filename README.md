@@ -92,7 +92,7 @@ Keeping keys private:
 | [ASI03](items/asi03-identity-privilege/) | Identity and Privilege Abuse | Measured | Three preregistered live rounds |
 | [ASI04](items/asi04-supply-chain/) | Agentic Supply Chain Vulnerabilities | Measured | A tampered MCP tool staged in front of the real server, and three load-time controls; one preregistered live run |
 | [ASI05](items/asi05-code-execution/) | Unexpected Code Execution | Measured | A data agent's generated code, run in a disposable Docker container, against an audit-hook block and a wall-clock cap; one preregistered live run |
-| [ASI06](items/asi06-memory-context-poisoning/) | Memory and Context Poisoning | Measured elsewhere | Palimpsest and Aegis Vector |
+| [ASI06](items/asi06-memory-context-poisoning/) | Memory and Context Poisoning | Measured elsewhere (retrieval) and built here (write path) | Palimpsest and Aegis Vector (retrieval); a new write-path scenario against real Palimpsest, no live preregistered run yet |
 | [ASI07](items/asi07-inter-agent-communication/) | Insecure Inter-Agent Communication | Stub | Plan written |
 | [ASI08](items/asi08-cascading-failures/) | Cascading Failures | Measured | A three-agent crew where a bad figure can spread to an offer; one preregistered live run |
 | [ASI09](items/asi09-human-agent-trust/) | Human-Agent Trust Exploitation | Built | AI reviewers measured; a [people study](site/study.html) built and waiting for participants |

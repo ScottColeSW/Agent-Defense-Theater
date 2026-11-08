@@ -2,7 +2,7 @@
 
 | | |
 | --- | --- |
-| Status | Measured elsewhere |
+| Status | Measured elsewhere (retrieval) and built here (write path), not yet run |
 | OWASP LLM Top 10 2025 | LLM04 Data and Model Poisoning; LLM08 Vector and Embedding Weaknesses |
 | MITRE ATLAS | AML.T0070 RAG Poisoning |
 | Existing work | Palimpsest and Aegis Vector |
@@ -41,11 +41,13 @@ Results use the shared schema in [`../../common/RESULTS-SCHEMA.md`](../../common
 
 ## What exists today
 
-Palimpsest (memory gate) and Aegis Vector (forgery testbed). Both are linked from integrations/ and are not copied here. The Aegis Vector defenses battery is imported as schema-format records in [`results/`](results/) so it can be plotted on the [site](../../site/README.md).
+Palimpsest (memory gate) and Aegis Vector (forgery testbed). Both are linked from integrations/ and are not copied here. The Aegis Vector defenses battery is imported as schema-format records in [`results/`](results/) so it can be plotted on the [site](../../site/README.md). That battery measures retrieval: a forgery already in the store, trying to get served.
+
+A second, new scenario (`scenario.py`, first run not yet executed) built independently in this repository targets the write path instead: whether a forged document becomes a live, unflagged belief in Palimpsest's real memory (editable-installed from the sibling repo, not reimplemented) in the first place, and whether that actually changes a real downstream decision made by a live model. Three attacks exploit specific, cited gaps in `consult()`'s own fixed rules (wording and number comparison only, never who-does-what), against Palimpsest's own agent-judgment floor, an independent rules-only quarantine, and a blanket quarantine. See [`PREREGISTRATION.md`](PREREGISTRATION.md) for the full design and a pilot's early findings.
 
 ## Limits and what it would take
 
-Registered facts only; an unregistered fact is admitted. Untested: the memory write path, slow drift, many agreeing forgeries, a poisoned verified corpus. Needs: larger models, an adaptive attacker who knows the gate, and a production-size corpus.
+Registered facts only; an unregistered fact is admitted. The new write-path scenario closes part of "untested: the memory write path" from this section's earlier state, but not all of it: still untested are slow drift, many agreeing forgeries, and a poisoned verified corpus. Needs: larger models, an adaptive attacker who knows the gate, and a production-size corpus.
 
 ## Folder map
 

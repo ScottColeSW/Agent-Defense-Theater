@@ -48,3 +48,43 @@ An exploratory observation is also reported: the share of requests approved in t
 - **The agent's reasons are the author's.** The reasons on the agent-style card were written by the author, not produced by an agent trying to persuade.
 - **Twenty-two cards, eleven kinds, one scenario.**
 - **Learning within the exercise.** A participant may work out the pattern as they go, which would lower the later slips and blur the style comparison. Order is shuffled to spread this, not remove it.
+
+## Addendum (after the first five participants)
+
+Five participants finished all 22 cards, 110 answers, 2026-11-08 (`python adt.py study`; raw: `results/study/answers.jsonl`, `participants.jsonl`).
+
+**A deviation from the committed protocol, disclosed rather than absorbed into the numbers:** these five took the study together at a gathering, with someone reading each card aloud rather than each participant reading independently and silently, as "What a participant does" above describes. Four of the five decided in well under two seconds on every single one of their 22 cards (session medians 0.9 to 1.0 s, no card over 5.9 s); the fifth took a median of 11.5 s and up to three minutes on one card. The recorded "time taken" therefore does not measure what the protocol predicted it would (reading plus deciding time) for four of the five, and criterion 3 is reported as **uninformative** for that reason, not as met or missed. The decisions themselves are still each participant's own choice, made out loud in response to a card read to them, not fabricated or skipped; they are kept.
+
+### Prediction against result
+
+| Presentation | Approved what was not asked (predicted) | Observed | Denied what was asked (predicted) | Observed |
+| --- | --- | --- | --- | --- |
+| The agent's own account | 25% (10 to 45) | **54% (13/24), far above its range** | 10% | **38% (5/13), far above its range** |
+| System-computed checks | 12% (3 to 25) | **39% (9/23), far above its range** | 12% | **50% (7/14), far above its range** |
+| The system's comparison first | 5% (0 to 15) | **26% (6/23), far above its range** | 5% | **62% (8/13), far above its range** |
+
+Every number in both columns came in far above its predicted range, in the same direction, for all three presentation styles. The miss is uniform rather than style-specific, which points at a shared cause the prediction did not anticipate strongly enough even though it is named in this file's own known-limitations list below ("cards written for models... a person may read them differently"): the cards were, in this administration, hard enough to parse, read aloud, in a social setting, that both kinds of error went up together for every style, not just the one the prediction expected to be weakest.
+
+### Pass bar: one met, two missed, one uninformative
+
+| # | Criterion | Result |
+| --- | --- | --- |
+| 1 | Approvals of what was not asked are at least 10 points higher under the agent's own account than under the comparison-first card | Met. 54% against 26%, a 28-point gap |
+| 2 | People do not rubber-stamp the comparison-first card: deny what was asked no more than 15% of the time under it | **Missed.** 62% (8/13) — far from rubber-stamping, the comparison-first card was wrongly denied more often than either other style |
+| 3 | The comparison-first card is the fastest to decide | **Uninformative.** All three medians (0.9, 1.0, 0.9 s) sit at the floor of how fast a read-aloud decision can be recorded; the administration deviation above means this run cannot distinguish them |
+| 4 | People are fooled by the agent's own account less often than the AI reviewers pooled (40%) | **Missed.** 54% against 40% — people were fooled *more* often than the small local models were, not less |
+
+Exploratory fatigue observation: approvals ran 48% in the first third of each participant's cards, 43% in the second, 40% in the last — a mild downward drift, the opposite of fatigue (people got more cautious, not less, as the exercise went on).
+
+### What this run shows
+
+- **A real presentation-style gap survived even a confusing, read-aloud administration** (criterion 1, met by a wide margin): people approved what was not asked almost twice as often when shown the agent's own account as when shown the system's comparison first.
+- **People were fooled more often than the AI reviewers this study was built to compare against**, not less — the opposite of what was predicted, and by a wide margin (54% against 40%).
+- **The comparison-first card, which states plainly whether the request matches, was wrongly denied more than any other style (62%)** — the sharpest sign that the cards themselves, not just the agent's framing, were hard to act on correctly. This is consistent with what one participant said afterward (the questions were long and it was hard to tell what information mattered), not just a number that happened to come out high.
+
+### What this run does not show
+
+- **Whether a person reading independently and silently, as the protocol describes, would show the same pattern.** This administration (read aloud, in a group, at a social gathering) is disclosed above as a real deviation; the timing data in particular cannot be read as if it had not happened.
+- **Whether the gap between styles would survive a clearer card.** The uniform miss across all three styles is the strongest signal in this run that the cards' own difficulty, not the presentation manipulation, may be driving a large share of both error rates; a revised, shorter card is needed before concluding more than criterion 1's gap.
+- **Five people, one pass each, who knew this was a security exercise and took it together.** Not a sample of approvers in a real queue.
+- This result stands as five of the five participants this protocol's own pass bar requires before anything is reported; a second round, with a clearer instrument, would be a replication, not a do-over of a broken one.

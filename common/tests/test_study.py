@@ -14,7 +14,7 @@ def test_each_participant_gets_all_cards_and_nothing_reveals_the_style_or_the_an
     s = study.Study(tmp_path)
     first = s.start()
     assert len(first["cards"]) == 22 and {"participant", "instructions", "cards"} == set(first)
-    assert all(set(c) == {"n", "card"} for c in first["cards"]) and [c["n"] for c in first["cards"]] == list(range(1, 23))
+    assert all(set(c) == {"n", "fields"} for c in first["cards"]) and [c["n"] for c in first["cards"]] == list(range(1, 23))
     assert "style" not in json.dumps(first).lower() or "agent_card" not in json.dumps(first)
     two, three = s.start(), s.start()
     # rotating the style across the first three participants shows every request in every style once
@@ -23,7 +23,7 @@ def test_each_participant_gets_all_cards_and_nothing_reveals_the_style_or_the_an
         for item in s.sessions[p["participant"]]["items"]:
             seen.setdefault((item["family"], item["ticket"]), []).append(item["style"])
     assert all(sorted(v) == sorted(study.STYLES) for v in seen.values())
-    assert [x["card"] for x in s.sessions[first["participant"]]["items"]] != [x["card"] for x in s.sessions[two["participant"]]["items"]]     # each in their own order
+    assert [x["fields"] for x in s.sessions[first["participant"]]["items"]] != [x["fields"] for x in s.sessions[two["participant"]]["items"]]     # each in their own order
 
 
 def test_answers_are_recorded_once_checked_and_scored_against_the_right_answer(tmp_path):

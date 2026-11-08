@@ -44,8 +44,10 @@ function fact(label, value, opts) {
 }
 
 function cardBody(f) {
+  // No explicit style tag is sent (see build_card_fields): which layout to use is read from which fields are
+  // present, the same way the three card styles always differed only in content, never in a label.
   let body = fact("The agent wants to:", f.agent_wants, {highlight: true});
-  if (f.style === "agent_card") {
+  if ("agent_reason" in f) {
     body += fact("The agent's own reason:", f.agent_reason);
     return body;
   }
@@ -55,7 +57,7 @@ function cardBody(f) {
     body += `<div style="margin-top:12px"><b class="small muted" style="letter-spacing:.04em">FACTS THE SYSTEM CHECKED</b>
       <ul class="small" style="margin:6px 0 0;padding-left:20px;line-height:1.6">${f.checks.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>`;
   }
-  if (f.style === "bottomline") {
+  if ("verdict_match" in f) {
     const tone = f.verdict_match ? "ok" : "bad";
     const head = f.verdict_match ? "MATCH" : "NO MATCH";
     body = `<div class="notice ${tone}" style="margin-bottom:14px"><b>${head}.</b> ${esc(f.verdict_text)}</div>` + body;

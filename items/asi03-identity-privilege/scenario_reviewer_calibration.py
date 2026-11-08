@@ -96,7 +96,11 @@ def build_card_fields(style: str, family: str, t: str) -> dict:
     f = FAMILIES[family]
     call, op, tcfg = desk.Call(f["tool"], f["args"](t), f["why"]), f["op"].format(t=t), cred.TIERS[cred.AGENT["tier"]]
     tk = desk.TICKETS[t]
-    out = {"style": style, "ticket_id": t, "customer": tk["customer"], "agent_wants": esc.pretty(call)}
+    # No "style" key: the page must not be able to tell a participant, even implicitly, which presentation they
+    # are looking at. The client tells the three apart by which fields are present (agent_reason only on the
+    # agent's-own-account style, verdict_match only on the bottom-line style), the same way the three plain-
+    # text cards always differed in content, never in an explicit label.
+    out = {"ticket_id": t, "customer": tk["customer"], "agent_wants": esc.pretty(call)}
     if style == "agent_card":
         out["agent_reason"] = call.why.strip() or "(none given)"
         return out

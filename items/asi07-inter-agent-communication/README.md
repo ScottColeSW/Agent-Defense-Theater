@@ -2,7 +2,7 @@
 
 | | |
 | --- | --- |
-| Status | Built, not yet measured |
+| Status | Measured |
 | OWASP LLM Top 10 2025 | No direct match |
 | MITRE ATLAS | To be mapped |
 | Existing work | New work |
@@ -41,7 +41,9 @@ Results use the shared schema in [`../../common/RESULTS-SCHEMA.md`](../../common
 
 ## What exists today
 
-A new scenario (`scenario.py`) built independently in this repository, reusing the real deal-desk MCP server ASI01/02/08/10 already use for genuine tool execution, with a real HMAC-SHA256 signing and verification implementation (not simulated). See [`PREREGISTRATION.md`](PREREGISTRATION.md) for the full design, including a real asymmetry a pilot found: one model heeded the same transport-layer warning for one bad-signature attack and ignored it for another. No live preregistered run yet.
+A new scenario (`scenario.py`) built independently in this repository, reusing the real deal-desk MCP server ASI01/02/08/10 already use for genuine tool execution, with a real HMAC-SHA256 signing and verification implementation (not simulated).
+
+**First run, pooled over three models:** with no defense, 23 of 27 forged or replayed messages produced a real offer (85.2%). A signature-only check stopped a fabricated signature perfectly (0 of 9) but let an unsigned message through 6 of 9 times and a genuinely valid signature replayed from a different deal through 6 of 9 times — the same machine-generated warning, heeded differently depending only on what the message itself claimed. Adding a check that the message's claimed deal matches the deal actually being discussed stopped the replay completely (0 of 9), and an independent recomputation that never trusts the message at all stopped everything (0 of 27). All six pass-bar criteria met. See [`PREREGISTRATION.md`](PREREGISTRATION.md) for the full design and addendum.
 
 ## Limits and what it would take
 

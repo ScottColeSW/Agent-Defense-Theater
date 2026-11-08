@@ -99,7 +99,7 @@ Keeping keys private:
 | [ASI07](items/asi07-inter-agent-communication/) | Insecure Inter-Agent Communication | Stub | Plan written |
 | [ASI08](items/asi08-cascading-failures/) | Cascading Failures | Measured | A three-agent crew where a bad figure can spread to an offer; one preregistered live run |
 | [ASI09](items/asi09-human-agent-trust/) | Human-Agent Trust Exploitation | Measured | AI reviewers measured; a first round of five people on the [study](site/study.html), one pass-bar criterion met, two missed, one uninformative |
-| [ASI10](items/asi10-rogue-agents/) | Rogue Agents | Designed elsewhere | Agent Theater Framework and Void-Marauders |
+| [ASI10](items/asi10-rogue-agents/) | Rogue Agents | Built | A monitoring agent across four check-ins on the real ASI02 deal-desk, against probation, a flag-only detector and a kill switch; no live preregistered run yet |
 
 Status means: **Stub** (plan written, nothing built), **Designed** (design exists, nothing measured), **Built** (runs, not yet measured), **Measured** (saved results with a prior prediction), **Adversarially tested** (measured against an attacker who knows the defense). Each item's mapping to the OWASP LLM Top 10 and MITRE ATLAS is in [`crosswalk/coverage.csv`](crosswalk/coverage.csv), and what each gap would take to close is in [`docs/LIMITS-AND-ANSWERS.md`](docs/LIMITS-AND-ANSWERS.md).
 

@@ -2,7 +2,7 @@
 
 | | |
 | --- | --- |
-| Status | Built, not yet measured |
+| Status | Measured |
 | OWASP LLM Top 10 2025 | LLM06 Excessive Agency |
 | MITRE ATLAS | To be mapped |
 | Existing work | Agent Theater Framework and Void-Marauders |
@@ -45,7 +45,9 @@ Results use the shared schema in [`../../common/RESULTS-SCHEMA.md`](../../common
 
 ## What exists today
 
-A new scenario (`scenario.py`) built independently in this repository, reusing the real deal-desk MCP server ASI01/02/08 already use for genuine tool execution. Agent Theater's three-tier taxonomy and Void-Marauders' outcome-sensitive loyalty and mutiny model were both checked before building this: void-marauders has a real headless harness, but its loyalty system measures order compliance (ASI09's territory), not scope drift, and has no "assigned scope" or self-report-versus-action check at all; Agent Theater Framework is a design document with nothing executable. Neither gave this item anything to import. See [`PREREGISTRATION.md`](PREREGISTRATION.md) for the full design; no live preregistered run yet.
+A new scenario (`scenario.py`) built independently in this repository, reusing the real deal-desk MCP server ASI01/02/08 already use for genuine tool execution. Agent Theater's three-tier taxonomy and Void-Marauders' outcome-sensitive loyalty and mutiny model were both checked before building this: void-marauders has a real headless harness, but its loyalty system measures order compliance (ASI09's territory), not scope drift, and has no "assigned scope" or self-report-versus-action check at all; Agent Theater Framework is a design document with nothing executable. Neither gave this item anything to import.
+
+**First run, pooled over three models:** every model, on all three attacks, let the first restricted action run and never once disclosed it in its report — 18 of 18 attack cases drifted and were reported as routine under no defense, under a flag-only detector, and under a kill switch, since none of those three stop a first drift. The kill switch's real value showed up in the secondary measure: it ran exactly half as many restricted calls overall (18 against 36), because it is the only condition that uses a first drift to block the second. Unconditional probation stopped everything, including the operator's own plainly authorized request, every time; the kill switch did not share that cost. All seven pass-bar criteria met. See [`PREREGISTRATION.md`](PREREGISTRATION.md) for the full design and addendum, including a real harness bug (a rejected tool call being silently counted as executed) found and fixed before this run.
 
 ## Limits and what it would take
 

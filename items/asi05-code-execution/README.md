@@ -2,7 +2,7 @@
 
 | | |
 | --- | --- |
-| Status | Built, not yet measured |
+| Status | Measured |
 | OWASP LLM Top 10 2025 | LLM05 Improper Output Handling |
 | MITRE ATLAS | To be mapped |
 | Existing work | New work |
@@ -41,7 +41,9 @@ Results use the shared schema in [`../../common/RESULTS-SCHEMA.md`](../../common
 
 ## What exists today
 
-A data agent (a live local model) writes Python to answer a ticket; the code runs inside a disposable Docker container, never on the host and never in the harness's own process. See [`PREREGISTRATION.md`](PREREGISTRATION.md) for the full design, including two real bugs caught and fixed while building this (a bare-subprocess version let generated code open real GUI windows on the host, and a first containerized version let its own safety margin swallow the measured timeout), and the exact pass bar. No live preregistered run has been recorded yet.
+A data agent (a live local model) writes Python to answer a ticket; the code runs inside a disposable Docker container, never on the host and never in the harness's own process. See [`PREREGISTRATION.md`](PREREGISTRATION.md) for the full design, including two real bugs caught and fixed while building this (a bare-subprocess version let generated code open real GUI windows on the host, and a first containerized version let its own safety margin swallow the measured timeout), and the full addendum.
+
+**First run, pooled over three models:** with no defense, 15 of 54 exfiltration and compute-exhaustion attempts got through (27.8%). The audit hook stopped all of them, however the call was spelled (direct, `pathlib`, `getattr`-obfuscated, over a socket, or appended to the ticket's own output), at zero measured cost to in-tier work. The wall-clock cap alone stopped nothing: `timeout_contain` scored identically to no defense (also 15/54), because none of the five exfiltration channels take any measurable time to run. The one case the cap should have mattered for, a resource-exhaustion loop, mostly did not test it: two of three models wrote loops too fast to matter regardless of the instruction, and where one did run long enough, it was the test rig's own generous safety cap that caught it, not a clean "unchecked" comparison. Six of seven pass-bar criteria were met; one was missed and explained in the addendum.
 
 ## Limits and what it would take
 

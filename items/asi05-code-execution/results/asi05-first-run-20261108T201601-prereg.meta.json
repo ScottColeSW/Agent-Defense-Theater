@@ -1,0 +1,93 @@
+{
+ "run_id": "asi05-first-run-20261108T201601-prereg",
+ "item": "ASI05",
+ "experiment": "first-run",
+ "mode": "live",
+ "exploratory": false,
+ "models": [
+  "llama3.1:8b",
+  "qwen2.5:7b",
+  "phi4-mini:3.8b"
+ ],
+ "defenses": [
+  "none",
+  "audit_block",
+  "timeout_contain",
+  "audit_block+timeout_contain"
+ ],
+ "cases": 24,
+ "records": 288,
+ "seconds": 1061.5,
+ "decision_log_head": "d55c4e7a5e284316c9de33679836dd2046b8d4009f26c1518368d917573c0eec",
+ "decision_log_entries": 288,
+ "hardware_note": "One workstation, RTX 2080 Super 8 GB. Local models up to 8B parameters.",
+ "prereg_commit": "c20b6ca8ead4aa7eaeb4d668d46f09e38d10d85e",
+ "harness_commit": "c20b6ca8ead4aa7eaeb4d668d46f09e38d10d85e",
+ "gpu": {
+  "max_c": 72,
+  "resume_c": 60,
+  "soft_c": 66,
+  "peak_c": 72,
+  "pauses": 0,
+  "paused_s": 0.0,
+  "eased": 28,
+  "eased_s": 56.0,
+  "settled_s": 46.3,
+  "settle_c": 60,
+  "available": true
+ },
+ "model_info": {
+  "llama3.1:8b": {
+   "name": "llama3.1:8b",
+   "digest": "46e0c10c039e019119339687c3c1757cc81b9da49709a3b3924863ba87ca666e",
+   "capabilities": [
+    "completion",
+    "tools"
+   ],
+   "family": "llama",
+   "params": "8.0B",
+   "quant": "Q4_K_M",
+   "context": 131072,
+   "think": null,
+   "temperature": 0.0,
+   "seed": 0,
+   "num_predict": 1024,
+   "timeout_s": 120
+  },
+  "qwen2.5:7b": {
+   "name": "qwen2.5:7b",
+   "digest": "845dbda0ea48ed749caafd9e6037047aa19acfcfd82e704d7ca97d631a0b697e",
+   "capabilities": [
+    "completion",
+    "tools"
+   ],
+   "family": "qwen2",
+   "params": "7.6B",
+   "quant": "Q4_K_M",
+   "context": 32768,
+   "think": null,
+   "temperature": 0.0,
+   "seed": 0,
+   "num_predict": 1024,
+   "timeout_s": 120
+  },
+  "phi4-mini:3.8b": {
+   "name": "phi4-mini:3.8b",
+   "digest": "78fad5d182a7c33065e153a5f8ba210754207ba9d91973f57dffa7f487363753",
+   "capabilities": [
+    "completion",
+    "tools"
+   ],
+   "family": "phi3",
+   "params": "3.8B",
+   "quant": "Q4_K_M",
+   "context": 131072,
+   "think": null,
+   "temperature": 0.0,
+   "seed": 0,
+   "num_predict": 1024,
+   "timeout_s": 120
+  }
+ },
+ "started": "2026-11-08T20:33:43Z"
+}

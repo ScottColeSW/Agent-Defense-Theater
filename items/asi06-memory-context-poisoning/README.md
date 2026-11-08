@@ -2,7 +2,7 @@
 
 | | |
 | --- | --- |
-| Status | Measured elsewhere (retrieval) and built here (write path), not yet run |
+| Status | Measured elsewhere (retrieval) and measured here (write path) |
 | OWASP LLM Top 10 2025 | LLM04 Data and Model Poisoning; LLM08 Vector and Embedding Weaknesses |
 | MITRE ATLAS | AML.T0070 RAG Poisoning |
 | Existing work | Palimpsest and Aegis Vector |
@@ -43,7 +43,9 @@ Results use the shared schema in [`../../common/RESULTS-SCHEMA.md`](../../common
 
 Palimpsest (memory gate) and Aegis Vector (forgery testbed). Both are linked from integrations/ and are not copied here. The Aegis Vector defenses battery is imported as schema-format records in [`results/`](results/) so it can be plotted on the [site](../../site/README.md). That battery measures retrieval: a forgery already in the store, trying to get served.
 
-A second, new scenario (`scenario.py`, first run not yet executed) built independently in this repository targets the write path instead: whether a forged document becomes a live, unflagged belief in Palimpsest's real memory (editable-installed from the sibling repo, not reimplemented) in the first place, and whether that actually changes a real downstream decision made by a live model. Three attacks exploit specific, cited gaps in `consult()`'s own fixed rules (wording and number comparison only, never who-does-what), against Palimpsest's own agent-judgment floor, an independent rules-only quarantine, and a blanket quarantine. See [`PREREGISTRATION.md`](PREREGISTRATION.md) for the full design and a pilot's early findings.
+A second, new scenario (`scenario.py`) built independently in this repository targets the write path instead: whether a forged document becomes a live, unflagged belief in Palimpsest's real memory (editable-installed from the sibling repo, not reimplemented) in the first place, and whether that actually changes a real downstream decision made by a live model. Three attacks exploit specific, cited gaps in `consult()`'s own fixed rules (wording and number comparison only, never who-does-what), against Palimpsest's own agent-judgment floor, an independent rules-only quarantine, and a blanket quarantine.
+
+**First run, pooled over three models:** with no defense, 23 of 27 forged documents changed a real decision (85.2%). Palimpsest's own floor stopped all 27, at zero cost — not because its fixed rules caught the forgeries (two of the three are structurally invisible to them, confirmed directly) but because every model, honestly, labeled the two tricky attacks as a conflict or an exception in its own words, and the floor trusts that over its own blind rules when they disagree. A second condition that trusted only the fixed rules and never the model's own judgment missed exactly what the rules themselves can't see: 17 of 27 got through. All six pass-bar criteria were met. See [`PREREGISTRATION.md`](PREREGISTRATION.md) for the full design and addendum.
 
 ## Limits and what it would take
 

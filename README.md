@@ -97,7 +97,7 @@ Keeping keys private:
 | [ASI04](items/asi04-supply-chain/) | Agentic Supply Chain Vulnerabilities | Measured | A tampered MCP tool staged in front of the real server, and three load-time controls; one preregistered live run |
 | [ASI05](items/asi05-code-execution/) | Unexpected Code Execution | Measured | A data agent's generated code, run in a disposable Docker container, against an audit-hook block and a wall-clock cap; one preregistered live run |
 | [ASI06](items/asi06-memory-context-poisoning/) | Memory and Context Poisoning | Measured elsewhere (retrieval) and measured here (write path) | Palimpsest and Aegis Vector (retrieval); a new write-path scenario against real Palimpsest, one preregistered live run |
-| [ASI07](items/asi07-inter-agent-communication/) | Insecure Inter-Agent Communication | Stub | Plan written |
+| [ASI07](items/asi07-inter-agent-communication/) | Insecure Inter-Agent Communication | Built | A real HMAC-signed inter-agent message, on the real ASI02 deal-desk, against signature-only verification, deal-bound verification and an independent recompute; no live preregistered run yet |
 | [ASI08](items/asi08-cascading-failures/) | Cascading Failures | Measured | A three-agent crew where a bad figure can spread to an offer; one preregistered live run |
 | [ASI09](items/asi09-human-agent-trust/) | Human-Agent Trust Exploitation | Measured | AI reviewers measured; a first round of five people on the [study](site/study.html), one pass-bar criterion met, two missed, one uninformative |
 | [ASI10](items/asi10-rogue-agents/) | Rogue Agents | Measured | A monitoring agent across four check-ins on the real ASI02 deal-desk, against probation, a flag-only detector and a kill switch; one preregistered live run |

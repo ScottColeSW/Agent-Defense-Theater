@@ -30,7 +30,7 @@ These are the places where a reader looking for assurance would find nothing yet
 | Gap | Requirement it touches | Why it matters |
 | --- | --- | --- |
 | No independent assessor. All attacks, gates and harm definitions are written by the author. | NIST MEASURE 1.3: internal experts or independent assessors who did not build the system are involved | A defense tested only by its builder is tested against what the builder thought of |
-| No study of real human reviewers. The "reviewer" is a model or a rule. | EU Art. 14: oversight that works for the people doing it | A model reviewer's accuracy is not a person's, and fatigue, queues and pressure are not modeled |
+| Only a five-person pilot of human reviewers (read aloud in a group). Elsewhere the "reviewer" is a model or a rule. | EU Art. 14: oversight that works for the people doing it | A model reviewer's accuracy is not a person's, and fatigue, queues and pressure are not modeled |
 | No monitoring after deployment, no incident response procedure. | NIST MANAGE 2.3 and 4.1 | These experiments end when the run ends |
 | No impact assessment for affected people. | ISO/IEC 42001 A.5 | The desks are fictional, so there are no affected people to assess |
 | Small local models up to 8B parameters, one workstation. | NIST MEASURE 2.5: valid and reliable for the conditions of use | Results say nothing about larger models or other conditions |

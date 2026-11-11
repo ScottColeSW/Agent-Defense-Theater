@@ -48,7 +48,7 @@ Results use the shared schema in [`../../common/RESULTS-SCHEMA.md`](../../common
 
 ## Limits and what it would take
 
-Needs a human-subject study with real reviewers. Simulated reviewers cannot show how people actually fail.
+Needs a larger human-subject study with a clearer card, read independently as the protocol describes. The first round of five people is a pilot, and simulated reviewers cannot show how people actually fail.
 
 ## Folder map
 

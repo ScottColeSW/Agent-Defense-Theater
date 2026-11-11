@@ -110,7 +110,7 @@ Status means: **Stub** (plan written, nothing built), **Designed** (design exist
 - The gates and harm definitions are written by the author, and so were the first rounds' attacks. Later ASI03 rounds add attacks written by models (two hosted, one local) and an attacker shown the defenses, but no independent human red team has tried the range.
 - Credentials, holds and approvals are in-process simulations. They are not integrations with an identity provider or a production MCP gateway.
 - The models are local, up to 8B parameters, on one workstation. Nothing here says how larger models behave.
-- Reviewers are models or rules. No person has been in the loop: a study with people is built and has no participants yet.
+- Reviewers are models or rules, except one first round of five people (ASI09, 2026-11-08). They took the study together with the cards read aloud, a disclosed deviation from the protocol, so it is a pilot and too small to generalize. See the [study protocol and addendum](items/asi09-human-agent-trust/STUDY-PROTOCOL.md).
 - The repository was built with AI coding assistance (Claude Code). Commits carry co-author trailers.
 - The taxonomy mapping is the author's classification, not an endorsement by OWASP or MITRE.
 

@@ -193,7 +193,7 @@ def test_readme_later_rounds_and_dry_run_figures_match_the_saved_results():
     for p in ("506/675", "76/675", "0/675", "2 of 39", "30/54", "36/54", "0/54", "32/54", "32 of 32", "5.4 minutes instead of 25.6", "4 to 14 usable attacks",
               "0% to 18.7%", "0/720", "7 of 120 attacks still ran an unsafe calculation", "4 floods of simulations, 3 falsified figures",
               "real MCP servers in three of the items", "in-process simulation in ASI03 and ASI08", "built with AI coding assistance (Claude Code)",
-              "No person has been in the loop", "not integrations with an identity provider"):
+              "except one first round of five people", "not integrations with an identity provider"):
         assert p in README, p
     assert "\u2014" not in README and "\u2013" not in README
 

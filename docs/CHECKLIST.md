@@ -16,7 +16,7 @@ Eleven things worth checking against your own agents. Most teams will already do
 
 **3. What does your approver see, and who wrote it?**
 *What we saw:* showing a reviewer the agent's own stated reason let 40% of non-matching requests through, against 6% when the system's comparison with the operator's words came first.
-*Caveat:* the reviewers were small models on 22 cards. People were not studied (a study is built and waiting for participants).
+*Caveat:* the reviewers were small models on 22 cards. A first round of five people showed the same direction (54% of non-matching requests approved under the agent's own account, 26% with the comparison first), but they took it together with the cards read aloud, so it is a pilot and too small to generalize.
 
 **4. Have you tested your reviewer against cases with known answers?**
 *What we saw:* on the same card, reviewers differed by 27 points, and one model reviewer alone approved 12 refunds nobody asked for. In a three-agent crew, a reviewer agreed with 78% of bad reports and 67% of honest ones, so its agreement carried almost no information.

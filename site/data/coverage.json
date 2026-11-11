@@ -84,10 +84,10 @@
   "name": "Human-Agent Trust Exploitation",
   "owasp_llm_2025": "LLM09 Misinformation (partial)",
   "mitre_atlas": "To be mapped",
-  "status": "Built",
-  "existing_work": "AI reviewers measured in the ASI03 calibration run; a people study is built and waiting for participants",
+  "status": "Measured",
+  "existing_work": "AI reviewers measured in the ASI03 calibration run; a first round of five people finished 2026-11-08 (read aloud in a group, so a pilot)",
   "folder": "items/asi09-human-agent-trust",
-  "limits_and_what_it_would_take": "Needs a human-subject study with real reviewers. Simulated reviewers cannot show how people actually fail."
+  "limits_and_what_it_would_take": "Needs a larger human-subject study with a clearer card. The first round of five people is a pilot. Simulated reviewers cannot show how people actually fail."
  },
  {
   "id": "ASI10",

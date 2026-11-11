@@ -24,7 +24,7 @@ With no control, planted text became actions in 62 of 120 cases. The best contro
 
 **Where is a person in the loop, and what do they actually see?**
 A reviewer shown the agent's own reason let 40% of non-matching requests through. Shown the system's comparison with the operator's words first, 6%.
-*Caveat:* the reviewers were small models. A study with people is built and waiting for participants.
+*Caveat:* the reviewers were small models. A first round of five people showed the same direction (54% approved under the agent's own account, 26% with the comparison first), but they took it together with the cards read aloud, so it is a pilot and too small to generalize.
 
 ## CFO
 
@@ -65,7 +65,7 @@ Each preregistered live run refuses to start unless its prediction is committed 
 *Caveat:* method, not a guarantee. The governance crosswalk lists the gaps against NIST AI RMF, EU AI Act and ISO/IEC 42001.
 
 **What could not be tested, and what would close it?**
-Independent red teams, larger models, real tool catalogs, production telemetry and people reviewing approvals. Each is listed with what it would take in `LIMITS-AND-ANSWERS.md`.
+Independent red teams, larger models, real tool catalogs, production telemetry and a larger study of people reviewing approvals (only a five-person pilot so far). Each is listed with what it would take in `LIMITS-AND-ANSWERS.md`.
 *Caveat:* the list is the author's own.
 
 ## Board

@@ -10,7 +10,7 @@ Every item, including the measured ones, has limits. This page collects them wit
 | Attacks are written by the author | An independent red team, or a public challenge, with attackers who know the defenses |
 | Small samples, one scenario per item | More runs per cell, more scenarios, and published raw results |
 | Simulated crews in one process | Agents on separate hosts with real network paths and key management |
-| No real users | A human-subject study for the oversight and trust items |
+| No real users. Only a five-person pilot of the oversight and trust item, read aloud in a group | A larger human-subject study, read independently with a clearer card |
 | No production telemetry | Integration with a real logging and detection stack |
 
 ## By item
@@ -69,9 +69,9 @@ The fault is injected at the first of three stages, and the reviewer and decider
 
 ### ASI09: Human-Agent Trust Exploitation
 
-Status: AI reviewers measured (the ASI03 calibration run), a people study built and waiting for participants.
+Status: AI reviewers measured (the ASI03 calibration run), and a first round of five people finished on 2026-11-08.
 
-Needs a human-subject study with real reviewers, which the study page now makes possible, and enough of them: at least five finishing before anything is reported. A pilot of self-selected colleagues with nothing at stake cannot show how people fail under real queue pressure.
+The five took the study together with the cards read aloud, a disclosed deviation from the protocol, so the timing data is uninformative and the result is a pilot. One pass-bar criterion was met, two missed and one was uninformative. Every error rate came in far above the prediction, which points at the cards being hard for people to read. Needs a replication with a clearer, shorter card, read independently, and more participants. A pilot of self-selected colleagues with nothing at stake cannot show how people fail under real queue pressure.
 
 ### ASI10: Rogue Agents
 

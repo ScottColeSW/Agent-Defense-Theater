@@ -38,6 +38,53 @@ The OWASP Agentic Security Initiative published a crosswalk between the Agentic 
 
 Source: OWASP Top 10 for Agentic Applications, AIUC-1 Crosswalk, version 1.0, May 2026, OWASP GenAI Security Project, CC BY-SA 4.0. Gap descriptions are paraphrased.
 
+## Field context: State of Agentic AI Security and Governance v2.01
+
+The OWASP Agentic Security Initiative's State of Agentic AI Security and Governance report (version 2.01, June 2026, CC BY-SA 4.0) surveys incidents, regulation and maturity a year after the Agentic Top 10. It is field context, not a test, so it is set beside this project's results to show where they agree, where they differ, and where the field has evidence this range lacks. Statements from the report are paraphrased.
+
+| What the report says | What this repository found | How they sit together |
+| --- | --- | --- |
+| Plan-divergence detection, comparing an agent's actions with its declared intent, is an emerging core control | ASI01: a locked plan stopped every hijack that needed a new tool (0 of 36), and a goal check by a separate reviewer stopped all 45 | Agrees. One simulated desk, author-written attacks, so it shows the mechanism and not field effectiveness |
+| Hooks that intercept actions work more reliably as an early warning layer than as a hard boundary | ASI05: an audit hook stopped all 15 attempts that got through with no defense. ASI10: a flag-only detector changed nothing about the first drift | Mixed. The hook held here, but against author-written attacks in a container on a workstation. The flag-only result matches the report's point that detection warns and does not stop |
+| Approval prompts at volume bring decision fatigue, and reviewers blanket-approve | ASI09 pilot: approvals fell across the exercise (48%, 43%, 40%), the opposite of fatigue | Does not contradict it. The pilot had no queue, no volume and nothing at stake, so it could not test fatigue. This is the main thing a real-conditions study would add |
+| Human oversight cannot cover a high-throughput agent (the report's example is 50 reviews against 10,000 actions an hour) | ASI03: request binding with approval holds let 0 of 120 attacks through and kept 61 of 63 valid tasks | Consistent with the report's direction toward risk-tiered review. Binding narrows what reaches a person, but nothing here tests throughput |
+| Inter-agent communication risk is more common in research than in production, and confirmed ASI09 incidents are limited | ASI07 and ASI09 each have one first run | These are the two items where the field has least confirmed incident evidence, so this project's results are also the least validated against real cases |
+| Lower adoption tiers should focus on ASI01, ASI05 and ASI06, and higher tiers on the full list with ASI04, ASI07 and ASI08 | All ten items have a preregistered first run | Coverage matches the report's priorities. Depth does not: see [`OPEN-WORK.md`](OPEN-WORK.md) |
+
+Where the report names a surface this range does not touch: coding agents running inside CI pipelines as a distinct, attacker-facing surface, shadow AI discovered through delegated OAuth access, and delegation chains through spawned sub-agents. They are listed as stubs in [`OPEN-WORK.md`](OPEN-WORK.md).
+
+Source: OWASP GenAI Security Project, Agentic Security Initiative, State of Agentic AI Security and Governance, version 2.01, June 2026, CC BY-SA 4.0.
+
+## Builder guidance: Securing Agentic Applications V2
+
+The OWASP GenAI Security Project's builder and defender guide (Securing Agentic Applications V2, version 2.0, October 2026, CC BY-SA 4.0) gives lifecycle controls, and a chapter on assuring that the controls hold. Its testing advice matches how this project works in several places. Statements are paraphrased, and as above this is the author's reading, not a compliance claim.
+
+| What the guide says | What this repository found or does | How they sit together |
+| --- | --- | --- |
+| Behavioral testing must count over-restriction and miscalibrated controls, since an agent that refuses legitimate work has failed as surely as one that oversteps | Every run reports valid work kept beside attacks stopped. One control stopped every tampered tool and refused all 18 legitimate updates, and one reviewer denied nearly every legitimate refund | Agrees, and this is the project's central method. Cases are the author's, tidier than real requests |
+| The deployed application is the joint product of the model and its harness, and a change to any behavior-defining element invalidates earlier test results | The agent's output format moved attack-following by up to 80 points per model, and a reviewer's result did not transfer between models | Agrees. Revalidation here is manual, and a change that shifts results is not blocked automatically (stub in [`OPEN-WORK.md`](OPEN-WORK.md)) |
+| Detection with no automated response is expensive logging, and kill switches should work in graduated tiers (warn, limit, suspend, kill) | ASI10: a flag-only detector changed no outcome, and a one-step kill switch halved restricted calls but the first drift still ran | Agrees on detection. Only a single-step kill switch was tested, so graduated tiers are a stub |
+| An integrity hash detects modification of a record, but an intact record can still be malicious | The decision-log hash chain shows tampering after the fact and does not prevent it. In the ASI06 write-path run, two of the three forgeries were structurally invisible to the fixed rules | Agrees. The same limit is stated in [`common/decision-log/VERIFY.md`](../common/decision-log/VERIFY.md) |
+| Keyword or pattern filtering is a detection signal, and schema enforcement and isolation should come first | ASI02: a schema gate left 18 of 120 attacks running, 9 of them adaptive, while request binding with the schema gate let 0 of 120 through. ASI05's adaptive attacks were written to dodge a filter that checks the text of a call | Agrees. Small local models, author-written attacks |
+| Human approval should be risk-based, logged and rate limited | ASI03 holds and the ASI09 pilot log each human decision. No rate limit was tested | Partial. See the approval-load stub |
+| An agent should not combine private data, untrusted input and external communication (the guide's "Rule of Two") | No item tests a capability composition as a design gate | Gap. Listed as a stub |
+
+Source: OWASP GenAI Security Project, Securing Agentic Applications V2, version 2.0, October 2026, CC BY-SA 4.0.
+
+## Benchmark reliability: LLM Exploit Generation Phase 2
+
+The OWASP GenAI Security Project's Cyber Threat Intelligence team compared agent-driven and human-guided offensive testing against live targets (LLM Exploit Generation, Phase 2, version 1.0, October 2026, CC BY-SA 4.0). Its section on benchmark reliability is about how to read capability numbers, and it applies to this project's own results. Only that methodology is used here.
+
+| What the report says | What this repository does or found | How they sit together |
+| --- | --- | --- |
+| The harness around a model can move results more than the choice of model (one study it cites found harness variance about 7.8 times model variance), so scores need the harness, trial count and budget disclosed | Preregistrations state models, sample sizes, generation settings and hardware, and results carry the provider and model id. Hosted models are not version pinned, and the docs say so | Mostly agrees. Pinning hosted models is not possible, which limits repeats |
+| Treat guardrails as a variable and not a control | Marking text as untrusted raised ASI01 hijacks from 22 of 45 to 33 of 45, and plain background text about the desk raised soft hijacks as much as the security rule did | Agrees, and the project found it independently on small models. Why is still open |
+| Weaker attackers give false comfort: the report found local models lacked the capability that hosted ones had | In the Black ICE series a local 8B attacker won 1 of 108 incidents against a design where a hosted attacker's instructions worked in 27 of 45. The docs say a defense that survives a weak attacker is not shown to hold | Agrees |
+| Weight end-to-end and defended-environment results above discrete-skill results, and note that benchmarks omit active defenders | Every item is one simulated step or a short run with no active defender | Gap, stated in [`LIMITS-AND-ANSWERS.md`](LIMITS-AND-ANSWERS.md) |
+| Ask for the rate of unintended routes to a passing score, because scores are inflated by unintended solutions | Outcomes are scored as attack succeeded, blocked or valid work done. A success or a block is not checked for an unintended route | Gap. Listed as a stub |
+
+Source: OWASP GenAI Security Project, Cyber Threat Intelligence Layer, LLM Exploit Generation Phase 2, version 1.0, October 2026, CC BY-SA 4.0.
+
 ## What the project does not show
 
 These are the places where a reader looking for assurance would find nothing yet.

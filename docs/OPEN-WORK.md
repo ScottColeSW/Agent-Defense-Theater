@@ -45,6 +45,23 @@ From the capability map in [`PURPLE-TEAM-MAP.md`](PURPLE-TEAM-MAP.md). Each is a
 | Cross-tenant exposure test | Not modeled in any item |
 | Continuous prompt fuzzing | Not built. `attackgen` is the nearest starting point |
 
+## Field-context stubs
+
+Surfaces named in the State of Agentic AI Security and Governance report (v2.01, June 2026) that no item here tests. See [`GOVERNANCE-CROSSWALK.md`](GOVERNANCE-CROSSWALK.md). Each is a stub.
+
+| Stub | Why it matters | Starting point |
+| --- | --- | --- |
+| Coding agent inside a CI pipeline | It ingests input from outside contributors by design, so controls built for a trusted developer may not transfer | The ASI01 and ASI05 scenarios, with the attacker as the untrusted contributor |
+| Approval load and fatigue | The report names decision fatigue with hundreds of prompts. The ASI09 pilot had no volume | A study with a real queue and a time limit, after the clearer card exists |
+| Delegation through spawned sub-agents | Credentials inherited from a parent agent and revocation through a chain | The untested delegation-chain check in ASI03 |
+| Shadow AI discovered through delegated OAuth access | Broad delegated scopes granted to third-party AI tools | The loose-keys toolkit in [`LOOSE-KEYS.md`](LOOSE-KEYS.md) already audits a grant inventory |
+| Trajectory-level logging | The report calls it a primary runtime control. The decision log records each defense decision, not the full agent trajectory | Extend the decision log entry format in `common/decision-log/FORMAT.md` |
+| Capability composition as a design gate (the "Rule of Two") | The Securing Agentic Applications guide says an agent should not combine private data, untrusted input and external communication. No item tests it | A scenario where an agent holds all three and one leg is then removed |
+| Graduated kill switch (warn, limit, suspend, kill) | ASI10 tested a one-step kill switch only | Extend the ASI10 defenses with tiers and measure restricted calls per tier |
+| Block a release when behavior-defining elements change results | The guide asks for revalidation when the model, prompt or tool set changes. Here it is manual | Re-run a fixed set of preregistered cases when `common/` or an item's prompt changes, which also needs the CI stub above |
+| Check recorded successes and blocks for unintended routes | The exploit-generation report finds scores inflated by unintended solutions. Outcomes here are not checked that way | Sample saved records from one item and read each for how the outcome was reached |
+| Repetitive tool-loop detection | The report notes high-frequency, low-diversity tool calls as a candidate signal for model-driven activity | Compute it from the decision log of an existing run before building a detector |
+
 ## Mapping stubs
 
 | Gap | Where | Starting point |

@@ -127,7 +127,9 @@ The [governance crosswalk](docs/GOVERNANCE-CROSSWALK.md) sets each measurement b
 | [`docs/CHECKLIST.md`](docs/CHECKLIST.md), [`docs/ROLE-QUESTIONS.md`](docs/ROLE-QUESTIONS.md), [`docs/OUTREACH.md`](docs/OUTREACH.md) | An eleven-item agent security checklist, open questions by role, and a one-page outreach summary, each answer with its caveat. A test recomputes every quoted number from the saved results |
 | `crosswalk/` | Coverage and governance mapping data |
 | `theater/`, `greenroom/` | The governance model (earned trust, three oversight speeds) and the adversarial arena spec the project builds on |
-| [`blackice/`](blackice/) | Black ICE, a design for defensive counter-intrusion kept apart from the OWASP items: detect, contain, deceive, record and report on your own systems, never retaliation. Designed, not yet built |
+| [`blackice/`](blackice/) | Black ICE, a design for defensive counter-intrusion kept apart from the OWASP items: detect, contain, deceive, record and report on your own systems, never retaliation. Designed, with the first rung (containment under spoofed alarms) run |
+| [`CONTRIBUTING.md`](CONTRIBUTING.md), [`docs/OPEN-WORK.md`](docs/OPEN-WORK.md) | How to get started and the rules for results, and every known gap listed as an unclaimed stub |
+| [`docs/PURPLE-TEAM-MAP.md`](docs/PURPLE-TEAM-MAP.md) | The range set beside the OWASP red teaming taxonomy's purple, red and shared capabilities: what it has, what is partial, what is a stub |
 | `integrations/` | Sibling projects used or linked |
 
 ## Related projects

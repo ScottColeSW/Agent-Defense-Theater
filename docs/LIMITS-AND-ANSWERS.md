@@ -45,21 +45,21 @@ The tampered tools are a proxy in front of one reviewed server, not real comprom
 
 ### ASI05: Unexpected Code Execution
 
-Status: Stub.
+Status: Measured (first preregistered live run, 2026-11-08).
 
-Needs production isolation (a micro-VM or user-space kernel) and a security review of the sandbox itself. A container on a workstation is a demonstration, not a boundary to trust.
+A data agent's generated code runs in a disposable Docker container, with three models up to 8B and author-written attacks. The audit hook stopped every attempt and the wall-clock cap alone stopped none. The container is relied on for one narrow thing and is not a micro-VM. Needs production isolation (a micro-VM or user-space kernel), a security review of the sandbox itself, and an attacker who is not the author. A container on a workstation is a demonstration, not a boundary to trust.
 
 ### ASI06: Memory and Context Poisoning
 
-Status: Measured elsewhere.
+Status: Measured elsewhere (retrieval) and measured here (write path, first preregistered live run).
 
-Registered facts only; an unregistered fact is admitted. Untested: the memory write path, slow drift, many agreeing forgeries, a poisoned verified corpus. Needs: larger models, an adaptive attacker who knows the gate, and a production-size corpus.
+Registered facts only; an unregistered fact is admitted. The write-path run closes part of what was untested. Still untested: slow drift, many agreeing forgeries, a poisoned verified corpus. Needs: larger models, an adaptive attacker who knows the gate, and a production-size corpus.
 
 ### ASI07: Insecure Inter-Agent Communication
 
-Status: Stub.
+Status: Measured (first preregistered live run, 2026-11-08).
 
-Needs agents on separate hosts or runtimes and a real key management service. A single-process crew cannot show network-level attacks.
+A real shared-secret HMAC between agents in a single process, on the real deal desk. Needs agents on separate hosts or runtimes and a real key management service. A single-process crew cannot show network-level attacks.
 
 ### ASI08: Cascading Failures
 
@@ -75,6 +75,6 @@ The five took the study together with the cards read aloud, a disclosed deviatio
 
 ### ASI10: Rogue Agents
 
-Status: Designed elsewhere.
+Status: Measured (first preregistered live run, 2026-11-08).
 
-Needs long-horizon runs and real deployments to see slow drift. Short simulations underrepresent it.
+Four check-ins, one scenario, one kind of pressure (market commentary, never a forged identity or a compromised channel). Needs long-horizon runs and real deployments to see slow drift. Short simulations underrepresent it.

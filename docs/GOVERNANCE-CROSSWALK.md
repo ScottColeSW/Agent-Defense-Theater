@@ -23,6 +23,21 @@ What this project measures, set beside the places three governance frameworks as
 | **Third-party tools and servers** treated as part of the attack surface | ASI02 targets (the calculators, which accept unbounded inputs, and the deal desk) | GOVERN 6.1: policies for risks from third-party entities; MAP 4.1 | Art. 15: cybersecurity | A.10 third parties |
 | **Testing as a standing practice, with failures reported** | Aborted-run notes, addenda that name misses | GOVERN 4.3: practices that enable AI testing, incident identification and information sharing | Art. 9: ongoing risk management, with testing | A.6 life cycle |
 
+## AIUC-1 and the OWASP Agentic Top 10
+
+The OWASP Agentic Security Initiative published a crosswalk between the Agentic Top 10 and AIUC-1, a security, safety and reliability standard for AI agents (version 1.0, May 2026, CC BY-SA 4.0). Its "observed gaps" section lists control surfaces that it says AIUC-1 does not yet require. Several of them are things this project has measured, so they are set beside the evidence here. As above, this is the author's reading: a measurement bears on a control, it does not show a standard is met.
+
+| Control surface the crosswalk names | Item | Evidence in this repository | Caveat |
+| --- | --- | --- | --- |
+| Inter-agent message integrity and replay protection | ASI07 | An HMAC check stopped fabricated signatures, and binding the message to its deal stopped replays that a signature-only check passed | Shared-secret HMAC in one process, not separate hosts or a key service |
+| Kill switches and runtime containment | ASI10 | A kill switch halved restricted calls (18 against 36) without the cost of blanket probation | Four check-ins, one scenario, and the first drift still got through |
+| Circuit breakers and independent policy enforcement between planning and execution | ASI08 | An independent recomputation stopped every bad figure, where a reviewer in the crew did not | Fault injected at the first stage, reviewer and decider the same model |
+| Runtime monitoring and containment of code execution | ASI05 | An audit hook stopped all 15 of 54 attempts that got through with no defense, and a wall-clock cap alone stopped none | Container on a workstation, author-written attacks, and the runaway-loop case barely tested the cap |
+| Authorization of agent tool calls and tool identity | ASI02, ASI03 | Schema gates, scoped credentials and request binding, with the valid work lost reported | Simulated desks, small local models |
+| Signed manifests and content-hash pinning for tools | ASI04 | A manifest pin stopped every poisoned description and look-alike, and a code pin stopped everything but refused every legitimate update | A tampered proxy in front of one reviewed server, not real packages |
+
+Source: OWASP Top 10 for Agentic Applications, AIUC-1 Crosswalk, version 1.0, May 2026, OWASP GenAI Security Project, CC BY-SA 4.0. Gap descriptions are paraphrased.
+
 ## What the project does not show
 
 These are the places where a reader looking for assurance would find nothing yet.

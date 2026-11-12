@@ -79,11 +79,21 @@ These are open now. Each issue has the problem, a proposal, notes on the code to
 | [#19](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/19) | Corpus diffing for the ASI06 corpora | Tooling |
 | [#20](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/20) | Diff the behavior-defining elements between two saved runs | Tooling |
 | [#24](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/24) | Audit reply readers for duplicate JSON keys (a second decision key wins) | Scoring fix |
+| [#25](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/25) | ASI07: the deal id is outside the signature (experiment `bound-signature` is preregistered) | Defense fix, in progress |
+| [#26](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/26) | ASI05: agent code can disable the audit hook and the wall-clock cap | Defense fix |
+| [#27](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/27) | ASI03: `NaN` and `-Infinity` refund amounts defeat the budget and the scorer | Scoring fix |
+| [#28](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/28) | ASI03: request binding treats "do not refund $200" as asking for it | Defense fix |
+| [#29](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/29) | ASI03: reviewer card misreads destinations and prints model-written fields raw | Defense fix |
+| [#30](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/30) | ASI02: export recipient check and request binding match text, not intent | Defense fix |
+| [#31](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/31) | ASI04: code pin ignores file boundaries | Defense fix |
+| [#32](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/32) | Reword claims that say a defense stops a class when it stopped the attacks written | Docs |
+| [#33](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/33) | Tracking: root causes from the defense review, and adaptive rounds by a non-author | Tracking |
 
 Standards for all of them:
 
 - **Tooling and analysis issues (#3 to #7, #11 to #15, #19 and #20) change how results are shown, recorded or compared, never how they are scored, and never modify a saved result.** Reuse `scorer.summarize` and `report.build_report` rather than adding a second scoring path. Standard library only. Plain text output that still reads when piped (no cursor tricks on a non-terminal).
-- **A scoring fix (#24) is the one kind that changes what a record says.** Keep it narrow, resolve anything unclear restrictively (a denial, flagged), leave every saved result and committed prediction untouched, and state in the pull request which recorded fields differ for new runs.
+- **A defense fix (#25, #26, #28 to #31) never edits a committed experiment.** The fixed defense is a new condition in a new preregistered experiment, run beside the old one with the bypass as an adaptive attack, and the old result gets an addendum saying what it did and did not show. If you found the bypass, say so in the preregistration: the attacker is then not independent of the defense.
+- **A scoring fix (#24, #27) is the one kind that changes what a record says.** Keep it narrow, resolve anything unclear restrictively (a denial, flagged), leave every saved result and committed prediction untouched, and state in the pull request which recorded fields differ for new runs.
 - **Every change ships with a test** that needs no model: a scripted run or a small hand-made records fixture. Say in the pull request what you ran and what you did not.
 - **Experiment issues (#8 to #10, #16 to #18) follow the rules above in full.** Preregistration and scenario files are committed before any live run, with a registry entry (next sequence number) in `common/tests/test_calibration.py`. Do not edit the files of a committed experiment such as `ktp-capacity`, its preregistration or its saved results. A new experiment gets new files.
 - **Write the predictions to be wrong in public.** If a simple rule might tie the gate, say so beforehand. A tie, or a miss by one case, is a result and goes in an addendum.

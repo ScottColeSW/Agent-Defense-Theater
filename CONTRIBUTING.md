@@ -78,10 +78,12 @@ These are open now. Each issue has the problem, a proposal, notes on the code to
 | [#18](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/18) | Policy shadow mode | Experiment |
 | [#19](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/19) | Corpus diffing for the ASI06 corpora | Tooling |
 | [#20](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/20) | Diff the behavior-defining elements between two saved runs | Tooling |
+| [#24](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/24) | Audit reply readers for duplicate JSON keys (a second decision key wins) | Scoring fix |
 
 Standards for all of them:
 
 - **Tooling and analysis issues (#3 to #7, #11 to #15, #19 and #20) change how results are shown, recorded or compared, never how they are scored, and never modify a saved result.** Reuse `scorer.summarize` and `report.build_report` rather than adding a second scoring path. Standard library only. Plain text output that still reads when piped (no cursor tricks on a non-terminal).
+- **A scoring fix (#24) is the one kind that changes what a record says.** Keep it narrow, resolve anything unclear restrictively (a denial, flagged), leave every saved result and committed prediction untouched, and state in the pull request which recorded fields differ for new runs.
 - **Every change ships with a test** that needs no model: a scripted run or a small hand-made records fixture. Say in the pull request what you ran and what you did not.
 - **Experiment issues (#8 to #10, #16 to #18) follow the rules above in full.** Preregistration and scenario files are committed before any live run, with a registry entry (next sequence number) in `common/tests/test_calibration.py`. Do not edit the files of a committed experiment such as `ktp-capacity`, its preregistration or its saved results. A new experiment gets new files.
 - **Write the predictions to be wrong in public.** If a simple rule might tie the gate, say so beforehand. A tie, or a miss by one case, is a result and goes in an addendum.

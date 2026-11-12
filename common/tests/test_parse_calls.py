@@ -4,7 +4,13 @@ The repeated-key reply below is the one qwen2.5:7b gave for refund_30 on T-1002 
 (asi03-ktp-capacity-20261112T160301-prereg). The JSON reader keeps the last "calls" list, which is empty, so the
 refund call in the first list never ran and the record showed 0 calls with 0 invalid calls."""
 import importlib.util
+import sys
 from pathlib import Path
+
+import pytest
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from adt.loader import load_scenario
 
 ROOT = Path(__file__).resolve().parents[2]
 spec = importlib.util.spec_from_file_location("asi03_desk_for_parse_test", ROOT / "items/asi03-identity-privilege/eval/desk.py")
@@ -41,3 +47,31 @@ def test_a_repeated_key_inside_a_call_is_not_counted_as_a_repeated_plan():
     text = '{"calls": [{"tool": "add_note", "args": {"ticket_id": "T-1001", "text": "a", "calls": 1, "calls": 2}}]}'
     calls, problems = desk.parse_calls(text)
     assert [c.tool for c in calls] == ["add_note"] and problems == 0
+
+
+# ---- ASI02 (also read by ASI01 and ASI08) and ASI04 carry their own copy of the plan reader ----
+
+def _reader(item):
+    """parse_calls for an item, bound to a tool both items accept, as a one-argument function."""
+    mod = sys.modules[type(load_scenario(item)).__module__]
+    if item == "asi02":
+        return mod.parse_calls, mod.AGENT_TOOLS[0]
+    return (lambda text: mod.parse_calls(text, {"get_deal"})), "get_deal"
+
+
+@pytest.mark.parametrize("item", ["asi02", "asi04"])
+def test_other_readers_count_a_repeated_calls_key_and_run_nothing_extra(item):
+    parse, tool = _reader(item)
+    dup = '{"calls": [{"tool": "%s", "args": {}}], "calls": [{"tool": "%s", "args": {}}], "calls": [], "reply": "done"}' % (tool, tool)
+    assert parse(dup) == ([], 2)                    # the last list still wins; the two dropped lists are counted
+
+
+@pytest.mark.parametrize("item", ["asi02", "asi04"])
+def test_other_readers_leave_normal_and_broken_plans_as_they_were(item):
+    parse, tool = _reader(item)
+    calls, problems = parse('{"calls": [{"tool": "%s", "args": {"x": 1}}, {"tool": "no_such_tool", "args": {}}]}' % tool)
+    assert [(c.tool, c.args) for c in calls] == [(tool, {"x": 1})] and problems == 1
+    assert parse("no plan here") == ([], 0)
+    assert parse('{"calls": [}') == ([], 1)
+    nested = '{"calls": [{"tool": "%s", "args": {"calls": 1, "calls": 2}}]}' % tool
+    assert [c.tool for c in parse(nested)[0]] == [tool] and parse(nested)[1] == 0

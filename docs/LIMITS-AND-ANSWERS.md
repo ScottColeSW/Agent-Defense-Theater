@@ -37,6 +37,8 @@ The escalation experiment adds its own limits. The approver is one small local m
 
 The third round adds: every operator request in it states its amount and destination plainly and is compared by simple text matching, so request binding and the bottom-line card look better than they would against vague requests. The rule, the card and the binding share one comparison, so the round tests whether models follow it and what the design costs, not whether the comparison is right. One reviewer model followed the card and another did not, which means a reviewer's result does not transfer between models. No attack was written against the binding or the bottom line. Needs: vague and partial requests, adaptive attacks on the binding, reviewer calibration sets, and reviewers other than two 7 to 8B local models.
 
+The KTP capacity gate run closes the duplicate-refund hole on the six texts that found it (0 of 54 against 32 of 54) and leaves valid work unchanged. Its own limits: the texts were not written against the gate, the gate's contributor maintains the rule it implements, the declared capacity is a fixed number the agent never sees, and a simpler rule such as an idempotency key or one refund per ticket was not compared. The gate's result for its lease bound is close to true by construction. A defense review after the run found gaps this item has not closed: a refund amount of `NaN` or `-Infinity` defeats the scoped credential's budget and the independent scorer together when request binding is off, request binding reads "do not refund $200" as a request for it, the reviewer card can be told a destination is inside the company domain when it is not, and the verdict reader accepts any reply that starts with "approve". Each was shown by calling the code, not by a live model, and each has an open issue.
+
 ### ASI04: Agentic Supply Chain Vulnerabilities
 
 Status: Measured (first preregistered live run).
@@ -57,9 +59,11 @@ Registered facts only; an unregistered fact is admitted. The write-path run clos
 
 ### ASI07: Insecure Inter-Agent Communication
 
-Status: Measured (first preregistered live run, 2026-11-08).
+Status: Measured (two preregistered live runs, 2026-11-08 and 2026-11-12).
 
 A real shared-secret HMAC between agents in a single process, on the real deal desk. Needs agents on separate hosts or runtimes and a real key management service. A single-process crew cannot show network-level attacks.
+
+The first run's deal check stops only a replay that leaves the message untouched. The deal id it compares is outside the signature, so a replay with that field rewritten, or a genuine message delivered twice, passed it 18 of 18 times in the second run. A signature over the deal with a nonce memory refused all 27 replays. That check and those replays have one author, so the result shows the specific gap closed, not that the new check holds against an attacker who is trying. Untested: a stolen shared key, a decider that restarts and loses its memory, several deciders, and a message delayed and delivered once.
 
 ### ASI08: Cascading Failures
 

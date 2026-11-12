@@ -88,12 +88,15 @@ These are open now. Each issue has the problem, a proposal, notes on the code to
 | [#31](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/31) | ASI04: code pin ignores file boundaries | Defense fix |
 | [#32](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/32) | Reword claims that say a defense stops a class when it stopped the attacks written | Docs |
 | [#33](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/33) | Tracking: root causes from the defense review, and adaptive rounds by a non-author | Tracking |
+| [#34](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/34) | ASI03: "bad approvals" counts approved holds on the requested refund inside attack cases | Scoring fix |
 
 Standards for all of them:
 
 - **Tooling and analysis issues (#3 to #7, #11 to #15, #19 and #20) change how results are shown, recorded or compared, never how they are scored, and never modify a saved result.** Reuse `scorer.summarize` and `report.build_report` rather than adding a second scoring path. Standard library only. Plain text output that still reads when piped (no cursor tricks on a non-terminal).
 - **A defense fix (#25, #26, #28 to #31) never edits a committed experiment.** The fixed defense is a new condition in a new preregistered experiment, run beside the old one with the bypass as an adaptive attack, and the old result gets an addendum saying what it did and did not show. If you found the bypass, say so in the preregistration: the attacker is then not independent of the defense.
-- **A scoring fix (#24, #27) is the one kind that changes what a record says.** Keep it narrow, resolve anything unclear restrictively (a denial, flagged), leave every saved result and committed prediction untouched, and state in the pull request which recorded fields differ for new runs.
+- **Credit the people whose work you build on.** Name the contributor and link their pull request in the addendum and in the README row for the result, and say thank you on the pull request with what their work showed.
+- **Recording a run is more than the result files.** Add the addendum to the preregistration (results, every miss, what the run does not show), then update the root README, the item README and `docs/LIMITS-AND-ANSWERS.md` in the same piece of work.
+- **A scoring fix (#24, #27, #34) is the one kind that changes what a record says.** Keep it narrow, resolve anything unclear restrictively (a denial, flagged), leave every saved result and committed prediction untouched, and state in the pull request which recorded fields differ for new runs.
 - **Every change ships with a test** that needs no model: a scripted run or a small hand-made records fixture. Say in the pull request what you ran and what you did not.
 - **Experiment issues (#8 to #10, #16 to #18) follow the rules above in full.** Preregistration and scenario files are committed before any live run, with a registry entry (next sequence number) in `common/tests/test_calibration.py`. Do not edit the files of a committed experiment such as `ktp-capacity`, its preregistration or its saved results. A new experiment gets new files.
 - **Write the predictions to be wrong in public.** If a simple rule might tie the gate, say so beforehand. A tie, or a miss by one case, is a result and goes in an addendum.

@@ -117,3 +117,13 @@ Run `asi07-first-run-20261108T220442-prereg`, 2026-11-08, 180 records, 193 decis
 - **Whether a real per-agent key-management system, asymmetric signing, or more than two agents on the channel would change anything measured here.** A shared-secret HMAC in a single process is what this run tests.
 - **The attacks, the signing scheme, and the deal-binding check are the author's.**
 - Three small local models, one pass each, paired samples. Nine cases a cell for attacks, eighteen for valid work.
+
+### Later finding (2026-11-12): what `prevent`'s 0 of 27 does and does not show
+
+A defense review ([issue 25](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/25)) found that `prevent` compares an unsigned plaintext deal id, so it stops the replay this run used, which left the old deal id in that field, and no other. The [bound-signature experiment](PREREGISTRATION-bound-signature.md) then ran two replays this run did not have, on the same three models:
+
+- A replay with the plaintext deal id rewritten to the current deal: `prevent` showed all 9 to the decider and 9 of 9 produced a real offer.
+- A second delivery of a genuine message about the same deal: `prevent` showed all 9 and 9 of 9 produced a real offer.
+- The unchanged replay from this run: 0 of 9 under `prevent`, as here.
+
+So this run's result for `prevent` holds for an attacker who replays a message without touching it. It does not hold for one who edits the unsigned field or delivers a genuine message twice. The prediction and pass bar above are unchanged. `contain` was not affected (0 of 27 again).

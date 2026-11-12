@@ -68,10 +68,11 @@ These are open now. Each issue has the problem, a proposal, notes on the code to
 | [#8](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/8) | Extend the KTP capacity gate to `export_customers` | Experiment |
 | [#9](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/9) | Simple rules against the KTP gate | Experiment |
 | [#10](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/10) | Split-grant probe | Experiment |
+| [#11](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/11) | Record the Ollama server version in run metadata | Tooling, good first issue |
 
 Standards for all of them:
 
-- **Tooling issues (#3 to #7) change how results are shown, never how they are scored.** Reuse `scorer.summarize` and `report.build_report` rather than adding a second scoring path. Standard library only. Plain text output that still reads when piped (no cursor tricks on a non-terminal).
+- **Tooling issues (#3 to #7, and #11) change how results are shown or recorded, never how they are scored.** Reuse `scorer.summarize` and `report.build_report` rather than adding a second scoring path. Standard library only. Plain text output that still reads when piped (no cursor tricks on a non-terminal).
 - **Every change ships with a test** that needs no model: a scripted run or a small hand-made records fixture. Say in the pull request what you ran and what you did not.
 - **Experiment issues (#8 to #10) follow the rules above in full.** Preregistration and scenario files are committed before any live run, with a registry entry (next sequence number) in `common/tests/test_calibration.py`. Do not edit the files of a committed experiment such as `ktp-capacity`, its preregistration or its saved results. A new experiment gets new files.
 - **Write the predictions to be wrong in public.** If a simple rule might tie the gate, say so beforehand. A tie, or a miss by one case, is a result and goes in an addendum.

@@ -54,6 +54,31 @@ Copy `keys.example.ini` to `keys.ini` only if you use hosted models. Git ignores
 
 [`docs/OPEN-WORK.md`](docs/OPEN-WORK.md) lists every known gap as a stub: what is missing, what it would take, and where to start. Open an issue or leave a note on a stub before starting, so two people do not run the same experiment.
 
+### Starter issues
+
+These are open now. Each issue has the problem, a proposal, notes on the code to read first and acceptance criteria. Comment on the issue before you start, so two people do not take the same one.
+
+| Issue | What | Kind |
+| --- | --- | --- |
+| [#3](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/3) | Show the pass bar in the console after a run and in `adt summary` | Tooling, good first issue |
+| [#4](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/4) | Predicted vs observed values in `adt summary` | Tooling |
+| [#5](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/5) | `adt summary --why` for non-completed valid work | Tooling |
+| [#6](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/6) | Speed up the test suite | Tooling |
+| [#7](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/7) | Per-model table by default after a run | Tooling |
+| [#8](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/8) | Extend the KTP capacity gate to `export_customers` | Experiment |
+| [#9](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/9) | Simple rules against the KTP gate | Experiment |
+| [#10](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/10) | Split-grant probe | Experiment |
+
+Standards for all of them:
+
+- **Tooling issues (#3 to #7) change how results are shown, never how they are scored.** Reuse `scorer.summarize` and `report.build_report` rather than adding a second scoring path. Standard library only. Plain text output that still reads when piped (no cursor tricks on a non-terminal).
+- **Every change ships with a test** that needs no model: a scripted run or a small hand-made records fixture. Say in the pull request what you ran and what you did not.
+- **Experiment issues (#8 to #10) follow the rules above in full.** Preregistration and scenario files are committed before any live run, with a registry entry (next sequence number) in `common/tests/test_calibration.py`. Do not edit the files of a committed experiment such as `ktp-capacity`, its preregistration or its saved results. A new experiment gets new files.
+- **Write the predictions to be wrong in public.** If a simple rule might tie the gate, say so beforehand. A tie, or a miss by one case, is a result and goes in an addendum.
+- **State the reading you chose** wherever the specification is silent (as #2 does for undefined leases), and label it as the experiment's reading.
+- **Do not run tests while a live model run is going** (timing and GPU), and keep test temp and scratch output out of the repo.
+- **One issue per pull request**, and name the issue (`Closes #N`) in the description. #3 and #4 touch the same summary code, so do them in order.
+
 ## Opening a pull request
 
 - One experiment or doc fix per pull request.

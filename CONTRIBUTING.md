@@ -69,12 +69,21 @@ These are open now. Each issue has the problem, a proposal, notes on the code to
 | [#9](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/9) | Simple rules against the KTP gate | Experiment |
 | [#10](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/10) | Split-grant probe | Experiment |
 | [#11](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/11) | Record the Ollama server version in run metadata | Tooling, good first issue |
+| [#12](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/12) | Repetitive tool-loop signal from saved decision logs | Analysis, good first issue |
+| [#13](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/13) | Audit how saved outcomes were reached (unintended routes) | Analysis |
+| [#14](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/14) | CI workflow that runs the tests on every pull request | Tooling, good first issue |
+| [#15](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/15) | Dry-run issue filing for missed pass-bar criteria | Tooling |
+| [#16](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/16) | Graduated kill switch for ASI10 | Experiment |
+| [#17](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/17) | Rule of Two, remove one leg at a time | Experiment |
+| [#18](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/18) | Policy shadow mode | Experiment |
+| [#19](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/19) | Corpus diffing for the ASI06 corpora | Tooling |
+| [#20](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/20) | Diff the behavior-defining elements between two saved runs | Tooling |
 
 Standards for all of them:
 
-- **Tooling issues (#3 to #7, and #11) change how results are shown or recorded, never how they are scored.** Reuse `scorer.summarize` and `report.build_report` rather than adding a second scoring path. Standard library only. Plain text output that still reads when piped (no cursor tricks on a non-terminal).
+- **Tooling and analysis issues (#3 to #7, #11 to #15, #19 and #20) change how results are shown, recorded or compared, never how they are scored, and never modify a saved result.** Reuse `scorer.summarize` and `report.build_report` rather than adding a second scoring path. Standard library only. Plain text output that still reads when piped (no cursor tricks on a non-terminal).
 - **Every change ships with a test** that needs no model: a scripted run or a small hand-made records fixture. Say in the pull request what you ran and what you did not.
-- **Experiment issues (#8 to #10) follow the rules above in full.** Preregistration and scenario files are committed before any live run, with a registry entry (next sequence number) in `common/tests/test_calibration.py`. Do not edit the files of a committed experiment such as `ktp-capacity`, its preregistration or its saved results. A new experiment gets new files.
+- **Experiment issues (#8 to #10, #16 to #18) follow the rules above in full.** Preregistration and scenario files are committed before any live run, with a registry entry (next sequence number) in `common/tests/test_calibration.py`. Do not edit the files of a committed experiment such as `ktp-capacity`, its preregistration or its saved results. A new experiment gets new files.
 - **Write the predictions to be wrong in public.** If a simple rule might tie the gate, say so beforehand. A tie, or a miss by one case, is a result and goes in an addendum.
 - **State the reading you chose** wherever the specification is silent (as #2 does for undefined leases), and label it as the experiment's reading.
 - **Do not run tests while a live model run is going** (timing and GPU), and keep test temp and scratch output out of the repo.

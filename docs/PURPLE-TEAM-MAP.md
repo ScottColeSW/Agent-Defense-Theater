@@ -7,6 +7,7 @@ This repository is a purple-team range for AI agents: attacks and defenses are t
 - **Have**: saved evidence in the repository.
 - **Partial**: something relevant exists, with a stated gap.
 - **Stub**: not built. Each stub is also listed in [`OPEN-WORK.md`](OPEN-WORK.md).
+- **Not planned**: the capability does not fit a range like this one, with the reason beside it.
 
 ## Purple teaming capabilities
 
@@ -30,6 +31,10 @@ This repository is a purple-team range for AI agents: attacks and defenses are t
 | Red/blue alert correlation, purple SIEM lens, merged telemetry | Stub | The decision log is a record, not a SIEM integration |
 | Time-series scoring, model-drift vs threat-drift analysis | Stub | Runs are single rounds. No trend over time |
 | Residual risk analysis cycles | Partial | Each addendum lists what was not shown. No scheduled cycle |
+| Real-time policy shadow mode | Stub | Not built. A defense is either in a run or not, so there is no observe-only comparison. See [issue 18](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/18) |
+| Corpus diffing | Stub | Not built. ASI06 corpora are compared by reading. See [issue 19](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/19) |
+| Rollback script generation | Not planned | There is no release pipeline to roll back. The range runs experiments, not deployments |
+| Risk simulators | Not planned | Forward-looking risk modeling would be speculation, which the preregistration rules are written to avoid. Revisit if a measured basis appears |
 
 ## Red teaming capabilities this range exercises
 
@@ -55,5 +60,7 @@ This repository is a purple-team range for AI agents: attacks and defenses are t
 | Signed artifact stores | Partial | The decision log is tamper-evident, and it detects tampering without preventing it. See [`common/decision-log/VERIFY.md`](../common/decision-log/VERIFY.md) |
 | Export of tests as stories | Partial | The role questions and checklist put each result in plain language beside its caveat |
 | Risk taxonomy import and export | Partial | The coverage CSV and JSON. No standard interchange format |
+| AI-BOM / SBOM diffing | Stub | Run metadata records model digests, settings and commits, but nothing compares two runs. See [issue 20](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/20) |
+| Executive reporting | Stub | The role questions and checklist are plain-language, but there is no one-page summary of a run's pass bar and caveats |
 
 Source: OWASP GenAI Security Project, Gen AI and Agentic Red Teaming Solutions Guide taxonomy, version 1.0, CC BY-SA 4.0. Capability names are quoted for mapping only, and the descriptions are the author's.

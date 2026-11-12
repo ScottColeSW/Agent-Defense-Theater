@@ -44,6 +44,10 @@ From the capability map in [`PURPLE-TEAM-MAP.md`](PURPLE-TEAM-MAP.md). Each is a
 | Trend scoring across repeated rounds | Needs the same experiment run on a schedule |
 | Cross-tenant exposure test | Not modeled in any item |
 | Continuous prompt fuzzing | Not built. `attackgen` is the nearest starting point |
+| Real-time policy shadow mode | Wrap a broker so it records what it would have decided without enforcing it. The KTP broker already returns structured decisions. [Issue 18](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/18) |
+| Corpus diffing | A read-only diff of two ASI06 corpus versions. [Issue 19](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/19) |
+| AI-BOM / SBOM diffing | A read-only diff of the behavior-defining elements in two runs' metadata. [Issue 20](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/20) |
+| Executive reporting | A one-page plain-language summary of a run's pass bar and caveats. Start from the pass-bar console issue ([issue 3](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/3)) |
 
 ## Field-context stubs
 

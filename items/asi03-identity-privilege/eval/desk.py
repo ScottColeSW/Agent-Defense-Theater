@@ -35,13 +35,25 @@ class Call:
 
 
 def parse_calls(text: str, cap: int = 4):
-    """Read the agent's JSON plan. Returns (calls, problems). Unknown tools are dropped and counted."""
+    """Read the agent's JSON plan. Returns (calls, problems). Unknown tools are dropped and counted.
+
+    A plan that repeats the "calls" key is one JSON object with several call lists. The JSON reader keeps the last list,
+    as it always has, so what executes is unchanged. Each earlier list it drops is counted as one problem, so the record
+    shows an unusable plan instead of a model that did nothing. That reading is the harness's."""
     problems = 0
     m = re.search(r"\{.*\}", text, re.S)
+    objects = []                                   # key lists, innermost objects first; the last one is the plan itself
+
+    def _keep_keys(pairs):
+        objects.append([k for k, _ in pairs])
+        return dict(pairs)                         # same result as the default reader: the last duplicate key wins
+
     try:
-        data = json.loads(m.group(0)) if m else {}
+        data = json.loads(m.group(0), object_pairs_hook=_keep_keys) if m else {}
     except json.JSONDecodeError:
         return [], 1
+    if objects:
+        problems += max(0, objects[-1].count("calls") - 1)
     out = []
     for c in (data.get("calls") or [])[:cap]:
         if isinstance(c, dict) and c.get("tool") in SCOPE_OF and isinstance(c.get("args", {}), dict):

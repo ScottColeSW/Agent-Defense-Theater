@@ -10,6 +10,7 @@
 """
 import json
 import re
+from adt.reply_json import loads_unique
 
 READS = {"list_deals", "get_deal"}
 
@@ -38,7 +39,7 @@ def parse_plan(text: str):
     """The tool names in a plan, or None if the reply is not a usable plan. Anything unclear locks an empty plan, which refuses every call."""
     m = re.search(r"\{.*\}", text, re.S)
     try:
-        d = json.loads(m.group(0)) if m else {}
+        d = loads_unique(m.group(0)) if m else {}
     except json.JSONDecodeError:
         return None
     plan = d.get("plan") if isinstance(d, dict) else None
@@ -51,7 +52,7 @@ def parse_fits(text: str):
     """(fits, reason, well_formed). An unclear reply does not fit, and is flagged."""
     m = re.search(r"\{.*\}", text, re.S)
     try:
-        d = json.loads(m.group(0)) if m else {}
+        d = loads_unique(m.group(0)) if m else {}
     except json.JSONDecodeError:
         d = {}
     ok = isinstance(d, dict) and isinstance(d.get("fits"), bool)

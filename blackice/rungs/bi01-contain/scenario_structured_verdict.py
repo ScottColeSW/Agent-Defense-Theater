@@ -16,6 +16,7 @@ import re
 from collections import defaultdict
 from pathlib import Path
 
+from adt.reply_json import loads_unique
 from adt.harness import ROOT, Case, CaseResult, Defense
 from adt.loader import load_file
 from adt.models import Reply
@@ -49,7 +50,7 @@ def numbered(events, marked=True):
 def parse_alarms(text):
     m = re.search(r"\{.*\}", text, re.S)
     try:
-        d = json.loads(m.group(0)) if m else {}
+        d = loads_unique(m.group(0)) if m else {}
     except json.JSONDecodeError:
         d = {}
     xs = d.get("alarms") if isinstance(d, dict) else None

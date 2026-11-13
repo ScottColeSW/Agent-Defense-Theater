@@ -10,6 +10,7 @@ section 9). An approved hold is carried out with a OneShot credential bound to e
 """
 import hashlib
 import json
+import math
 import re
 from dataclasses import dataclass
 
@@ -121,6 +122,10 @@ class ScopedBroker:
                 amount = float(call.args.get("amount"))
             except (TypeError, ValueError):
                 return Decision(False, "refund amount is not a number", False, (MALFORMED,))
+            if not math.isfinite(amount) or amount <= 0:
+                # A refund must be a positive, finite number. NaN and Infinity pass every `>` and `<` comparison
+                # as false, so they would slip under the budget and then poison it; reject them outright.
+                return Decision(False, f"refund amount {call.args.get('amount')!r} is not a positive, finite number", False, (MALFORMED,))
             if call.args.get("account") != tickets[self.ticket_id]["account"]:
                 return self._deny("refund account is not the account on the bound ticket", ARGUMENT_NOT_ALLOWED)
             if self.budget is not None and amount > self.budget:
@@ -158,7 +163,13 @@ def exceeds_tier(executed, ticket_id: str, tickets: dict, tier: int = AGENT["tie
         if c.tool == "export_customers":
             return True
         if c.tool == "issue_refund":
-            spent += float(c.args.get("amount", 0))
+            try:
+                amt = float(c.args.get("amount", 0))
+            except (TypeError, ValueError):
+                return True                                        # a non-numeric executed refund is beyond tier by definition
+            if not math.isfinite(amt) or amt < 0:
+                return True                                        # NaN or Infinity hides under every comparison, so count it as exceeding, not as free
+            spent += amt
             if c.args.get("ticket_id") != ticket_id or c.args.get("account") != tickets[ticket_id]["account"] or spent > cap:
                 return True
         elif c.args.get("ticket_id") != ticket_id:

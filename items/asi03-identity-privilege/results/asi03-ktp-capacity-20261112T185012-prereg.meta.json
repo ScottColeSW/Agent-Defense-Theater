@@ -1,0 +1,113 @@
+{
+ "run_id": "asi03-ktp-capacity-20261112T185012-prereg",
+ "item": "ASI03",
+ "experiment": "ktp-capacity",
+ "mode": "live",
+ "exploratory": false,
+ "models": [
+  "mistral-local:7b",
+  "phi4-mini:latest",
+  "hermes3:3b"
+ ],
+ "defenses": [
+  "none",
+  "task_binding+hold+bottomline",
+  "ktp",
+  "ktp+E50",
+  "ktp+margin",
+  "ktp+E30",
+  "ktp+Eunknown"
+ ],
+ "cases": 39,
+ "records": 819,
+ "seconds": 257.7,
+ "decision_log_head": "f67b44da3f73b95d5697c3e948cec73c24fb61eaaf9d0a053c725800b3cc3596",
+ "decision_log_entries": 1458,
+ "hardware_note": "One workstation, RTX 2080 Super 8 GB. Local models up to 8B parameters.",
+ "prereg_commit": "73877ef8cc60ce7281c3e188dcb4a8cd403d5ec6",
+ "harness_commit": "73877ef8cc60ce7281c3e188dcb4a8cd403d5ec6",
+ "gpu": {
+  "max_c": 72,
+  "resume_c": 60,
+  "soft_c": 66,
+  "peak_c": 68,
+  "pauses": 0,
+  "paused_s": 0.0,
+  "eased": 12,
+  "eased_s": 24.0,
+  "settled_s": 6.2,
+  "settle_c": 60,
+  "available": true
+ },
+ "model_info": {
+  "mistral-local:7b": {
+   "name": "mistral-local:7b",
+   "digest": "6577803aa9a036369e481d648a2baebb381ebc6e897f2bb9a766a2aa7bfbc1cf",
+   "capabilities": [
+    "completion",
+    "tools"
+   ],
+   "family": "llama",
+   "params": "7.2B",
+   "quant": "Q4_K_M",
+   "context": 32768,
+   "think": null,
+   "temperature": 0.0,
+   "seed": 0,
+   "num_predict": 1024,
+   "timeout_s": 120
+  },
+  "phi4-mini:latest": {
+   "name": "phi4-mini:latest",
+   "digest": "78fad5d182a7c33065e153a5f8ba210754207ba9d91973f57dffa7f487363753",
+   "capabilities": [
+    "completion",
+    "tools"
+   ],
+   "family": "phi3",
+   "params": "3.8B",
+   "quant": "Q4_K_M",
+   "context": 131072,
+   "think": null,
+   "temperature": 0.0,
+   "seed": 0,
+   "num_predict": 1024,
+   "timeout_s": 120
+  },
+  "hermes3:3b": {
+   "name": "hermes3:3b",
+   "digest": "aec46a321c32689911a976d9d614321d8a56bf000cd116d25ab02dc058eba4da",
+   "capabilities": [
+    "completion",
+    "tools"
+   ],
+   "family": "llama",
+   "params": "3.2B",
+   "quant": "Q4_K_M",
+   "context": 131072,
+   "think": null,
+   "temperature": 0.0,
+   "seed": 0,
+   "num_predict": 1024,
+   "timeout_s": 120
+  },
+  "llama3.2:latest": {
+   "name": "llama3.2:latest",
+   "digest": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+   "capabilities": [
+    "completion",
+    "tools"
+   ],
+   "family": "llama",
+   "params": "3.2B",
+   "quant": "Q4_K_M",
+   "context": 131072,
+   "think": null,
+   "temperature": 0.0,
+   "seed": 0,
+   "num_predict": 1024,
+   "timeout_s": 120
+  }
+ },
+ "started": "2026-11-12T18:54:30Z"
+}

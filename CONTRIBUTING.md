@@ -69,8 +69,8 @@ These are open now. Each issue has the problem, a proposal, notes on the code to
 | [#9](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/9) | Simple rules against the KTP gate | Experiment |
 | [#10](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/10) | Split-grant probe | Experiment |
 | [#11](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/11) | Record the Ollama server version in run metadata | Tooling, good first issue |
-| [#12](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/12) | Repetitive tool-loop signal from saved decision logs | Analysis, good first issue |
-| [#13](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/13) | Audit how saved outcomes were reached (unintended routes) | Analysis |
+| [#12](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/12) | Repetitive tool-loop signal from saved decision logs. Started by miaoyang-data in `tools/audit_decision_logs.py` (pull request 35). Still open: the findings note and the attack against valid comparison | Analysis, partly done |
+| [#13](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/13) | Audit how saved outcomes were reached (unintended routes). The auditor from pull request 35 flags structure. Sampling records and reading each is still open | Analysis |
 | [#14](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/14) | CI workflow that runs the tests on every pull request | Tooling, good first issue |
 | [#15](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/15) | Dry-run issue filing for missed pass-bar criteria | Tooling |
 | [#16](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/16) | Graduated kill switch for ASI10 | Experiment |
@@ -89,12 +89,15 @@ These are open now. Each issue has the problem, a proposal, notes on the code to
 | [#32](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/32) | Reword claims that say a defense stops a class when it stopped the attacks written | Docs |
 | [#33](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/33) | Tracking: root causes from the defense review, and adaptive rounds by a non-author | Tracking |
 | [#34](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/34) | ASI03: "bad approvals" counts approved holds on the requested refund inside attack cases | Scoring fix |
+| [#36](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/36) | A run on models the preregistration does not name is still labelled `prereg` and pooled | Tooling |
 
 Standards for all of them:
 
 - **Tooling and analysis issues (#3 to #7, #11 to #15, #19 and #20) change how results are shown, recorded or compared, never how they are scored, and never modify a saved result.** Reuse `scorer.summarize` and `report.build_report` rather than adding a second scoring path. Standard library only. Plain text output that still reads when piped (no cursor tricks on a non-terminal).
 - **A defense fix (#25, #26, #28 to #31) never edits a committed experiment.** The fixed defense is a new condition in a new preregistered experiment, run beside the old one with the bypass as an adaptive attack, and the old result gets an addendum saying what it did and did not show. If you found the bypass, say so in the preregistration: the attacker is then not independent of the defense.
 - **Credit the people whose work you build on.** Name the contributor and link their pull request in the addendum and in the README row for the result, and say thank you on the pull request with what their work showed.
+- **Run the models the preregistration names.** A run on other models is welcome, but it is a variation, not a test of the prediction. Say so in the addendum and report it on its own, never pooled with the preregistered run (#36).
+- **Run the full suite after recording a run, not only before.** Some tests read the saved results, so new result files can fail a test that passed an hour earlier (a new attack name needs an entry in `crosswalk/threat-surfaces.json`).
 - **Recording a run is more than the result files.** Add the addendum to the preregistration (results, every miss, what the run does not show), then update the root README, the item README and `docs/LIMITS-AND-ANSWERS.md` in the same piece of work.
 - **A scoring fix (#24, #27, #34) is the one kind that changes what a record says.** Keep it narrow, resolve anything unclear restrictively (a denial, flagged), leave every saved result and committed prediction untouched, and state in the pull request which recorded fields differ for new runs.
 - **Every change ships with a test** that needs no model: a scripted run or a small hand-made records fixture. Say in the pull request what you ran and what you did not.

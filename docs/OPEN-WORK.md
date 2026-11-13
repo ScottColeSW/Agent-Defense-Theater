@@ -1,4 +1,4 @@
-﻿# Open work
+# Open work
 
 Every item below is a stub: a gap the project knows about and has not closed. Each one is taken from [`LIMITS-AND-ANSWERS.md`](LIMITS-AND-ANSWERS.md) or the [crosswalk](../crosswalk/README.md), so nothing here is a new claim. Status for all of them is **Stub, unclaimed**.
 
@@ -63,8 +63,8 @@ Surfaces named in the State of Agentic AI Security and Governance report (v2.01,
 | Capability composition as a design gate (the "Rule of Two") | The Securing Agentic Applications guide says an agent should not combine private data, untrusted input and external communication. No item tests it | A scenario where an agent holds all three and one leg is then removed |
 | Graduated kill switch (warn, limit, suspend, kill) | ASI10 tested a one-step kill switch only | Extend the ASI10 defenses with tiers and measure restricted calls per tier |
 | Block a release when behavior-defining elements change results | The guide asks for revalidation when the model, prompt or tool set changes. Here it is manual | Re-run a fixed set of preregistered cases when `common/` or an item's prompt changes, which also needs the CI stub above |
-| Check recorded successes and blocks for unintended routes | The exploit-generation report finds scores inflated by unintended solutions. Outcomes here are not checked that way | Implemented offline anomaly & repeat-allow sampler in `tools/audit_decision_logs.py` |
-| Repetitive tool-loop detection | The report notes high-frequency, low-diversity tool calls as a candidate signal for model-driven activity | Implemented contiguous streak detector in `tools/audit_decision_logs.py` |
+| Check recorded successes and blocks for unintended routes | The exploit-generation report finds scores inflated by unintended solutions. Outcomes here are not checked that way | Partly done. `tools/audit_decision_logs.py` (by miaoyang-data) flags repeated allowed calls, shared-token allows and missing reasons in the saved logs. It does not read how an outcome was reached. Sampling records and reading each is still open ([issue 13](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/13)) |
+| Repetitive tool-loop detection | The report notes high-frequency, low-diversity tool calls as a candidate signal for model-driven activity | Measured, no detector yet. `tools/audit_decision_logs.py` (by miaoyang-data) finds consecutive identical calls in the saved logs. It recovers the 32 repeated refunds in each run that uses the duplicate-refund texts, and finds no repeated allowed call in any other ASI03 run. Where a log does not record arguments (ASI10) it can only show a repeated tool. A findings note and a comparison of attack against valid cases are still open ([issue 12](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/12)) |
 
 ## Mapping stubs
 

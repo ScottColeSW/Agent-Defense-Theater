@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """Offline decision-log auditor for Agent Defense Theater.
 
 Addresses two unclaimed field-context stubs from docs/OPEN-WORK.md:
@@ -8,6 +8,13 @@ Addresses two unclaimed field-context stubs from docs/OPEN-WORK.md:
 2. Unintended-route anomaly audit: flags structural anomalies in decision logs
    such as repeated allowed state-mutating calls within a single episode,
    unrestricted ambient-token allows, and missing decision rationales.
+
+Limit: some items do not record a call's arguments in the log (`saw.args`). For
+those entries two consecutive calls to the same tool in one case look identical
+whether or not their arguments match, so such a streak is marked
+`args_recorded: false` and counted apart. It shows a repeated tool, not a
+repeated call. The tool flags structure only. It does not read how an outcome
+was reached, which still needs a person sampling records.
 
 Usage:
     python tools/audit_decision_logs.py
@@ -107,6 +114,7 @@ def _summarize_streak(
         "streak_length": len(group),
         "allowed": allowed,
         "denied": denied,
+        "args_recorded": all("args" in (e.get("saw") or {}) for e in group),
     }
 
 
@@ -144,6 +152,7 @@ def analyze_log(path: Path, min_streak: int = 2) -> dict[str, Any]:
         "empty_reasons": empty_reasons,
         "contiguous_loop_count": len(streaks),
         "repeat_allow_loops": len(repeat_allow_streaks),
+        "loops_args_unknown": sum(1 for s in streaks if not s["args_recorded"]),
         "max_streak": max_streak,
         "sample_loops": streaks[:5],
     }
@@ -170,8 +179,12 @@ def main() -> int:
     print(f"Audited {len(reports)} preregistered decision logs ({total_entries} total entries)")
     print(
         f"Detected {total_loops} contiguous tool-call streaks "
-        f"({total_repeat_allows} with >=2 allowed repeats).\n"
+        f"({total_repeat_allows} with >=2 allowed repeats)."
     )
+    unknown = sum(r["loops_args_unknown"] for r in reports)
+    if unknown:
+        print(f"{unknown} of those streaks are in logs that do not record arguments, so they show a repeated tool, not a repeated call.")
+    print()
     print(
         f"{'Log File':<66} {'Entries':>7} {'Allow':>6} {'Deny':>6} "
         f"{'Loops':>6} {'RepAllow':>8} {'MaxStrk':>7}"

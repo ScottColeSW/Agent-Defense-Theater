@@ -1,6 +1,6 @@
 # Threat model
 
-This page is organized around [Shostack's Four Question Frame for Threat Modeling](https://github.com/adamshostack/4QuestionFrame) (CC-BY): what are we working on, what can go wrong, what are we going to do about it, and did we do a good enough job. The four questions are the spine; each item folder holds the specifics, and the measurements answer the fourth.
+This page is organized around [Shostack's Four Question Frame for Threat Modeling](https://github.com/adamshostack/4QuestionFrame), created by Adam Shostack and used here with thanks: what are we working on, what can go wrong, what are we going to do about it, and did we do a good enough job. The four questions are the spine; each item folder holds the specifics, and the measurements answer the fourth. The frame is used under CC-BY; the wording and the per-boundary structure below are this project's own.
 
 A note on names: `greenroom/SPEC.md` has its own "four questions," which are an executive governance framing (what can it do if it goes wrong, who is responsible, can we stop and undo it, can you prove what it did). Those are not Shostack's frame and are not what this page uses.
 
@@ -69,6 +69,10 @@ This is the question the project is built to answer, and the method is the answe
 | 6. Agent and its tool provider (provenance) | [ASI04](../items/asi04-supply-chain/) | A manifest pin, a canary comparison, a code pin | Each control caught only what it was built to see. The code pin stopped everything but refused all 18 legitimate updates; the manifest pin was fooled by a tool that recognizes the check |
 
 Every item is **Measured** (one or more preregistered live runs). What "Measured" does and does not cover for each is in [`LIMITS-AND-ANSWERS.md`](LIMITS-AND-ANSWERS.md), and the open gaps are in [`OPEN-WORK.md`](OPEN-WORK.md).
+
+## Acknowledgement
+
+The organizing structure of this page is [Shostack's Four Question Frame for Threat Modeling](https://github.com/adamshostack/4QuestionFrame) by Adam Shostack, used under CC-BY. The canonical citation is Shostack, Adam. *Threat Modeling: Designing for Security*. John Wiley & Sons, 2014. Thanks to the author for a frame that fits a measured range as cleanly as it fits a design review.
 
 ## References
 

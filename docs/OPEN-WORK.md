@@ -1,4 +1,4 @@
-# Open work
+﻿# Open work
 
 Every item below is a stub: a gap the project knows about and has not closed. Each one is taken from [`LIMITS-AND-ANSWERS.md`](LIMITS-AND-ANSWERS.md) or the [crosswalk](../crosswalk/README.md), so nothing here is a new claim. Status for all of them is **Stub, unclaimed**.
 
@@ -63,8 +63,8 @@ Surfaces named in the State of Agentic AI Security and Governance report (v2.01,
 | Capability composition as a design gate (the "Rule of Two") | The Securing Agentic Applications guide says an agent should not combine private data, untrusted input and external communication. No item tests it | A scenario where an agent holds all three and one leg is then removed |
 | Graduated kill switch (warn, limit, suspend, kill) | ASI10 tested a one-step kill switch only | Extend the ASI10 defenses with tiers and measure restricted calls per tier |
 | Block a release when behavior-defining elements change results | The guide asks for revalidation when the model, prompt or tool set changes. Here it is manual | Re-run a fixed set of preregistered cases when `common/` or an item's prompt changes, which also needs the CI stub above |
-| Check recorded successes and blocks for unintended routes | The exploit-generation report finds scores inflated by unintended solutions. Outcomes here are not checked that way | Sample saved records from one item and read each for how the outcome was reached |
-| Repetitive tool-loop detection | The report notes high-frequency, low-diversity tool calls as a candidate signal for model-driven activity | Compute it from the decision log of an existing run before building a detector |
+| Check recorded successes and blocks for unintended routes | The exploit-generation report finds scores inflated by unintended solutions. Outcomes here are not checked that way | Implemented offline anomaly & repeat-allow sampler in `tools/audit_decision_logs.py` |
+| Repetitive tool-loop detection | The report notes high-frequency, low-diversity tool calls as a candidate signal for model-driven activity | Implemented contiguous streak detector in `tools/audit_decision_logs.py` |
 
 ## Mapping stubs
 
@@ -73,3 +73,4 @@ Surfaces named in the State of Agentic AI Security and Governance report (v2.01,
 | MITRE ATLAS IDs are "To be mapped" for most rows | `crosswalk/coverage.csv` | Candidates from the OWASP LLM Top 10 are listed in [`../crosswalk/README.md`](../crosswalk/README.md). Verify each against the current ATLAS release before filling it in |
 | No item maps to LLM02 Sensitive Information Disclosure or LLM07 System Prompt Leakage | `crosswalk/coverage.csv` | ASI05's secret-exfiltration attacks overlap LLM02. Decide whether to add a partial match |
 | ASI07 has no direct LLM Top 10 match | `crosswalk/coverage.csv` | Confirm that is still true against the OWASP Agentic Top 10 text |
+

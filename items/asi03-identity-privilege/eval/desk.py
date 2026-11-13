@@ -48,9 +48,14 @@ def parse_calls(text: str, cap: int = 4):
         objects.append([k for k, _ in pairs])
         return dict(pairs)                         # same result as the default reader: the last duplicate key wins
 
+    def _reject_constant(tok):
+        # Python's json accepts the literals NaN, Infinity and -Infinity by default. A refund of NaN slips under
+        # every budget comparison, so an unusable plan that carries one is refused here, not passed on.
+        raise ValueError(f"non-standard JSON constant {tok}")
+
     try:
-        data = json.loads(m.group(0), object_pairs_hook=_keep_keys) if m else {}
-    except json.JSONDecodeError:
+        data = json.loads(m.group(0), object_pairs_hook=_keep_keys, parse_constant=_reject_constant) if m else {}
+    except ValueError:                             # JSONDecodeError (a subclass) or a rejected NaN/Infinity constant
         return [], 1
     if objects:
         problems += max(0, objects[-1].count("calls") - 1)

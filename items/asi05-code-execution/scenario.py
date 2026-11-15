@@ -16,6 +16,7 @@ import tempfile
 from collections import defaultdict
 from pathlib import Path
 
+from adt.reply_json import loads_unique
 from adt.harness import ROOT, Case, CaseResult, Defense
 from adt.loader import load_file
 from adt.models import Reply
@@ -86,7 +87,7 @@ def _parse_code(text: str):
     if not m:
         return None
     try:
-        d = json.loads(m.group(0))
+        d = loads_unique(m.group(0))
     except json.JSONDecodeError:
         return None
     if not isinstance(d, dict):

@@ -12,6 +12,7 @@ import re
 from collections import defaultdict
 from pathlib import Path
 
+from adt.reply_json import loads_unique
 from adt.harness import ROOT, Case, CaseResult, Defense
 from adt.models import Reply
 from adt.passbar import criterion, kn, pct, rate
@@ -103,7 +104,7 @@ def rule_two(events, signed=False):
 def parse_quarantine(text):
     m = re.search(r"\{.*\}", text, re.S)
     try:
-        d = json.loads(m.group(0)) if m else {}
+        d = loads_unique(m.group(0)) if m else {}
     except json.JSONDecodeError:
         d = {}
     q = d.get("quarantine") if isinstance(d, dict) else None

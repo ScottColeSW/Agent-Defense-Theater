@@ -12,6 +12,7 @@ import uuid
 from collections import defaultdict
 from pathlib import Path
 
+from adt.reply_json import loads_unique
 from adt.harness import ROOT, Case, CaseResult, Defense
 from adt.loader import load_file
 from adt.passbar import criterion, kn, pct, rate
@@ -60,7 +61,7 @@ def _message_block(message, admitted: bool, flag):
 def _parse_decider(text: str):
     m = re.search(r"\{.*\}", text, re.S)
     try:
-        data = json.loads(m.group(0)) if m else {}
+        data = loads_unique(m.group(0)) if m else {}
     except json.JSONDecodeError:
         return []
     out = []

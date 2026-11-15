@@ -13,6 +13,7 @@ careful reader catch. It does not show how people actually behave.
 import json
 import re
 
+from adt.reply_json import loads_unique
 from adt.models import ModelError
 from dataclasses import dataclass
 
@@ -178,11 +179,12 @@ def parse_verdict(text: str) -> tuple:
     """(approve, reason, well_formed). Anything unclear is a denial, and is flagged so a report can count it."""
     m = re.search(r"\{.*\}", text, re.S)
     try:
-        d = json.loads(m.group(0)) if m else {}
+        d = loads_unique(m.group(0)) if m else {}
     except json.JSONDecodeError:
         d = {}
-    ok = isinstance(d, dict) and "decision" in d
-    approve = ok and str(d.get("decision", "")).strip().lower().startswith("approve")
+    decision = str(d.get("decision", "")).strip().lower() if isinstance(d, dict) else ""
+    ok = decision in ("approve", "deny")
+    approve = ok and decision == "approve"
     return approve, (str(d.get("reason", ""))[:200] if ok else "unparseable reply: denied"), ok
 
 

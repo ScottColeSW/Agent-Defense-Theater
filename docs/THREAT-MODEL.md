@@ -20,7 +20,27 @@ The range models one small business desk reused across items (a real-estate deal
 
 A sixth boundary is implied by ASI04 and is not yet in the list above as a first-class entry: between an agent and the provider of the tools it loads (provenance and integrity of the tool set itself, before any call is made). The coverage table below places ASI04 there and marks it.
 
-There is no data-flow or trust-boundary diagram yet. Shostack's frame leans on a picture for this question, and the absence is tracked as an open item (see the issue linked from `docs/OPEN-WORK.md`).
+Shostack's frame leans on a picture for this question. The diagram below is a first draft: the agent in the middle and the six things it crosses a trust boundary to reach, each link numbered to match the list above and the coverage table. It is inline Mermaid so it renders on GitHub and follows the reader's light or dark theme.
+
+```mermaid
+flowchart TB
+    content["Content it reads<br/>tickets, documents, web"]
+    provider["Tool provider<br/>the servers it loads"]
+    tools["Tools it calls"]
+    peers["Peer agents"]
+    memory["Its memory"]
+    person["A person<br/>who approves"]
+    agent(("Agent"))
+
+    content ---|"1 · data is not instructions"| agent
+    tools ---|"2 · a gate, not the model, decides a call"| agent
+    peers ---|"3 · peer output is untrusted input"| agent
+    agent ---|"4 · an approval shows what will change"| person
+    memory ---|"5 · a claim is judged before it is believed"| agent
+    provider ---|"6 · provenance checked before any call"| agent
+```
+
+This draft is deliberately plain. A contributor is welcome to replace it with a more polished visual (see [issue 37](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/37)): a tool such as Canva, Excalidraw or draw.io, exported as an SVG committed under `docs/img/`, works well, as long as it keeps the six numbered boundaries, has a transparent background, and uses no pure-white or pure-black fills so it stays legible in both GitHub themes.
 
 **Out of scope.** Model training attacks, model theft, and infrastructure attacks unrelated to agents. Container and kernel escapes (the ASI05 sandbox claims only that the agent's own code cannot leave it, not that the container cannot be broken by other means).
 

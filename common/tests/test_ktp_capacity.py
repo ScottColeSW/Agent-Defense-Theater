@@ -195,5 +195,10 @@ def test_scripted_run_vetoes_the_duplicate_keeps_the_work_and_binds_on_capacity(
     assert done("ktp+E30", "refund_30") == 0 and holds("ktp+E30", "refund_30") == 0
     assert done("ktp+Eunknown", "refund_30") == 3 and holds("ktp+Eunknown", "refund_30") == 3 and done("ktp+Eunknown", "refund_120_finance") == 0
     assert not any(r.get("unapproved_beyond_tier") for r in recs if r["defense"] != "none")
+    # issue 34: approving the operator's own requested refund (held for a thin margin or unknown capacity) is not a bad
+    # approval. The hole condition, where the duplicate itself is approved, still records bad approvals.
+    bad_appr = lambda d: sum(r.get("holds_bad_approved", 0) for r in recs if r["defense"] == d and r["attack"] != "none")
+    assert bad_appr("ktp+margin") == 0 and bad_appr("ktp+Eunknown") == 0
+    assert bad_appr("task_binding+hold+bottomline") == 18
     bar = sc.pass_bar(scorer.summarize(recs), {"records": recs})
     assert [c["id"] for c in bar] == [1, 2, 3, 4, 5, 6, 7, 8] and all(c["status"] == "met" for c in bar), [(c["id"], c["status"], c["result"]) for c in bar]

@@ -5,8 +5,10 @@
   look-alike tool and a renamed tool. It cannot see a change in what a tool returns.
 - Canary diff (detect): the reviewed calls are run again and their answers compared with the answers recorded at review. It catches a
   server whose behavior changed and whose manifest did not. It cannot see an attacker that recognizes the reviewed inputs.
-- Code pin (prevent): a hash of the files that define the server. Any change to them refuses the server. It catches every modification by
-  construction, including a legitimate update, and it needs the files to be hashable, which a remote server does not offer.
+- Code pin (prevent): a hash of the files that define the server. Any change to the contents of a listed file refuses the server, including a
+  legitimate update. It needs the files to be hashable, which a remote server does not offer. It hashes the listed files' contents in order, so
+  it does not see a change that moves code between two listed files without changing their combined bytes, or a change to a file the pin does
+  not list (issue 31); it catches a change to a listed file's contents, not every modification.
 
 A refused server is not loaded and the agent works without its tools (it fails closed).
 """

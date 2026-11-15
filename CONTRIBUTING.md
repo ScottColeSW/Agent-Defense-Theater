@@ -56,7 +56,7 @@ Copy `keys.example.ini` to `keys.ini` only if you use hosted models. Git ignores
 
 ### Starter issues
 
-These are open now. Each issue has the problem, a proposal, notes on the code to read first and acceptance criteria. Comment on the issue before you start, so two people do not take the same one.
+These are open now. Each issue has the problem, a proposal, notes on the code to read first and acceptance criteria. Comment on the issue before you start, so two people do not take the same one. The defense review that opened #25 to #34 has since closed #21, #24, #27, #29, #34 and #38; #25, #26 and #28 have landed work and stay open only for the piece noted.
 
 | Issue | What | Kind |
 | --- | --- | --- |
@@ -78,28 +78,25 @@ These are open now. Each issue has the problem, a proposal, notes on the code to
 | [#18](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/18) | Policy shadow mode | Experiment |
 | [#19](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/19) | Corpus diffing for the ASI06 corpora | Tooling |
 | [#20](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/20) | Diff the behavior-defining elements between two saved runs | Tooling |
-| [#24](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/24) | Audit reply readers for duplicate JSON keys (a second decision key wins) | Scoring fix |
-| [#25](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/25) | ASI07: the deal id is outside the signature (experiment `bound-signature` is preregistered) | Defense fix, in progress |
-| [#26](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/26) | ASI05: agent code can disable the audit hook and the wall-clock cap | Defense fix |
-| [#27](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/27) | ASI03: `NaN` and `-Infinity` refund amounts defeat the budget and the scorer | Scoring fix |
-| [#28](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/28) | ASI03: request binding treats "do not refund $200" as asking for it | Defense fix |
-| [#29](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/29) | ASI03: reviewer card misreads destinations and prints model-written fields raw | Defense fix |
+| [#25](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/25) | ASI07: the deal id is outside the signature. The `bound-signature` experiment (merged) measures the fix; open for an independent attacker | Defense fix, measured |
+| [#26](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/26) | ASI05: agent code can disable the audit hook and cap. The `os-boundary` experiment (merged) closes it with an OS boundary; open for an independent attacker | Defense fix, measured |
+| [#28](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/28) | ASI03: request binding reads a negated or reported refund as a request. A heuristic stopgap (`defenses/binding.py`) is merged; open for the declared-grant fix | Defense fix, stopgap merged |
 | [#30](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/30) | ASI02: export recipient check and request binding match text, not intent | Defense fix |
 | [#31](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/31) | ASI04: code pin ignores file boundaries | Defense fix |
 | [#32](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/32) | Reword claims that say a defense stops a class when it stopped the attacks written | Docs |
 | [#33](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/33) | Tracking: root causes from the defense review, and adaptive rounds by a non-author | Tracking |
-| [#34](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/34) | ASI03: "bad approvals" counts approved holds on the requested refund inside attack cases | Scoring fix |
-| [#36](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/36) | A run on models the preregistration does not name is still labelled `prereg` and pooled | Tooling |
+| [#36](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/36) | A run on off-prereg models: `adt summary` no longer pools them; the run-time labelling (declare prereg models, refuse an off-prereg run) stays open | Tooling, partly done |
+| [#37](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/37) | Add a trust-boundary diagram to the threat model. A Mermaid first draft is merged; a polished SVG is welcome | Docs, good first issue |
 
 Standards for all of them:
 
 - **Tooling and analysis issues (#3 to #7, #11 to #15, #19 and #20) change how results are shown, recorded or compared, never how they are scored, and never modify a saved result.** Reuse `scorer.summarize` and `report.build_report` rather than adding a second scoring path. Standard library only. Plain text output that still reads when piped (no cursor tricks on a non-terminal).
-- **A defense fix (#25, #26, #28 to #31) never edits a committed experiment.** The fixed defense is a new condition in a new preregistered experiment, run beside the old one with the bypass as an adaptive attack, and the old result gets an addendum saying what it did and did not show. If you found the bypass, say so in the preregistration: the attacker is then not independent of the defense.
+- **A defense fix (#30 and #31, the pattern #25, #26 and #28 followed) never edits a committed experiment.** The fixed defense is a new condition in a new preregistered experiment, run beside the old one with the bypass as an adaptive attack, and the old result gets an addendum saying what it did and did not show. If you found the bypass, say so in the preregistration: the attacker is then not independent of the defense. Where measuring the fix would be circular (a text heuristic graded against text its own author wrote, as in #28), ship a code fix with deterministic tests and say plainly it is not a measured control, rather than a preregistered experiment with a number that is true by construction.
 - **Credit the people whose work you build on.** Name the contributor and link their pull request in the addendum and in the README row for the result, and say thank you on the pull request with what their work showed.
 - **Run the models the preregistration names.** A run on other models is welcome, but it is a variation, not a test of the prediction. Say so in the addendum and report it on its own, never pooled with the preregistered run (#36).
 - **Run the full suite after recording a run, not only before.** Some tests read the saved results, so new result files can fail a test that passed an hour earlier (a new attack name needs an entry in `crosswalk/threat-surfaces.json`).
 - **Recording a run is more than the result files.** Add the addendum to the preregistration (results, every miss, what the run does not show), then update the root README, the item README and `docs/LIMITS-AND-ANSWERS.md` in the same piece of work.
-- **A scoring fix (#24, #27, #34) is the one kind that changes what a record says.** Keep it narrow, resolve anything unclear restrictively (a denial, flagged), leave every saved result and committed prediction untouched, and state in the pull request which recorded fields differ for new runs.
+- **A scoring or correctness fix is the one kind that changes what a record says** (the closed #24, #27, #29, #34 and #38 were these). Keep it narrow, resolve anything unclear restrictively (a denial, flagged), leave every saved result and committed prediction untouched, and state in the pull request which recorded fields differ for new runs. A bug that showed the reviewer wrong or forgeable information (as in #29) is fixed in place when the change touches only attack inputs the committed runs never used.
 - **Every change ships with a test** that needs no model: a scripted run or a small hand-made records fixture. Say in the pull request what you ran and what you did not.
 - **Experiment issues (#8 to #10, #16 to #18) follow the rules above in full.** Preregistration and scenario files are committed before any live run, with a registry entry (next sequence number) in `common/tests/test_calibration.py`. Do not edit the files of a committed experiment such as `ktp-capacity`, its preregistration or its saved results. A new experiment gets new files.
 - **Write the predictions to be wrong in public.** If a simple rule might tie the gate, say so beforehand. A tie, or a miss by one case, is a result and goes in an addendum.

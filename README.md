@@ -45,6 +45,10 @@ Each round committed its prediction first, and the addenda record the misses. Th
 
 The takeaway is about method as much as defenses: a defense that survives a weak attacker has not been shown to hold, and the control that looked strongest had a hole that a simpler one did not.
 
+### Reviewing our own defenses
+
+The same scrutiny is turned on the defenses themselves. A review in November 2026 read each item's defense code as an adversary and found holes the original attacks never exercised: a replay whose unsigned deal id was rewritten (ASI07), code that switches off its own sandbox hook and timeout (ASI05), a refund of `NaN` that slips under a budget, request binding that reads "do not refund $200" as a request, and a reviewer card that a model-written field can forge (ASI03). Each is now closed or measured. ASI07 ships a signature that covers the deal and ASI05 an operating-system boundary the agent's code cannot switch off, both preregistered and run. The ASI03 refund-amount and reviewer-card holes are fixed in code; request binding has a heuristic stopgap with the real fix (a declared grant) still open. Deterministic tests cover each. The review is logged as issues 25 to 38, and the honest limit is stated on every one: the same author wrote the holes and the fixes, so an independent attacker is still the largest open gap (issue 33).
+
 ![The top of a report: baseline risk, best control, and a verdict for every control, with residual risk and business impact side by side](docs/img/report.png)
 
 ## How it works

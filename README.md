@@ -72,6 +72,8 @@ python tools/build_rock.py      # rebuild the data behind the Defense Rock carto
 python tools/build_reviewer_episodes.py  # rebuild the ASI03 reviewer-calibration episode player, then open /episodes/ on the same server
 python adt.py loosekeys demo     # find loose OAuth tokens, plant canaries, compare countermeasures (docs/LOOSE-KEYS.md)
 python adt.py run asi03 --models llama3.1:8b,qwen2.5:7b,phi4-mini:3.8b
+python adt.py run-all --scripted          # run every experiment in sequence (a fast, no-model sanity pass)
+python adt.py run-all --models llama3.1:8b,qwen2.5:7b,phi4-mini:3.8b   # the same, live, printing each experiment's pass bar
 python -m pytest -q
 ```
 

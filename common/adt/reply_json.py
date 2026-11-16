@@ -1,4 +1,9 @@
-"""JSON for single-decision model replies, not saved results or tool plans."""
+"""JSON for single-decision model replies, not saved results or tool plans.
+
+Contributed by jwalith4418-Mj in pull request 40 (issue 24): a reply that repeats a decision key is read as
+unclear, so each reader falls back to its own fail-closed result rather than silently taking the last value, which
+could turn a denial into an approval.
+"""
 import json
 
 

@@ -14,7 +14,7 @@ Every run here produces two honest numbers together: the attacks a defense stops
 
 ![Purple Team: traditional versus AI purple teaming, with a Blue Team KPI scorecard tagged by what the bench actually measures](docs/img/purple-team.jpg)
 
-Both pages read a confidence interval as the hypothesis test it inverts ([NIST/SEMATECH e-Handbook §7.2.4.1](https://www.itl.nist.gov/div898/handbook/prc/section2/prc241.htm), the Wilson method the harness already uses), and both carry the same caveat: the attacker is the author one level up, so a high number bounds confidence, it does not guarantee it. Run `python adt.py serve --open` to use them live, or `python adt.py risk` for the table in a terminal.
+Both pages read a confidence interval as the hypothesis test it inverts ([NIST/SEMATECH e-Handbook §7.2.4.1](https://www.itl.nist.gov/div898/handbook/prc/section2/prc241.htm), the Wilson method the harness already uses), and both carry the same caveat: the attacker is the author one level up, so a high number bounds confidence, it does not guarantee it. That floor is in fact conservative twice over, since small local models can flatter a defense too; what would raise it (an independent attacker, a more capable agent, more runs) and the run pattern for keeping it honest are in [`docs/RAISING-CONFIDENCE.md`](docs/RAISING-CONFIDENCE.md). Run `python adt.py serve --open` to use the pages live, or `python adt.py risk` for the table in a terminal.
 
 ## Why it exists
 

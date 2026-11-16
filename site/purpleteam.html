@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Purple Team</title>
+<link rel="stylesheet" href="assets/app.css">
+<script src="assets/theme.js"></script>
+<style>
+  .lenses { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
+  .lens { padding: 15px 17px; border-radius: 12px; border: 1px solid var(--border-color); background: var(--soft); }
+  .lens .tag { font-weight: 800; letter-spacing: .03em; font-size: 12px; }
+  .lens.red .tag { color: var(--accent-rose); } .lens.blue .tag { color: var(--accent-blue); }
+  .lens h3 { margin: 4px 0 6px; font-size: 16px; }
+  .lens p { margin: 0 0 8px; font-size: 14px; line-height: 1.5; }
+  .lens .q { font-style: italic; border-left: 3px solid var(--accent-blue); padding-left: 10px; margin-top: 10px; color: var(--text-primary); }
+  .kpi { margin: 0; padding: 0; list-style: none; }
+  .kpi li { padding: 11px 0; border-bottom: 1px solid var(--border-color); }
+  .kpi li:last-child { border-bottom: 0; }
+  .kpi .name { font-weight: 700; }
+  .kpi .desc { font-size: 13.5px; color: var(--text-secondary); margin-top: 3px; line-height: 1.5; }
+  .inshort { background: var(--soft); border-left: 3px solid var(--accent-violet); padding: 12px 16px; border-radius: 8px; margin-top: 16px; font-size: 15px; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 820px) { .lenses, .two { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="site-nav" id="nav" aria-label="Site"></nav>
+  <div id="page"></div>
+</div>
+<footer id="foot"></footer>
+
+<script src="assets/app.js"></script>
+<script>
+const TAG = {m: `<span class="chip ok">Measured here</span>`, p: `<span class="chip warn">Partial</span>`, f: `<span class="chip dim">Framework</span>`};
+
+const COMPARE = [
+  ["Red team objective", "Exploit code flaws, misconfigurations and identity gaps", "Induce semantic drift, goal hijacking and unauthorized tool execution"],
+  ["Blue team objective", "Harden perimeters, patch CVEs, tune deterministic alerts", "Enforce least agency, filter I/O telemetry, trip runtime circuit breakers"],
+  ["Confidence metric", "Mean time to detect / respond and control coverage %", "Attack-success-rate distribution, refusal stability, containment latency"],
+  ["Feedback loop", "Attack → patch / rule update → re-test (static closure)", "Adversarial corpus → guardrail tuning → continuous regression (drift tracking)"],
+];
+
+const CONFIDENCE = [
+  ["t", "Adversarial attack-success rate (ASR) distribution", "m",
+   "Our core number: the share of adversarial probes that get through, per risk, pooled across models, with a Wilson interval. We measure it on a fixed preregistered suite; rolling 24-hour and 7-day windows are the running deployment's to add."],
+  ["t", "Refusal stability & false-refusal rate (FRR)", "p",
+   "We track legitimate work wrongly denied, and whether identical malicious intent is blocked across phrasings (blind vs. informed attackers). Continuous FRR on live traffic is the deployment's."],
+  ["t", "Semantic & embedding drift", "f",
+   "Cosine shift between baseline and live prompts/responses, and changes in RAG chunk distributions. Needs live production traffic and retrieval traces; not instrumented in this bench."],
+  ["t", "Groundedness / hallucination rate", "m",
+   "ASI06 and BI01 measure whether a model adopts a forged or unsupported figure instead of the grounded one, which is the manipulation these KPIs watch for."],
+  ["t", "Guardrail interception latency (p95/p99)", "m",
+   "Every case records the defense's own added time (defense_ms / gate_ms), and `adt overhead` isolates it without a model. Under real production load, p95/p99 is the deployment's to watch."],
+];
+
+const CONTAINMENT = [
+  ["t", "Unauthorized tool-call attempt rate", "m",
+   "ASI02 and ASI03 count every call an agent attempts beyond its scoped task or tier (out-of-scope, exceeds-tier, unapproved-beyond-tier)."],
+  ["t", "Privilege escalation & cross-tenant violations", "m",
+   "ASI03 scopes credentials to the initiating user's token and flags actions that use inherited privilege or reach above the agent's tier."],
+  ["t", "Mean time to containment / circuit-breaker latency", "p",
+   "ASI05's out-of-process supervisor severs a runaway at a fixed deadline (the os-boundary cap). A live millisecond MTTC across every path is the deployment's."],
+  ["t", "Sensitive data egress / DLP block rate", "m",
+   "ASI05 stages a secret and reads harm from whether it actually left the sandbox, never from what the model claims it did."],
+  ["t", "Autonomous loop & token-velocity anomalies", "m",
+   "ASI03 ktp-capacity measures capacity and token burn, and the point where sheer volume defeats a reviewer (the denial-of-wallet / recon shape)."],
+];
+
+const SCORECARD = [
+  ["Input / output guardrails", "AI gateway & classifier logs", "Rolling ASR vs. false-refusal rate", "ASR < 1% on known TTPs; FRR < 2%", "p"],
+  ["RAG & context integrity", "Vector DB & retriever traces", "Groundedness & embedding drift", "> 95% grounded; no unverified ingestion", "p"],
+  ["Agentic action layer", "MCP / tool-execution proxy", "Out-of-scope tool-call block rate", "100% block on unapproved schemas", "m"],
+  ["Runtime containment", "Session orchestrator & DLP", "Circuit-breaker latency & egress blocks", "< 50ms inline; zero secret egress", "p"],
+];
+
+function kpiList(items) {
+  return `<ul class="kpi">${items.map(([, name, tag, desc]) =>
+    `<li><div class="name">${esc(name)} ${TAG[tag]}</div><div class="desc">${esc(desc)}</div></li>`).join("")}</ul>`;
+}
+
+function page() {
+  const cmp = COMPARE.map(([p, t, a]) => `<tr><td style="font-weight:700;white-space:nowrap">${esc(p)}</td><td>${esc(t)}</td><td>${esc(a)}</td></tr>`).join("");
+  const score = SCORECARD.map(([cat, src, kpi, thr, tag]) =>
+    `<tr><td style="font-weight:700">${esc(cat)}</td><td class="muted small">${esc(src)}</td><td>${esc(kpi)}</td><td style="font-family:var(--font-mono);font-size:12.5px">${esc(thr)}</td><td>${TAG[tag]}</td></tr>`).join("");
+
+  $("page").innerHTML = `
+  <header style="padding:24px 0 2px"><h1>Purple Team</h1>
+    <p class="muted" style="max-width:76ch">The operator's view behind <a href="risk.html">Risk vs Confidence</a>. Where the executive page asks whether to trust the system, this one asks how Red's findings become Blue's runtime controls, and which of those controls this bench actually measures.</p></header>
+
+  <section><div class="card">
+    <h2 style="margin-top:0">Purple teaming, two ways</h2>
+    <p class="muted" style="max-width:78ch;margin:4px 0 0">When Red's findings train and validate Blue's controls, Risk vs Confidence stops being a governance question and becomes an empirical feedback loop. The loop looks different for deterministic systems than for probabilistic ones.</p>
+    <div class="lenses">
+      <div class="lens red"><div class="tag">TRADITIONAL PURPLE TEAM</div><h3>Validating deterministic controls</h3>
+        <p>Red simulates known tactics against static infrastructure; Blue tunes SIEM rules, EDR signatures and segmentation. Exploitability is weighed against detection and prevention.</p>
+        <p class="q">&ldquo;Did our controls block or alert on this specific attack path, and have we closed the gap?&rdquo;</p></div>
+      <div class="lens blue"><div class="tag">AI PURPLE TEAM</div><h3>Measuring probabilistic drift and containment</h3>
+        <p>A single injection may succeed 15% of the time and fail 85%, so one-off patching fails. Red probes semantic boundaries, multi-turn jailbreaks and tool-use hijacking; Blue instruments telemetry, I/O classifiers and least-agency circuit breakers.</p>
+        <p class="q">&ldquo;What is our verified attack-success rate across adversarial distributions, and how reliably do runtime controls contain the blast radius when a bypass occurs?&rdquo;</p></div>
+    </div>
+    <div class="tblwrap" style="margin-top:16px"><table class="tbl"><thead><tr><th>Operational pillar</th><th>Traditional purple team</th><th>AI purple team</th></tr></thead><tbody>${cmp}</tbody></table></div>
+    <div class="inshort"><b>In short:</b> a traditional purple team proves walls hold against known exploits; an AI purple team proves guardrails hold against probabilistic manipulation, turning Red's adversarial edge cases directly into Blue's runtime telemetry and blast-radius limits.</div>
+  </div></section>
+
+  <section><div class="card">
+    <h2 style="margin:0 0 6px">The Blue Team split: confidence vs containment</h2>
+    <p class="muted" style="max-width:82ch;margin:0 0 4px">An AI Blue Team cannot lean on request-level monitoring alone: an agent can return HTTP 200 in 150ms while exfiltrating a database through a hijacked tool call. Runtime telemetry splits in two. The tags say which this bench measures, which it covers partly, and which belong to a live deployment.</p>
+    <p class="small muted" style="margin:0 0 14px">${TAG.m} our runs produce this directly &nbsp; ${TAG.p} partly, on a fixed suite &nbsp; ${TAG.f} needs a live deployment; not instrumented here</p>
+    <div class="two">
+      <div><h3 style="margin:0 0 2px">Confidence KPIs</h3><p class="muted small" style="margin:0 0 4px">Is the model and its guardrails behaving within policy over time?</p>${kpiList(CONFIDENCE)}</div>
+      <div><h3 style="margin:0 0 2px">Containment KPIs</h3><p class="muted small" style="margin:0 0 4px">Assume a bypass will occasionally land. How well is the blast radius held?</p>${kpiList(CONTAINMENT)}</div>
+    </div>
+  </div></section>
+
+  <section><div class="card">
+    <h2 style="margin:0 0 2px">An operational scorecard</h2>
+    <p class="muted small" style="margin:0 0 10px">A target posture a running deployment would hold itself to. The thresholds are <b>targets, not this bench's results</b>; the last column says how far our runs reach toward each.</p>
+    <div class="tblwrap"><table class="tbl"><thead><tr><th>Telemetry category</th><th>Core signal / source</th><th>Primary KPI</th><th>Target threshold</th><th>Here</th></tr></thead><tbody>${score}</tbody></table></div>
+  </div></section>
+
+  <section><div class="card" style="max-width:84ch">
+    <h2 style="margin:0 0 6px">What this bench is, and isn't</h2>
+    <p>This project runs a fixed, preregistered adversarial suite against local models and reads harm from what the system actually did, never from what a model says. That gives honest, repeatable numbers for the measured rows above: attack-success rate, out-of-scope tool calls, privilege and egress, token velocity, and the defense's own latency.</p>
+    <p>The framework rows (semantic drift, rolling live windows, p95 latency under real load, and OpenTelemetry trace correlation that ties an anomalous write back to the injection that caused it) belong to a running deployment. This is the lab where Red's edge cases become Blue's thresholds, not the production monitor itself.</p>
+    <p class="small muted" style="margin-bottom:0">And the standing caveat: the attacker is the author one level up. A measured attack-success rate bounds confidence from one side; it is not every attack. Read it with its floor and its sample size, as on the <a href="risk.html">Risk vs Confidence</a> page.</p>
+  </div></section>`;
+}
+
+chrome("purpleteam.html");
+page();
+</script>
+</body>
+</html>

@@ -254,6 +254,78 @@ def cmd_run(a):
     return meta
 
 
+def _plan_run_all(tests, item=None, live=True):
+    """From the registry list, which experiments run-all will run and which it skips, with the reason. Pure, so it is
+    testable without running anything. Orchestrator experiments (the informed rounds) need `adt informed`; a live run
+    skips an experiment whose prediction is not committed, as a live run of it would be refused anyway."""
+    run, skips = [], []
+    for t in tests:
+        if item and t["item"].lower() != item.lower():
+            continue
+        if t.get("needs_orchestrator"):
+            skips.append((t["id"], "runs in rounds; use `adt informed`"))
+        elif live and not t.get("prereg", {}).get("ready", True):
+            skips.append((t["id"], t.get("prereg", {}).get("message", "prediction not committed")))
+        else:
+            run.append(t)
+    return run, skips
+
+
+def cmd_run_all(a):
+    """Run every runnable experiment in sequence and print each one's pass bar as it finishes."""
+    from . import registry, report
+    live = not a.scripted
+    run, skips = _plan_run_all(registry.list_tests(refresh=True), a.item, live)
+    if not run and not skips:
+        sys.exit("No runnable experiments found" + (f" for {a.item}." if a.item else "."))
+    if live and not a.models:
+        sys.exit("A live run-all needs models: --models llama3.1:8b,qwen2.5:7b  (or --scripted for a fast no-model pass).")
+    if live and a.max_temp:
+        gpucooler.install(gpucooler.GpuCooler(max_c=a.max_temp, settle_c=a.settle_temp, settle_max_s=a.settle_max))
+        t = gpucooler.read_temp_c()
+        print(f"GPU cooler: pausing above {a.max_temp}C" + (f" (GPU is {t}C now)" if t is not None else ""))
+    for tid, why in skips:
+        print(f"SKIP {tid}: {why}")
+    mode = "scripted" if a.scripted else "live"
+    print(f"\nRunning {len(run)} experiment(s), {mode}:\n")
+    outcomes = []
+    for i, t in enumerate(run, 1):
+        item, exp = t["item"].lower(), t["experiment"]
+        head = f"[{i}/{len(run)}] {t['item']} [{exp}]"
+        try:
+            sc = load_scenario(item, exp)
+            if hasattr(sc, "configure"):
+                sc.configure(reviewer=a.reviewer)
+            runners = [models.ScriptedRunner()] if a.scripted else (
+                sc.make_runners(a.models.split(",")) if hasattr(sc, "make_runners") else [models.make_runner(n) for n in a.models.split(",")])
+            print(f"{head}: {len(sc.cases())} cases x {len(sc.defenses)} defenses x {len(runners)} model(s) ...")
+            meta = harness.run(sc, runners, _results_dir(item, "scripted" if a.scripted else ""), mode=mode, defenses=sc.defenses)
+        except BaseException as e:                       # one experiment failing must not stop the batch
+            print(f"{head}: FAILED - {type(e).__name__}: {str(e)[:120]}\n")
+            outcomes.append((t["id"], "FAILED", f"{type(e).__name__}: {str(e)[:50]}"))
+            continue
+        finally:
+            if live:
+                harness.free_models()
+        if a.scripted:
+            line = f"{meta['records']} records (scripted)"
+        else:
+            r = report.build_report(meta["run_id"]) or {}
+            bar = r.get("pass_bar") or []
+            line = f"{sum(1 for c in bar if c['status'] == 'met')}/{len(bar)} criteria met" if bar else f"{meta['records']} records"
+            for c in bar:
+                if c["status"] != "met":
+                    print(f"    [{c['status']}] {c['id']}: {c['text'][:90]}")
+        print(f"{head}: {line}\n")
+        outcomes.append((t["id"], "ran", line))
+    print("=== run-all summary ===")
+    for tid, status, note in outcomes:
+        print(f"  {tid:44} {status:7} {note}")
+    for tid, why in skips:
+        print(f"  {tid:44} skip    {why}")
+    sys.exit(1 if any(s == "FAILED" for _, s, _ in outcomes) else 0)
+
+
 def _experiment_of(path: Path) -> str:
     meta = path.with_name(path.name.replace(".jsonl", ".meta.json"))
     return json.loads(meta.read_text(encoding="utf-8")).get("experiment", "first-run") if meta.exists() else "first-run"
@@ -428,6 +500,14 @@ def main(argv=None):
     s.add_argument("--settle-max", type=int, default=900, help="longest wait for --settle-temp, in seconds, before going on")
     s.add_argument("--scripted", action="store_true", help="human-written replies, never a result")
     s.add_argument("--exploratory", action="store_true", help="run without a committed prediction, labeled as such"); s.set_defaults(f=cmd_run)
+    s = sub.add_parser("run-all", help="run every runnable experiment in sequence, printing each one's pass bar as it finishes")
+    s.add_argument("--item", help="limit to one item, e.g. asi03")
+    s.add_argument("--models", help="agent models for live runs (omit and use --scripted for a fast no-model pass)")
+    s.add_argument("--reviewer", help="model that plays the approver, where an experiment has one")
+    s.add_argument("--max-temp", type=int, default=gpucooler.DEFAULT_MAX_C, help="pause live model calls above this many C; 0 turns the cooler off")
+    s.add_argument("--settle-temp", type=int, default=None); s.add_argument("--settle-max", type=int, default=900)
+    s.add_argument("--scripted", action="store_true", help="human-written replies, fast, never a result")
+    s.set_defaults(f=cmd_run_all)
     s = sub.add_parser("summary", help="score saved runs"); s.add_argument("item"); s.add_argument("--by", default="defense", help="comma list: defense,model,tier,attack,task")
     s.add_argument("--run"); s.add_argument("--exploratory", action="store_true"); s.add_argument("--experiment", **EXP); s.set_defaults(f=cmd_summary)
     s = sub.add_parser("verify", help="verify decision-log hash chains"); s.add_argument("log", nargs="?"); s.set_defaults(f=cmd_verify)

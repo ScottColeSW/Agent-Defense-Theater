@@ -22,6 +22,13 @@
   .inshort { background: var(--soft); border-left: 3px solid var(--accent-violet); padding: 12px 16px; border-radius: 8px; margin-top: 16px; font-size: 15px; }
   .two { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
   @media (max-width: 820px) { .lenses, .two { grid-template-columns: 1fr; } }
+  .code { background: var(--soft); border: 1px solid var(--border-color); border-radius: 10px; padding: 12px 14px; font-family: var(--font-mono); font-size: 12px; line-height: 1.55; overflow-x: auto; white-space: pre; color: var(--text-primary); margin: 0; }
+  .otelcols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 14px; }
+  .otelcols h4 { margin: 0 0 6px; font-size: 13px; letter-spacing: .03em; color: var(--text-secondary); }
+  @media (max-width: 900px) { .otelcols { grid-template-columns: 1fr; } }
+  details.attrs { margin-top: 16px; border-top: 1px solid var(--border-color); padding-top: 12px; }
+  details.attrs summary { cursor: pointer; font-weight: 700; font-size: 14px; color: var(--accent-blue); }
+  details.attrs h4 { margin: 14px 0 4px; font-size: 13px; font-family: var(--font-mono); color: var(--text-primary); }
 </style>
 </head>
 <body>
@@ -75,9 +82,107 @@ const SCORECARD = [
   ["Runtime containment", "Session orchestrator & DLP", "Circuit-breaker latency & egress blocks", "< 50ms inline; zero secret egress", "p"],
 ];
 
+const SPAN_TREE =
+`agent.session.turn            root: end-to-end latency, user identity, global agency scope
+ ├─ ai.guardrail.input         pre-inference: injection, PII and jailbreak classifiers
+ ├─ ai.rag.retrieve            vector search, metadata ACL check, chunk provenance
+ ├─ gen_ai.chat.completions    LLM step: token velocity, refusal and drift signals
+ ├─ ai.tool.execute            MCP / API proxy: least-agency check, parameter validation
+ │   └─ ai.guardrail.circuit_breaker   fires if the tool call violates scope
+ └─ ai.guardrail.output        post-inference: DLP, prompt-leak check, groundedness`;
+
+const SAMPLE_TRACE =
+`{
+  "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736",
+  "spans": [
+    { "span_id": "00f0...b7", "name": "agent.session.turn",
+      "attributes": {
+        "enduser.id": "usr_98a7f6",
+        "ai.sec.agency.allowed_tools": ["kb.search", "ticket.read"],
+        "ai.sec.containment.tripped": true } },
+    { "span_id": "11a1...c8", "parent_span_id": "00f0...b7", "name": "ai.rag.retrieve",
+      "attributes": {
+        "ai.sec.rag.namespace": "tenant_442_tickets",
+        "ai.sec.rag.doc_ids": ["tkt_9941"],
+        "ai.sec.rag.trust_tier": "untrusted_user_submission" } },
+    { "span_id": "22b2...d9", "parent_span_id": "00f0...b7", "name": "ai.tool.execute",
+      "status": { "code": "ERROR", "message": "Least-Agency Policy Violation" },
+      "attributes": {
+        "ai.tool.name": "crm.export_all_contacts",
+        "ai.sec.policy.decision": "deny_out_of_scope",
+        "ai.sec.containment.latency_ms": 4.2 } }
+  ]
+}`;
+
+// Honest bridge: the OTel schema is a reference design, but our runs already record most of these signals.
+const BRIDGE = [
+  ["Initiating identity & per-turn scope", "enduser.id, ai.sec.agency.allowed_tools", "ASI03 scoped broker: tier and allowed tools", "m"],
+  ["Out-of-scope tool call blocked", "ai.sec.policy.decision = deny_out_of_scope", "ASI02 / ASI03: exceeds-tier, unapproved-beyond-tier", "m"],
+  ["Delegated, attenuated authority", "ai.sec.delegated_auth.scope", "ASI03 request binding: own-scope vs admin keys", "m"],
+  ["Token velocity / context bloat", "gen_ai.usage.input_tokens / output_tokens", "every record; ASI03 ktp-capacity", "m"],
+  ["Data egress", "ai.sec.egress.bytes", "ASI05: did the staged secret actually leave the sandbox", "m"],
+  ["Groundedness", "ai.sec.groundedness.score", "ASI06 / BI01: forged-vs-grounded figure adoption", "m"],
+  ["Containment tripped", "ai.sec.containment.tripped", "ASI05 cap fired / ran-unchecked", "p"],
+  ["Guardrail latency", "ai.sec.guardrail.latency_ms", "defense_ms / gate_ms; `adt overhead`", "m"],
+  ["RAG provenance / trust tier", "ai.sec.rag.trust_tier, doc_ids", "ASI06 provenance labels (spoofable variant tested)", "p"],
+  ["Embedding / cosine drift", "ai.sec.rag.max_cosine_shift", "needs live traffic; not instrumented here", "f"],
+];
+
+const SPAN_ATTRS = [
+  ["agent.session.turn (root orchestrator)", [
+    ["enduser.id", "Ties every downstream action to the initiating human identity."],
+    ["ai.sec.session.id", "Tracks multi-turn attack progression (e.g. Crescendo jailbreaks)."],
+    ["ai.sec.agency.allowed_tools", "The deterministic least-agency allowlist for this turn."],
+    ["ai.sec.containment.tripped", "Top-level flag: did a runtime circuit breaker end the turn."]]],
+  ["ai.guardrail.input / output", [
+    ["ai.sec.guardrail.stage", "Ingress prompt inspection vs. egress DLP / groundedness."],
+    ["ai.sec.guardrail.action", "allow / block / redact: tracks refusal stability and FRR."],
+    ["ai.sec.guardrail.category", "The policy triggered (pii_leak, system_prompt_exfil, ...)."],
+    ["ai.sec.guardrail.latency_ms", "Inline enforcement overhead against the SLO."]]],
+  ["ai.rag.retrieve", [
+    ["ai.sec.rag.namespace", "Enforces tenant isolation on every query."],
+    ["ai.sec.rag.doc_ids", "Forensic traceability if a poisoned document hijacks the agent."],
+    ["ai.sec.rag.trust_tier", "Flags external chunks so stricter sanitization applies."],
+    ["ai.sec.rag.max_cosine_shift", "Embedding-distribution drift against baseline queries."]]],
+  ["gen_ai.chat.completions", [
+    ["gen_ai.request.model", "Exact model version (critical after silent provider updates)."],
+    ["gen_ai.usage.input_tokens / output_tokens", "Context bloat and token velocity."],
+    ["gen_ai.response.finish_reasons", "Stopped naturally, refused, or invoked a tool."],
+    ["ai.sec.groundedness.score", "Flags ungrounded claims post-inference."]]],
+  ["ai.tool.execute", [
+    ["ai.tool.name", "The specific tool or MCP function invoked."],
+    ["ai.tool.args.hash", "Hash of arguments for audit without logging raw PII."],
+    ["ai.sec.policy.decision", "Did the call match the agency allowlist."],
+    ["ai.sec.delegated_auth.scope", "Proves attenuated user permissions, not admin keys."],
+    ["ai.sec.egress.bytes", "Payload spikes indicative of staged exfiltration."]]],
+];
+
 function kpiList(items) {
   return `<ul class="kpi">${items.map(([, name, tag, desc]) =>
     `<li><div class="name">${esc(name)} ${TAG[tag]}</div><div class="desc">${esc(desc)}</div></li>`).join("")}</ul>`;
+}
+
+function otel() {
+  const bridge = BRIDGE.map(([sig, attr, where, tag]) =>
+    `<tr><td style="font-weight:700">${esc(sig)}</td><td style="font-family:var(--font-mono);font-size:12px">${esc(attr)}</td><td class="small">${esc(where)}</td><td>${TAG[tag]}</td></tr>`).join("");
+  const attrs = SPAN_ATTRS.map(([span, rows]) =>
+    `<h4>${esc(span)}</h4><div class="tblwrap"><table class="tbl"><tbody>${rows.map(([k, p]) =>
+      `<tr><td style="font-family:var(--font-mono);font-size:12px;white-space:nowrap">${esc(k)}</td><td class="small">${esc(p)}</td></tr>`).join("")}</tbody></table></div>`).join("");
+  return `<section><div class="card">
+    <h2 style="margin:0 0 6px">Unified tracing: the OpenTelemetry shape ${TAG.f}</h2>
+    <p class="muted" style="max-width:84ch;margin:0 0 4px">To tie an anomalous downstream call back to the exact chunk or turn that poisoned the context, a deployment runs one trace per request with a span at each trust boundary, extending the OTel GenAI conventions (<code>gen_ai.*</code>) with security attributes (<code>ai.sec.*</code>). This is the reference design behind the "trace correlation" row above; the bench does not emit it, but it records most of the same signals (see the mapping below).</p>
+    <div class="otelcols">
+      <div><h4>SPAN HIERARCHY (one trace per request)</h4><pre class="code">${esc(SPAN_TREE)}</pre></div>
+      <div><h4>SAMPLE TRACE: A BLOCKED INDIRECT INJECTION</h4><pre class="code">${esc(SAMPLE_TRACE)}</pre></div>
+    </div>
+    <p class="small muted" style="margin:10px 0 0">In a backend like Tempo, Honeycomb or Splunk, grouping <code>ai.sec.policy.decision == "deny_out_of_scope"</code> by <code>ai.sec.rag.doc_ids</code> isolates <code>tkt_9941</code> as the poisoning artifact and quarantines it from the vector store.</p>
+
+    <h3 style="margin:22px 0 2px">What this bench already records</h3>
+    <p class="muted small" style="margin:0 0 10px">The schema is a deployment's to emit, but these signals are not hypothetical here: our runs capture them under their own names today.</p>
+    <div class="tblwrap"><table class="tbl"><thead><tr><th>Security signal</th><th>OTel attribute</th><th>Where this bench records it</th><th>Here</th></tr></thead><tbody>${bridge}</tbody></table></div>
+
+    <details class="attrs"><summary>Full per-span security attributes (reference)</summary>${attrs}</details>
+  </div></section>`;
 }
 
 function page() {
@@ -119,6 +224,8 @@ function page() {
     <p class="muted small" style="margin:0 0 10px">A target posture a running deployment would hold itself to. The thresholds are <b>targets, not this bench's results</b>; the last column says how far our runs reach toward each.</p>
     <div class="tblwrap"><table class="tbl"><thead><tr><th>Telemetry category</th><th>Core signal / source</th><th>Primary KPI</th><th>Target threshold</th><th>Here</th></tr></thead><tbody>${score}</tbody></table></div>
   </div></section>
+
+  ${otel()}
 
   <section><div class="card" style="max-width:84ch">
     <h2 style="margin:0 0 6px">What this bench is, and isn't</h2>

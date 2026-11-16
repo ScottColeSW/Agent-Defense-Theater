@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Risk vs Confidence</title>
+<link rel="stylesheet" href="assets/app.css">
+<script src="assets/theme.js"></script>
+<style>
+  .hyp { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
+  .hyp .h { padding: 14px 16px; border-radius: 12px; border: 1px solid var(--border-color); background: var(--soft); }
+  .hyp .h .lab { font-weight: 800; letter-spacing: .04em; font-size: 12px; }
+  .hyp .h .claim { font-size: 17px; margin-top: 6px; line-height: 1.4; }
+  .hyp .h0 .lab { color: var(--amber-ink); } .hyp .h1 .lab { color: var(--green-ink); }
+  .controls { display: flex; gap: 22px; align-items: flex-end; flex-wrap: wrap; }
+  .controls label { display: block; font-size: 12px; font-weight: 700; color: var(--text-secondary); letter-spacing: .03em; margin-bottom: 5px; }
+  .controls .field input { width: 130px; font-family: var(--font-mono); font-size: 15px; }
+  .verdict { font-weight: 800; font-size: 12px; letter-spacing: .03em; white-space: nowrap; }
+  .verdict.yes { color: var(--green-ink); } .verdict.no { color: var(--amber-ink); }
+  .fnum { font-size: .72em; vertical-align: super; color: var(--accent-blue); font-weight: 700; }
+  .fn { counter-reset: fn; }
+  .fn li { margin: 7px 0; color: var(--text-secondary); font-size: 13px; line-height: 1.55; }
+  #chart { width: 100%; height: auto; }
+  .legend { display: flex; gap: 18px; flex-wrap: wrap; font-size: 12.5px; color: var(--text-secondary); margin-top: 6px; }
+  .legend i { display: inline-block; width: 11px; height: 11px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="site-nav" id="nav" aria-label="Site"></nav>
+  <div id="page"></div>
+</div>
+<footer id="foot"></footer>
+
+<script src="assets/app.js"></script>
+<script>
+const NIST = "https://www.itl.nist.gov/div898/handbook/prc/section2/prc241.htm";
+const F = n => "$" + Math.round(n).toLocaleString();
+let DATA = null, exposure = 1000, impact = 50000;
+
+// Residual loss is the ONLY part that moves with the assumptions: measured success rate x exposure x impact.
+const residual = rate => exposure * rate * impact;
+
+function rows() {
+  return DATA.rows.map(r => {
+    const best = r.success_best, base = r.success_baseline;
+    const floorContain = 1 - best.ci[1];              // one-sided 95% lower bound on containment (NIST 7.2.4.1)
+    // Reject the null when the defended attack-success interval sits entirely below the undefended one.
+    const reject = best.ci[1] < base.ci[0];
+    return Object.assign({}, r, {
+      floorContain, reject,
+      residualFloor: residual(best.ci[1]),             // headline residual, taken at the floor: never a bare $0
+      residualPoint: residual(best.rate),
+      undefended: residual(base.rate),
+      avoided: residual(base.rate) - residual(best.rate),
+    });
+  });
+}
+
+function hypothesisCard(rs) {
+  const rejected = rs.filter(r => r.reject).length, testable = rs.filter(r => r.success_baseline.rate > 0).length;
+  return `<section><div class="card">
+    <h2 style="margin-top:0">The question, as a wager</h2>
+    <p class="muted" style="max-width:72ch;margin:4px 0 0">Every defense is a bet. We stated the bet before the runs, then let the measured runs settle it.
+      A confidence interval is read here as a hypothesis test<span class="fnum">2</span>: the defense wins the bet only when the evidence clears the null.</p>
+    <div class="hyp">
+      <div class="h h0"><div class="lab">NULL (what we must disprove)</div>
+        <div class="claim">Our defenses don't reduce the chance of a costly breach.</div></div>
+      <div class="h h1"><div class="lab">ALTERNATIVE (what we hope to show)</div>
+        <div class="claim">Our defenses do reduce the chance of a costly breach.</div></div>
+    </div>
+    <p style="margin:14px 0 0;font-size:15px"><b>Where the evidence lands:</b> for <b>${rejected} of ${testable}</b> risks that an undefended run could even test,
+      the measured runs reject the null<span class="fnum">5</span>. The rest are not failures of the defense; they are risks where even the undefended
+      system let nothing through, so there is no gap to prove.</p>
+  </div></section>`;
+}
+
+function controls() {
+  return `<section><div class="card">
+    <h2 style="margin:0 0 4px">Your assumptions</h2>
+    <p class="muted" style="margin:0 0 14px;max-width:72ch">The two numbers below are business assumptions, not measurements<span class="fnum">1</span>. Change them and every dollar on this page follows;
+      not one percentage of containment moves, because that half is measured and fixed.</p>
+    <div class="controls">
+      <div class="field"><label for="exp">Attempts per year</label><input id="exp" type="number" min="0" step="100" value="${exposure}"></div>
+      <div class="field"><label for="imp">Cost of one breach ($)</label><input id="imp" type="number" min="0" step="1000" value="${impact}"></div>
+      <div class="muted small" style="max-width:40ch">One live deployment, one attack class. Pick figures your own context makes reasonable.</div>
+    </div>
+  </div></section>`;
+}
+
+function scatter(rs) {
+  const W = 880, H = 440, m = {t: 24, r: 64, b: 54, l: 96};
+  const iw = W - m.l - m.r, ih = H - m.t - m.b;
+  const yMax = Math.max(...rs.map(r => r.residualFloor), 1) * 1.15;
+  const x = c => m.l + c * iw;                         // c in 0..1 (containment floor)
+  const y = v => m.t + ih - (v / yMax) * ih;
+  const xticks = [0, .25, .5, .75, 1], yticks = 4;
+  let g = "";
+  // quadrant wash: good = high confidence + low residual (bottom-right), invest = low confidence + high residual (top-left)
+  g += `<rect x="${x(.6)}" y="${y(yMax * .45)}" width="${x(1) - x(.6)}" height="${y(0) - y(yMax * .45)}" fill="${tint(T.green, .10)}"/>`;
+  g += `<rect x="${x(0)}" y="${m.t}" width="${x(.6) - x(0)}" height="${y(yMax * .45) - m.t}" fill="${tint(T.red, .09)}"/>`;
+  g += `<text x="${x(1) - 6}" y="${y(0) - 10}" text-anchor="end" font-size="12" font-weight="700" fill="${T.greenInk}">well defended</text>`;
+  g += `<text x="${x(0) + 8}" y="${m.t + 16}" font-size="12" font-weight="700" fill="${T.redInk}">invest here</text>`;
+  for (const t of xticks) {
+    g += `<line x1="${x(t)}" y1="${m.t}" x2="${x(t)}" y2="${m.t + ih}" stroke="${T.grid}" stroke-width="1" opacity=".5"/>`;
+    g += `<text x="${x(t)}" y="${m.t + ih + 20}" text-anchor="middle" font-size="12" fill="${T.muted}">${Math.round(t * 100)}%</text>`;
+  }
+  for (let i = 0; i <= yticks; i++) {
+    const v = yMax * i / yticks;
+    g += `<line x1="${m.l}" y1="${y(v)}" x2="${m.l + iw}" y2="${y(v)}" stroke="${T.grid}" stroke-width="1" opacity=".5"/>`;
+    g += `<text x="${m.l - 10}" y="${y(v) + 4}" text-anchor="end" font-size="11" fill="${T.muted}">${F(v)}</text>`;
+  }
+  g += `<text x="${m.l + iw / 2}" y="${H - 10}" text-anchor="middle" font-size="13" font-weight="700" fill="${T.text}">Confidence &mdash; containment of our attack suite (95% floor)</text>`;
+  g += `<text transform="translate(18 ${m.t + ih / 2}) rotate(-90)" text-anchor="middle" font-size="13" font-weight="700" fill="${T.text}">Residual loss / year (at the floor)</text>`;
+  // Several items land on the same spot (identical containment and residual), so bucket coincident points: one dot,
+  // their labels stacked, so nothing overlaps.
+  const buckets = {};
+  for (const r of rs) {
+    const cx = x(r.floorContain), cy = y(r.residualFloor), key = Math.round(cx) + "," + Math.round(cy);
+    (buckets[key] = buckets[key] || {cx, cy, items: []}).items.push(r);
+  }
+  for (const k in buckets) {
+    const b = buckets[k], any = b.items.some(r => r.reject), all = b.items.every(r => r.reject);
+    const col = all ? T.green : any ? T.violet : T.amber;
+    const tipHtml = b.items.map(r => `<b>${esc(r.label)}</b> &mdash; floor ${Math.round(r.floorContain * 100)}% (n=${r.attack_n}), ${F(r.residualFloor)}/yr, ${r.reject ? "null rejected" : "no gap"}`).join("<br>");
+    g += `<circle cx="${b.cx}" cy="${b.cy}" r="${b.items.length > 1 ? 8 : 7}" fill="${tint(col, .55)}" stroke="${col}" stroke-width="2" data-tip='${tipHtml.replace(/'/g, "&#39;")}'/>`;
+    const left = (b.cx - m.l) / iw > 0.72;             // most points cluster at high containment: keep labels inside
+    b.items.forEach((r, i) => {
+      const ly = b.cy + 4 + (i - (b.items.length - 1) / 2) * 13;
+      g += `<text x="${b.cx + (left ? -11 : 11)}" y="${ly}" text-anchor="${left ? "end" : "start"}" font-size="11" font-weight="700" fill="${T.text}">${esc(r.item)}</text>`;
+    });
+  }
+  return `<section><div class="card">
+    <h2 style="margin:0 0 2px">Where each risk sits</h2>
+    <p class="muted small" style="margin:0 0 10px">Rightward is more confidence (better); downward is less money at stake. Each point is one OWASP risk, at your assumptions.</p>
+    <svg id="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Risk versus confidence scatter">${g}</svg>
+    <div class="legend"><span><i style="background:${tint(T.green, .55)};border:2px solid ${T.green}"></i>evidence rejects the null</span>
+      <span><i style="background:${tint(T.amber, .55)};border:2px solid ${T.amber}"></i>no undefended gap to test</span></div>
+  </div></section>`;
+}
+
+function table(rs) {
+  const body = rs.map(r => {
+    const v = r.reject ? `<span class="verdict yes">REJECT NULL</span>` : `<span class="verdict no">NO GAP</span>`;
+    const contain = `${(r.containment_rate * 100).toFixed(1)}% <span class="muted small">(floor ${Math.round(r.floorContain * 100)}%, n=${r.attack_n})</span>`;
+    return `<tr><td><b>${esc(r.item)}</b></td><td>${esc(r.label)}</td><td>${v}</td><td>${contain}</td>
+      <td><code>${esc(r.best_defense)}</code></td><td style="font-family:var(--font-mono)">${F(r.residualFloor)}</td>
+      <td style="font-family:var(--font-mono);color:var(--text-secondary)">${F(r.undefended)}</td>
+      <td style="font-family:var(--font-mono);color:var(--green-ink)">${F(r.avoided)}</td></tr>`;
+  }).join("");
+  return `<section><div class="card">
+    <div class="tblwrap"><table class="tbl"><thead><tr>
+      <th>Item</th><th>Risk (OWASP)</th><th>Hypothesis</th><th>Containment (best defense)</th><th>Best defense</th>
+      <th>Residual $/yr<span class="fnum">1</span></th><th>If undefended</th><th>Avoided $/yr<span class="fnum">3</span></th>
+    </tr></thead><tbody>${body}</tbody></table></div>
+    <p class="muted small" style="margin:12px 0 0">Containment is measured; every dollar is the assumption model on top of it. Residual is taken at the 95% floor, so a zero-failure run still carries the risk its sample size cannot rule out, never a bare $0.</p>
+  </div></section>`;
+}
+
+function footnotes() {
+  return `<section><div class="card">
+    <h2 style="margin:0 0 6px">Notes</h2>
+    <ol class="fn">
+      <li><b>The dollar model.</b> Residual loss per year = attempts &times; (1 &minus; containment) &times; cost per breach. Only this layer uses the assumptions above; it is demonstration, not a finding.</li>
+      <li><b>Confidence interval = hypothesis test.</b> Containment and its floor use the Wilson score interval for a proportion, whose lower limit cannot go below zero and which is the exact counterpart of the hypothesis test it inverts (NIST/SEMATECH e-Handbook of Statistical Methods, <a href="${NIST}" rel="noopener">&sect;7.2.4.1</a>). The &ldquo;floor&rdquo; is its one-sided 95% lower bound.</li>
+      <li><b>Avoided is a central estimate.</b> Undefended loss minus defended loss, both at their point estimates, so it never goes negative when even the undefended run let nothing through.</li>
+      <li><b>The attacker is the author.</b> Containment measures the attacks we wrote, not every possible attack. A high number is an upper bound on confidence, not a guarantee; read the floor and the sample size.</li>
+      <li><b>When the null is rejected.</b> Only when the defended attack-success interval sits entirely below the undefended one. Where the undefended system itself let nothing through, there is no gap to test, so the row is marked &ldquo;no gap,&rdquo; not a win.</li>
+    </ol>
+  </div></section>`;
+}
+
+function render() {
+  const rs = rows();
+  $("page").innerHTML = `<header style="padding:24px 0 2px"><h1>Risk vs Confidence</h1>
+    <p class="muted" style="max-width:74ch">The balance an executive actually weighs. Two layers, kept apart: what the runs <b>measured</b> about how well each defense holds, and a transparent <b>assumption</b> model that turns that into money. Nothing in dollars is a measurement.</p></header>
+    ${hypothesisCard(rs)}${controls()}${scatter(rs)}${table(rs)}${footnotes()}`;
+  const bind = (id, set) => { const el = $(id); el.addEventListener("input", () => { const v = Number(el.value); if (v >= 0) { set(v); render(); const f = $(id); f.focus(); f.setSelectionRange(f.value.length, f.value.length); } }); };
+  bind("exp", v => exposure = v);
+  bind("imp", v => impact = v);
+}
+
+async function main() {
+  chrome("risk.html");
+  try { DATA = await api("data/risk.json"); }
+  catch (e) { $("page").innerHTML = `<div class="notice bad" style="margin-top:24px"><b>No risk data yet.</b> Build it with <code>python tools/build_data.py</code> (or <code>adt build</code>). ${esc(e.message)}</div>`; return; }
+  exposure = DATA.assumptions.exposure_attempts_per_year;
+  impact = DATA.assumptions.breach_impact_usd;
+  render();
+}
+main();
+</script>
+</body>
+</html>

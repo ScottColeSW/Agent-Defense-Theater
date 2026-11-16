@@ -15,6 +15,7 @@ LABELS = {
 }
 RECORD_FIELDS = ["model", "defense", "attack", "tier", "task", "ticket", "outcome", "calls", "holds", "holds_approved", "model_ms",
                  "review_ms", "gate_ms", "thermal_wait_ms", "gpu_temp_c", "tokens_in", "tokens_out", "thinking_chars", "model_error", "attempted", "exceeds_tier"]
+TIER_ORDER = ["loud", "quiet", "adaptive", "blind", "informed"]   # attack tiers, in reporting order
 
 
 def _kind(path: Path) -> str:
@@ -91,8 +92,12 @@ def build_report(run_id: str, records: bool = True):
                                            "matches_recorded": ver.head == meta.get("decision_log_head"), "reason": ver.reason, "first_bad": ver.first_bad},
         "summary": rows, "by_tier": by(("defense", "tier")), "by_attack": by(("defense", "attack")), "by_model": by(("defense", "model")),
         "by_task": by(("defense", "task")),
-        "attack_tiers": [{"name": n, "tier": t} for n, t in sorted({(r["attack"], r["tier"]) for r in recs if r["attack"] != "none"},
-                                                                    key=lambda x: ["loud", "quiet", "adaptive", "blind", "informed"].index(x[1]))],
+        # Sort by tier, then by name: the source is a set, so without the name tiebreak the within-tier order follows
+        # set iteration (which varies between builds) and the saved report churns on every rebuild. An unfamiliar tier
+        # sorts last rather than raising.
+        "attack_tiers": [{"name": n, "tier": t} for n, t in sorted(
+            {(r["attack"], r["tier"]) for r in recs if r["attack"] != "none"},
+            key=lambda x: (TIER_ORDER.index(x[1]) if x[1] in TIER_ORDER else len(TIER_ORDER), x[0]))],
         "reviewer": {d: {"approve": sum(1 for r in reviews if r["defense"] == d and r["verdict"] == "approve"),
                          "deny": sum(1 for r in reviews if r["defense"] == d and r["verdict"] == "deny")} for d in sorted({r["defense"] for r in reviews})},
         "reviews": reviews[:800], "reviews_total": len(reviews),

@@ -33,6 +33,16 @@ LAYER = {"none": "none", "ppl_filter": "detect", "provenance_labels": "prevent",
 OUTCOME = {"ADOPTED_FORGED": "attack_succeeded", "BLOCKED": "blocked", "CONFLICT": "flagged",
            "TRUE": "task_succeeded", "NO_FIGURE": "task_failed"}
 HARDWARE = "Local models up to 8B on one workstation; this run used five small models."
+TIER_ORDER = ["loud", "quiet", "adaptive"]   # ASI03 attack tiers, in reporting order
+
+
+def attack_tiers(recs):
+    """A stable, deduplicated (name, tier) list. Sorts by tier then name: the source is a set, so without the name
+    tiebreak the within-tier order follows set iteration (which varies between builds) and the saved file churns on
+    every rebuild. An unfamiliar tier sorts last rather than raising."""
+    pairs = {(r["attack"], r["tier"]) for r in recs if r["attack"] != "none"}
+    key = lambda x: (TIER_ORDER.index(x[1]) if x[1] in TIER_ORDER else len(TIER_ORDER), x[0])
+    return [{"name": n, "tier": t} for n, t in sorted(pairs, key=key)]
 
 
 def build_coverage():
@@ -88,8 +98,7 @@ def build_asi03():
            "defenses": table(("defense",)), "by_tier": table(("defense", "tier")),
            "by_attack": table(("defense", "attack")), "by_attack_model": table(("defense", "attack", "model")),
            "by_model": table(("defense", "model")),
-           "attack_tiers": [{"name": n, "tier": tr} for n, tr in sorted({(r["attack"], r["tier"]) for r in recs if r["attack"] != "none"},
-                                                                          key=lambda x: ["loud", "quiet", "adaptive"].index(x[1]))]}
+           "attack_tiers": attack_tiers(recs)}
     (ROOT / "site" / "data" / "asi03.json").write_text(json.dumps(out, indent=1), encoding="utf-8")
     print(f"asi03.json: {len(recs)} records from {len(files)} run(s)")
 
@@ -140,8 +149,7 @@ def build_asi03_escalation():
            "hardware_note": metas[-1]["hardware_note"], "records": len(recs), "prediction": ASI03_ESC_PREDICTION, "reviewer": reviewer,
            "defenses": table(("defense",)), "by_model": table(("defense", "model")), "by_attack": table(("defense", "attack")),
            "by_task": table(("defense", "task")), "by_tier": table(("defense", "tier")), "gpu": gpu,
-           "attack_tiers": [{"name": n, "tier": t} for n, t in sorted({(r["attack"], r["tier"]) for r in recs if r["attack"] != "none"},
-                                                                        key=lambda x: ["loud", "quiet", "adaptive"].index(x[1]))]}
+           "attack_tiers": attack_tiers(recs)}
     (ROOT / "site" / "data" / "asi03-escalation.json").write_text(json.dumps(out, indent=1), encoding="utf-8")
     print(f"asi03-escalation.json: {len(recs)} records from {len(files)} run(s)")
 
@@ -215,7 +223,7 @@ def build_pav(pav: Path):
 
     models = meta["models"]
     payloads = sorted({r["variant"] for r in recs if r["variant"] != "baseline"},
-                      key=lambda p: list(d["ppl_filter"]["payloads"]).index(p) if p in d["ppl_filter"]["payloads"] else 99)
+                      key=lambda p: (list(d["ppl_filter"]["payloads"]).index(p) if p in d["ppl_filter"]["payloads"] else 99, p))
     defenses = []
     for dfn, desc in meta["defenses"].items():
         cost = d["costs"]["per_query"][dfn]

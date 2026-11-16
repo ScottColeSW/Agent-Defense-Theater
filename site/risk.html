@@ -23,6 +23,13 @@
   #chart { width: 100%; height: auto; }
   .legend { display: flex; gap: 18px; flex-wrap: wrap; font-size: 12.5px; color: var(--text-secondary); margin-top: 6px; }
   .legend i { display: inline-block; width: 11px; height: 11px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
+  .lenses { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
+  .lens { padding: 15px 17px; border-radius: 12px; border: 1px solid var(--border-color); background: var(--soft); }
+  .lens .tag { font-weight: 800; letter-spacing: .03em; font-size: 12px; color: var(--accent-blue); }
+  .lens h3 { margin: 4px 0 6px; font-size: 16px; }
+  .lens p { margin: 0 0 8px; font-size: 14px; line-height: 1.5; }
+  .lens .q { font-style: italic; color: var(--text-primary); border-left: 3px solid var(--accent-blue); padding-left: 10px; margin-top: 10px; }
+  @media (max-width: 760px) { .lenses, .hyp { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
@@ -55,6 +62,30 @@ function rows() {
       avoided: residual(base.rate) - residual(best.rate),
     });
   });
+}
+
+function lenses() {
+  const compare = [
+    ["Core tension", "Cost of controls vs. likelihood of breach", "Speed of innovation vs. unpredictability of behavior"],
+    ["Source of confidence", "Static verification, perimeter defense, least privilege", "Continuous red-teaming, runtime observability, least agency"],
+    ["Failure mode", "Binary compromise (unauthorized access or data exfiltration)", "Semantic manipulation (prompt injection, hallucination, unintended autonomous action)"],
+    ["Executive question", "“Are our walls high enough?”", "“Can we contain and audit what the system decides to do?”"],
+  ];
+  const body = compare.map(([d, t, a]) => `<tr><td style="font-weight:700;white-space:nowrap">${esc(d)}</td><td>${esc(t)}</td><td>${esc(a)}</td></tr>`).join("");
+  return `<section><div class="card">
+    <h2 style="margin-top:0">What &ldquo;confidence&rdquo; means here</h2>
+    <p class="muted" style="max-width:76ch;margin:4px 0 0">Executives read traditional security and AI security through different lenses of predictability. This page is built for the second one.</p>
+    <div class="lenses">
+      <div class="lens"><div class="tag">TRADITIONAL SECURITY</div><h3>Confidence in deterministic boundaries</h3>
+        <p>Software behaves predictably, so confidence comes from architecture: firewalls, access controls, encryption. A known weakness is weighed against a verifiable control.</p>
+        <p class="q">&ldquo;How much does it cost to push a quantifiable breach probability down to an acceptable level?&rdquo;</p></div>
+      <div class="lens"><div class="tag">AI SECURITY</div><h3>Confidence in probabilistic behavior</h3>
+        <p>Models are probabilistic and agents interpret intent rather than run rigid code, so absolute prevention is impossible. Confidence shifts from guaranteeing nothing goes wrong to proving the system fails safely, stays observable, and stays within strict agency bounds.</p>
+        <p class="q">&ldquo;Do we have enough runtime telemetry, guardrails, and blast-radius containment to trust a system whose exact outputs we cannot pre-verify?&rdquo;</p></div>
+    </div>
+    <div class="tblwrap" style="margin-top:16px"><table class="tbl"><thead><tr><th>Dimension</th><th>Traditional security</th><th>AI security</th></tr></thead><tbody>${body}</tbody></table></div>
+    <p style="margin:14px 0 0;font-size:14.5px;max-width:82ch"><b>So confidence here is not a promise of zero breaches.</b> It is measured containment of a known attack suite, reported with its floor and sample size, never a bare 100%. The risk left over is what that bounded, observable system still cannot rule out.</p>
+  </div></section>`;
 }
 
 function hypothesisCard(rs) {
@@ -174,7 +205,7 @@ function render() {
   const rs = rows();
   $("page").innerHTML = `<header style="padding:24px 0 2px"><h1>Risk vs Confidence</h1>
     <p class="muted" style="max-width:74ch">The balance an executive actually weighs. Two layers, kept apart: what the runs <b>measured</b> about how well each defense holds, and a transparent <b>assumption</b> model that turns that into money. Nothing in dollars is a measurement.</p></header>
-    ${hypothesisCard(rs)}${controls()}${scatter(rs)}${table(rs)}${footnotes()}`;
+    ${lenses()}${hypothesisCard(rs)}${controls()}${scatter(rs)}${table(rs)}${footnotes()}`;
   const bind = (id, set) => { const el = $(id); el.addEventListener("input", () => { const v = Number(el.value); if (v >= 0) { set(v); render(); const f = $(id); f.focus(); f.setSelectionRange(f.value.length, f.value.length); } }); };
   bind("exp", v => exposure = v);
   bind("imp", v => impact = v);

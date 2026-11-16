@@ -2,7 +2,19 @@
 
 A live range for testing defenses against the [OWASP Top 10 for Agentic Applications](https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/). Local AI models are attacked through tool protocols (real MCP servers in three of the items, simulated desks in the others), and every defense is scored by two numbers together: the attacks it stops and the legitimate work it still allows. Each prediction is committed before the run, and misses are reported.
 
-![The test runner: pick a test or run them all, choose scripted or live, and watch the GPU](docs/img/runner.png)
+## Read the range two ways
+
+Every run here produces two honest numbers together: the attacks a defense stops and the legitimate work it still allows. Two views turn those runs into a decision, one for executives and one for operators.
+
+**[Risk vs Confidence](site/risk.html)** is the executive read. Confidence is measured: how well the strongest defense contains the attack suite, reported with a 95% floor and the sample size, never a bare 100%. Risk is a transparent assumptions model on top, exposure × impact, that you move live. The dollars follow your inputs; not one measured percentage does. The chart places each OWASP risk by confidence and residual loss, and names two different investments: push a point down with stronger controls, push it right with harder, independent testing.
+
+![Risk vs Confidence: each OWASP risk placed by measured containment (with its 95% floor) and residual loss, over an assumptions model you move live](docs/img/risk-vs-confidence.jpg)
+
+**[Purple Team](site/purpleteam.html)** is the operator read: how Red's findings become Blue's runtime controls, a Confidence-versus-Containment KPI split, and an OpenTelemetry tracing shape. Every signal is tagged by whether this bench measures it, covers it partly, or leaves it to a live deployment, so the page never implies we instrument what we do not.
+
+![Purple Team: traditional versus AI purple teaming, with a Blue Team KPI scorecard tagged by what the bench actually measures](docs/img/purple-team.jpg)
+
+Both pages read a confidence interval as the hypothesis test it inverts ([NIST/SEMATECH e-Handbook §7.2.4.1](https://www.itl.nist.gov/div898/handbook/prc/section2/prc241.htm), the Wilson method the harness already uses), and both carry the same caveat: the attacker is the author one level up, so a high number bounds confidence, it does not guarantee it. Run `python adt.py serve --open` to use them live, or `python adt.py risk` for the table in a terminal.
 
 ## Why it exists
 
@@ -64,6 +76,8 @@ Every report opens with an at-a-glance view: each control gets a verdict (effect
 ## Quick start
 
 Python 3.10 or newer, standard library only. [Ollama](https://ollama.com) is needed to run live, and Node 18 or newer for the ASI02 calculators.
+
+![The test runner: pick a test or run them all, choose scripted or live, and watch the GPU](docs/img/runner.png)
 
 ```bash
 python adt.py serve --open     # the runner and the reports, at http://localhost:8765/start.html

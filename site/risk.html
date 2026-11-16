@@ -131,7 +131,7 @@ function scatter(rs) {
   g += `<rect x="${x(.6)}" y="${y(yMax * .45)}" width="${x(1) - x(.6)}" height="${y(0) - y(yMax * .45)}" fill="${tint(T.green, .10)}"/>`;
   g += `<rect x="${x(0)}" y="${m.t}" width="${x(.6) - x(0)}" height="${y(yMax * .45) - m.t}" fill="${tint(T.red, .09)}"/>`;
   g += `<text x="${x(1) - 6}" y="${y(0) - 10}" text-anchor="end" font-size="12" font-weight="700" fill="${T.greenInk}">well defended</text>`;
-  g += `<text x="${x(0) + 8}" y="${m.t + 16}" font-size="12" font-weight="700" fill="${T.redInk}">invest here</text>`;
+  g += `<text x="${x(0) + 8}" y="${m.t + 16}" font-size="12" font-weight="700" fill="${T.redInk}">harden &amp; re-test</text>`;
   for (const t of xticks) {
     g += `<line x1="${x(t)}" y1="${m.t}" x2="${x(t)}" y2="${m.t + ih}" stroke="${T.grid}" stroke-width="1" opacity=".5"/>`;
     g += `<text x="${x(t)}" y="${m.t + ih + 20}" text-anchor="middle" font-size="12" fill="${T.muted}">${Math.round(t * 100)}%</text>`;
@@ -163,7 +163,7 @@ function scatter(rs) {
   }
   return `<section><div class="card">
     <h2 style="margin:0 0 2px">Where each risk sits</h2>
-    <p class="muted small" style="margin:0 0 10px">Rightward is more confidence (better); downward is less money at stake. Each point is one OWASP risk, at your assumptions.</p>
+    <p class="muted small" style="margin:0 0 10px">Each point is one OWASP risk, at your assumptions. The two axes name two different investments: push a point <b>down</b> with stronger controls (tighter containment and least agency, smaller blast radius), and push it <b>right</b> with harder, independent testing (the only thing that raises measured confidence). A point in the top-left corner needs both; none sit there today, which the attacker-is-author caveat qualifies.</p>
     <svg id="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Risk versus confidence scatter">${g}</svg>
     <div class="legend"><span><i style="background:${tint(T.green, .55)};border:2px solid ${T.green}"></i>evidence rejects the null</span>
       <span><i style="background:${tint(T.amber, .55)};border:2px solid ${T.amber}"></i>no undefended gap to test</span></div>

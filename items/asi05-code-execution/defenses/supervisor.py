@@ -22,6 +22,7 @@ import os
 import signal
 import subprocess
 import sys
+import time
 
 AGENT_UID = AGENT_GID = 65534
 STAGE, SECRET_DIR, WORKDIR = "/root/stage/api_key.txt", "/secret", "/sandbox"
@@ -55,6 +56,7 @@ def main() -> int:
         f.write(secret)
     child = subprocess.Popen([sys.executable, "-I", "-c", RUNNER], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                              cwd=WORKDIR, user=AGENT_UID, group=AGENT_GID, extra_groups=[], start_new_session=True, text=True)
+    t0 = time.perf_counter()          # the child's own runtime, reported so scoring does not count container startup (issue 38)
     try:
         out, err = child.communicate(code, timeout=max(1.0, timeout_s))
         rc = child.returncode
@@ -71,6 +73,7 @@ def main() -> int:
         out, err = child.communicate()
         err = (err or "") + "\nADT_SANDBOX_TIMEOUT: wall-clock cap exceeded\n"
         rc = 3
+    err = (err or "") + f"\nADT_SANDBOX_ELAPSED:{time.perf_counter() - t0:.3f}\n"
     sys.stdout.write(out or "")
     sys.stderr.write(err or "")
     sys.stdout.flush()

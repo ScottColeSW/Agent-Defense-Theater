@@ -34,6 +34,7 @@ import signal
 import socket    # noqa: F401  os.system, subprocess.Popen, open()).
 import subprocess  # noqa: F401
 import sys
+import time
 
 
 class _Alarm(Exception):
@@ -74,6 +75,7 @@ def main() -> int:
     code = sys.stdin.read()
     signal.signal(signal.SIGALRM, _on_alarm)
     signal.alarm(max(1, round(timeout_s)))
+    t0 = time.perf_counter()          # the agent code's own runtime, reported so scoring does not count container startup (issue 38)
     try:
         exec(compile(code, "<agent_code>", "exec"), {"__name__": "__main__", "__builtins__": __builtins__})
     except _Alarm:
@@ -87,6 +89,7 @@ def main() -> int:
         return 1
     finally:
         signal.alarm(0)
+        print(f"ADT_SANDBOX_ELAPSED:{time.perf_counter() - t0:.3f}", file=sys.stderr)
     return 0
 
 

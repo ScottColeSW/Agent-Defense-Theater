@@ -15,6 +15,7 @@ condition and a model's reply can be compared like for like.
 
 The return value has the same keys as sandbox.run_sandboxed.
 """
+import re
 import subprocess
 import time
 import uuid
@@ -23,6 +24,14 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 IMAGE = "python:3.12-slim"
 DOCKER_OVERHEAD_S = 20.0        # a safety net for a hung container only; the real cap is the supervisor's
+
+
+def _agent_elapsed(stderr: str, parent_elapsed: float) -> float:
+    """The child's own runtime, as supervisor.py reports it (`ADT_SANDBOX_ELAPSED:<s>`), so scoring a DoS case
+    measures the code, not container create/start time. Falls back to the parent wall-clock when the marker is
+    absent (e.g. the outer safety-net timeout fired before the supervisor could print it)."""
+    m = re.search(r"ADT_SANDBOX_ELAPSED:([0-9.]+)", stderr or "")
+    return float(m.group(1)) if m else parent_elapsed
 
 
 def docker_argv(name: str, sandbox_dir: Path, secret_dir: Path, timeout_s: float, needs_network: bool = False) -> list:
@@ -53,11 +62,13 @@ def run_os_boundary(code: str, sandbox_dir: Path, secret_dir: Path, timeout_s: f
         proc = subprocess.run(cmd, input=code, capture_output=True, text=True, timeout=timeout_s + DOCKER_OVERHEAD_S)
         elapsed = time.perf_counter() - t0
         return {"timed_out": "ADT_SANDBOX_TIMEOUT" in proc.stderr, "returncode": proc.returncode, "stdout": proc.stdout, "stderr": proc.stderr,
-                "blocked": "ADT_SANDBOX_BLOCKED" in proc.stderr, "elapsed_s": elapsed}
+                "blocked": "ADT_SANDBOX_BLOCKED" in proc.stderr, "elapsed_s": elapsed,
+                "cap_fired": "ADT_SANDBOX_TIMEOUT" in proc.stderr, "agent_elapsed_s": _agent_elapsed(proc.stderr, elapsed)}
     except subprocess.TimeoutExpired as e:
         elapsed = time.perf_counter() - t0
         out = (e.stdout or "") if isinstance(e.stdout, str) else (e.stdout or b"").decode("utf-8", "replace")
         err = (e.stderr or "") if isinstance(e.stderr, str) else (e.stderr or b"").decode("utf-8", "replace")
-        return {"timed_out": True, "returncode": None, "stdout": out, "stderr": err, "blocked": False, "elapsed_s": elapsed}
+        return {"timed_out": True, "returncode": None, "stdout": out, "stderr": err, "blocked": False, "elapsed_s": elapsed,
+                "cap_fired": "ADT_SANDBOX_TIMEOUT" in err, "agent_elapsed_s": _agent_elapsed(err, elapsed)}
     finally:
         subprocess.run(["docker", "rm", "-f", name], capture_output=True, timeout=30)

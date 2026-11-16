@@ -21,6 +21,7 @@ host-side files behind both mounts live under the test's own temp directory (whi
 follows the pytesting_area convention) and are deleted when the case is done.
 """
 import os
+import re
 import shutil
 import socket
 import subprocess
@@ -35,6 +36,14 @@ DEFENSES_DIR = HERE
 SECRET_MARKER = "ADT-FAKE-SECRET-3c2a9f17"
 IMAGE = "python:3.12-slim"
 DOCKER_OVERHEAD_S = 20.0   # image already pulled, but container create/start still costs real seconds on this box
+
+
+def _agent_elapsed(stderr: str, parent_elapsed: float) -> float:
+    """The agent code's own runtime, as guard.py reports it (`ADT_SANDBOX_ELAPSED:<s>`), so scoring a DoS case
+    measures the code, not container create/start time. Falls back to the parent wall-clock when the marker is
+    absent (e.g. the outer safety-net timeout fired before guard.py could print it)."""
+    m = re.search(r"ADT_SANDBOX_ELAPSED:([0-9.]+)", stderr or "")
+    return float(m.group(1)) if m else parent_elapsed
 
 
 class Listener:
@@ -179,12 +188,14 @@ def run_sandboxed(code: str, mode: str, sandbox_dir: Path, secret_dir: Path, tim
         proc = subprocess.run(cmd, input=code, capture_output=True, text=True, timeout=timeout_s + DOCKER_OVERHEAD_S)
         elapsed = time.perf_counter() - t0
         return {"timed_out": "ADT_SANDBOX_TIMEOUT" in proc.stderr, "returncode": proc.returncode, "stdout": proc.stdout, "stderr": proc.stderr,
-                "blocked": "ADT_SANDBOX_BLOCKED" in proc.stderr, "elapsed_s": elapsed}
+                "blocked": "ADT_SANDBOX_BLOCKED" in proc.stderr, "elapsed_s": elapsed,
+                "cap_fired": "ADT_SANDBOX_TIMEOUT" in proc.stderr, "agent_elapsed_s": _agent_elapsed(proc.stderr, elapsed)}
     except subprocess.TimeoutExpired as e:
         elapsed = time.perf_counter() - t0
         out = (e.stdout or "") if isinstance(e.stdout, str) else (e.stdout or b"").decode("utf-8", "replace")
         err = (e.stderr or "") if isinstance(e.stderr, str) else (e.stderr or b"").decode("utf-8", "replace")
-        return {"timed_out": True, "returncode": None, "stdout": out, "stderr": err, "blocked": False, "elapsed_s": elapsed}
+        return {"timed_out": True, "returncode": None, "stdout": out, "stderr": err, "blocked": False, "elapsed_s": elapsed,
+                "cap_fired": "ADT_SANDBOX_TIMEOUT" in err, "agent_elapsed_s": _agent_elapsed(err, elapsed)}
     finally:
         subprocess.run(["docker", "rm", "-f", name], capture_output=True, timeout=30)
 

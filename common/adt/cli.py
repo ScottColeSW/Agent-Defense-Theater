@@ -13,7 +13,7 @@ import tempfile
 import webbrowser
 from pathlib import Path
 
-from . import resources, decisionlog, gpucooler, harness, models, scorer
+from . import resources, decisionlog, gpucooler, harness, models, risk, scorer
 from .loader import ITEMS, ROOT, experiments, item_folder, item_folders, load_scenario, results_dir
 
 TAG = {"prereg": "prereg", "exploratory": "exploratory", "scripted": "scripted"}
@@ -372,6 +372,50 @@ def cmd_summary(a):
     print("Counts are k/n. With n this small, step size is 100/n points; see the per-cell n before reading a difference.")
 
 
+def _usd(x) -> str:
+    return f"${x:,.0f}"
+
+
+def cmd_risk(a):
+    assumptions = {"exposure_attempts_per_year": a.exposure, "breach_impact_usd": a.impact}
+    items = [a.item.lower()] if a.item else None
+    rows = risk.all_item_risks(items=items, experiment=a.experiment, assumptions=assumptions)
+    if not rows:
+        sys.exit(f"No preregistered runs to score for [{a.experiment}]" + (f" on {a.item.upper()}" if a.item else "") + ".")
+    if a.json:
+        print(json.dumps({"assumptions": assumptions, "experiment": a.experiment, "rows": rows}, indent=2))
+        return
+
+    print("RISK vs CONFIDENCE  (demonstrative)\n")
+    print("Two layers, kept apart:")
+    print("  Confidence = MEASURED. The strongest defense's containment of our attack suite, from the committed runs,")
+    print("               with the 95% floor (what it can be defended as being at least) and the sample size n.")
+    print("  Residual $ = ASSUMPTIONS applied to that measurement, not a finding:")
+    print(f"               exposure x (1 - containment) x impact, with exposure = {assumptions['exposure_attempts_per_year']:,}/yr "
+          f"and impact = {_usd(assumptions['breach_impact_usd'])}/breach (change with --exposure / --impact).")
+    print("               Residual is taken at the 95% floor, so a zero-failure run still carries the risk its sample")
+    print("               size cannot rule out, rather than a bare $0.\n")
+
+    head = ["item", "risk (OWASP)", "attacks", "containment (best defense)", "best defense",
+            "residual $/yr (floor)", "if undefended", "avoided $/yr"]
+    table = [head]
+    for r in rows:
+        contain = f"{r['containment_rate']*100:.1f}%  (floor {r['containment_floor']*100:.0f}%, n={r['attack_n']})"
+        table.append([r["item"], r["label"], f"{r['attack_n']}", contain, r["best_defense"],
+                      _usd(r["residual_floor_usd"]), _usd(r["residual_baseline_usd"]), _usd(r["risk_reduced_usd"])])
+    widths = [max(len(row[i]) for row in table) for i in range(len(head))]
+    for i, row in enumerate(table):
+        print("  ".join(c.ljust(widths[j]) for j, c in enumerate(row)))
+        if i == 0:
+            print("  ".join("-" * widths[j] for j in range(len(head))))
+
+    print("\nHow to read it:")
+    print("  - Confidence measures the attacks WE wrote, not every possible attack. The attacker is the author one level")
+    print("    up, so a high containment is an upper bound on confidence, not a guarantee. Read the floor and the n.")
+    print("  - The frequency and dollar figures are demonstration assumptions, chosen to be reasonable and clear. They are")
+    print("    not measured. The measured half is the containment; everything in dollars is that assumption model on top.")
+
+
 def cmd_verify(a):
     paths = [Path(a.log)] if a.log else (sorted(g for f in item_folders() for g in f.glob("results/**/*.decisions.jsonl")) +
                                          sorted((Path(tempfile.gettempdir()) / "adt").glob("*/*/*.decisions.jsonl")))
@@ -510,6 +554,13 @@ def main(argv=None):
     s.set_defaults(f=cmd_run_all)
     s = sub.add_parser("summary", help="score saved runs"); s.add_argument("item"); s.add_argument("--by", default="defense", help="comma list: defense,model,tier,attack,task")
     s.add_argument("--run"); s.add_argument("--exploratory", action="store_true"); s.add_argument("--experiment", **EXP); s.set_defaults(f=cmd_summary)
+    s = sub.add_parser("risk", help="Risk vs Confidence: measured containment under a transparent assumptions model")
+    s.add_argument("item", nargs="?", help="one item (default: every item with a preregistered run)")
+    s.add_argument("--experiment", **EXP)
+    s.add_argument("--exposure", type=int, default=risk.ASSUMPTIONS["exposure_attempts_per_year"], help="assumed attempts per year (demonstration, not measured)")
+    s.add_argument("--impact", type=int, default=risk.ASSUMPTIONS["breach_impact_usd"], help="assumed $ cost per successful breach (demonstration, not measured)")
+    s.add_argument("--json", action="store_true", help="emit the rows and assumptions as JSON")
+    s.set_defaults(f=cmd_risk)
     s = sub.add_parser("verify", help="verify decision-log hash chains"); s.add_argument("log", nargs="?"); s.set_defaults(f=cmd_verify)
     s = sub.add_parser("demo", help="scripted ASI03 run, then verify its log"); s.add_argument("--experiment", **EXP); s.set_defaults(f=cmd_demo)
     s = sub.add_parser("prereg", help="check an item's prediction is committed"); s.add_argument("item"); s.add_argument("--experiment", **EXP); s.set_defaults(f=cmd_prereg)

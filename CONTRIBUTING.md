@@ -35,6 +35,17 @@ At least one test (`test_thinking_scripted_run_and_sidecar` in `common/tests/tes
 5. **Keep the docs in step.** When an item's status changes, update `crosswalk/coverage.csv` first, then `site/data/coverage.json`, the README coverage table and `docs/LIMITS-AND-ANSWERS.md`. See [`crosswalk/README.md`](crosswalk/README.md).
 6. **Plain writing.** Use periods, commas or parentheses, not em dashes. Some documents are checked by a test.
 
+## Defense design checklist
+
+Before a new or changed defense claims a number, check it against the six ways the November 2026 review found defenses that scored 0% could still be bypassed in a line or two (issue [#33](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/33)). A defense that fails any of these has not been shown to hold, whatever its measured rate.
+
+1. **Type and bound every model-written value before trusting it.** A reply can carry `NaN`, `-Infinity`, a string where a boolean belongs, a newline in a field, or a repeated JSON key. Reject non-finite and out-of-range numbers, wrong types, and duplicate keys at the boundary, not after.
+2. **Put the control outside the thing it controls.** An audit hook or a timeout that runs in the agent's own interpreter can be switched off by the agent's code; a secret or a cap enforced by a separate process cannot. A signature must cover the field it protects (the deal id inside the signature, not beside it).
+3. **Do not let text matching stand in for intent.** A word appearing, a string ending in a domain, or an id as a substring is not authorization. Prefer a typed, declared grant over a cue-word match; where only a heuristic is possible, say so and do not call it a measured control.
+4. **Keep a scorer that does not reuse the defense's parsing.** At least one scorer per item reads harm from what actually happened (a database difference, a call that reached a server), so the defense and the scorer do not share a blind spot. Test that scorer against the values in item 1.
+5. **Enforce "unclear means deny", do not just state it.** A verdict reader that falls through to allow on an answer it cannot parse is not fail-closed. Resolve anything unclear restrictively, in the code.
+6. **Face an adaptive attacker who knows the defense, before claiming it holds.** Run a round of attacks written against the defense as built by someone who is not its author (the `attackgen` blind generator and the `informed` adaptive rounds are the tools), preregistered as a new experiment. If you wrote the bypass yourself, say so: the attacker is then not independent, which is a stated limit, not a disqualification.
+
 ## Keys and secrets
 
 Copy `keys.example.ini` to `keys.ini` only if you use hosted models. Git ignores `keys.ini`, and a test fails if a configured key, or a string shaped like one, is found in a tracked or uncommitted file. Set `max_calls` under `[limits]` to cap spend. A key pasted into a chat, screenshot or log is exposed: revoke it at the provider.

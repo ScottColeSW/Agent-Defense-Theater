@@ -248,6 +248,18 @@ def build_pav(pav: Path):
     print(f"asi06-defenses.json: {len(defenses)} defenses, {len(recs)} records from {commit[:8]}")
 
 
+def build_risk():
+    """The Risk-vs-Confidence rows: measured containment (with its Wilson interval and the baseline) and the default
+    demonstration assumptions. The dollars are left for the page to compute, so a reader can move exposure and impact
+    and watch the residual change without a rebuild. The measured half is fixed here; only the assumptions move."""
+    sys.path.insert(0, str(ROOT / "common"))
+    from adt import risk
+    rows = risk.all_item_risks()
+    out = {"assumptions": risk.ASSUMPTIONS, "experiment": "first-run", "rows": rows}
+    (ROOT / "site" / "data" / "risk.json").write_text(json.dumps(out, indent=1, ensure_ascii=False), encoding="utf-8")
+    print(f"risk.json: {len(rows)} item(s)")
+
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--pav", type=Path, help="path to a Project-Aegis-Vector checkout")
@@ -256,5 +268,6 @@ if __name__ == "__main__":
     build_asi03()
     build_asi03_escalation()
     build_runner_data()
+    build_risk()
     if a.pav:
         build_pav(a.pav)

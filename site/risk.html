@@ -188,6 +188,22 @@ function table(rs) {
   </div></section>`;
 }
 
+function raiseFloor() {
+  const DOC = "https://github.com/ScottColeSW/Agent-Defense-Theater/blob/main/docs/RAISING-CONFIDENCE.md";
+  return `<section><div class="card" style="max-width:84ch">
+    <h2 style="margin:0 0 6px">What would raise this floor</h2>
+    <p>A high containment floor is an upper bound on confidence, not a guarantee, for two separate reasons. <b>The attacker is the author:</b> the same work built the defenses and wrote the attacks that test them. <b>And small models can flatter the defense:</b> a weaker agent sometimes just fails to write the bypass it was nudged toward, so a low attack rate can be model incapacity read as containment. So the floor is conservative twice over, it assumes our attacks and an agent no smarter than an 8B, and both can only make the real residual larger, never smaller.</p>
+    <p style="margin-bottom:6px">The chart names the lever: push right with harder, independent testing. In order of how much they close those gaps:</p>
+    <ol style="margin:0;padding-left:20px;line-height:1.6">
+      <li><b>An independent attacker</b> (a human red team, or a model that never saw the defenses). The only direct answer to attacker-is-author. <a href="https://github.com/ScottColeSW/Agent-Defense-Theater/issues/33" rel="noopener">Issue 33</a>.</li>
+      <li><b>A more capable agent.</b> Run the agents under attack, not just the attackers, on larger hosted models. A smarter agent is a harder test, and the direct answer to the small-model limit.</li>
+      <li><b>More replicates, wider distribution.</b> Confidence is a distribution; more runs tighten the interval and move the point right without touching the defense.</li>
+      <li><b>Live-deployment telemetry.</b> The Framework-tagged KPIs on <a href="purpleteam.html">Purple Team</a>, validated under real traffic.</li>
+    </ol>
+    <p class="small muted" style="margin:12px 0 0">The run pattern and the full write-up: <a href="${DOC}" rel="noopener">RAISING-CONFIDENCE.md</a>. Re-run on every defense change, track the floor over time, re-test after a model swap.</p>
+  </div></section>`;
+}
+
 function footnotes() {
   return `<section><div class="card">
     <h2 style="margin:0 0 6px">Notes</h2>
@@ -205,7 +221,7 @@ function render() {
   const rs = rows();
   $("page").innerHTML = `<header style="padding:24px 0 2px"><h1>Risk vs Confidence</h1>
     <p class="muted" style="max-width:74ch">The balance an executive actually weighs. Two layers, kept apart: what the runs <b>measured</b> about how well each defense holds, and a transparent <b>assumption</b> model that turns that into money. Nothing in dollars is a measurement.</p></header>
-    ${lenses()}${hypothesisCard(rs)}${controls()}${scatter(rs)}${table(rs)}${footnotes()}`;
+    ${lenses()}${hypothesisCard(rs)}${controls()}${scatter(rs)}${table(rs)}${raiseFloor()}${footnotes()}`;
   const bind = (id, set) => { const el = $(id); el.addEventListener("input", () => { const v = Number(el.value); if (v >= 0) { set(v); render(); const f = $(id); f.focus(); f.setSelectionRange(f.value.length, f.value.length); } }); };
   bind("exp", v => exposure = v);
   bind("imp", v => impact = v);

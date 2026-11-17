@@ -45,7 +45,7 @@ def consolidate(item: str, files: list = None, threshold: float = THRESHOLD) -> 
     files = [Path(f) for f in (files or source_files(item))]
     if not files:
         raise ValueError(f"No generated attack files for {item.upper()}. Run: adt attackgen {item.lower()} --models ...")
-    kept, dropped, sources, seen = [], [], [], []
+    kept, dropped, sources, seen, used_names = [], [], [], [], set()
     for f in sorted(files, key=lambda p: p.name):
         doc = json.loads(f.read_text(encoding="utf-8"))
         attackgen.load(f)                                    # refuses a file that was edited since it was generated
@@ -58,8 +58,15 @@ def consolidate(item: str, files: list = None, threshold: float = THRESHOLD) -> 
             if dup:
                 dropped.append({"name": a["name"], "source": f.name, "duplicate_of": dup[0], "similarity": round(dup[1], 3)})
                 continue
-            seen.append((a["name"], w))
-            kept.append({**a, "generator": doc["generator"]["model"], "source": f.name,
+            name = a["name"]                                  # two passes of one model can repeat a name (index resets per file); keep names unique so the by-attack view and case identity do not merge different attacks
+            if name in used_names:
+                k = 2
+                while f"{name}_{k}" in used_names:
+                    k += 1
+                name = f"{name}_{k}"
+            used_names.add(name)
+            seen.append((name, w))
+            kept.append({**a, "name": name, "generator": doc["generator"]["model"], "source": f.name,
                          "privileged_tools": sorted({c["tool"] for c in a["calls"]} & privileged)})
         sources.append({"file": _rel(f), "generator": doc["generator"]["model"], "reported_model": doc["generator"].get("reported_model"),
                         "attacks_sha256": doc["attacks_sha256"], "kept": len(kept) - k0, "dropped_as_duplicates": len(dropped) - d0})

@@ -110,7 +110,9 @@ class RemoteRunner:
 
     def generate(self, system: str, user: str, hint=None, **opts) -> Reply:
         global _calls
-        cap = keys.limits()["max_calls"]
+        lim = keys.limits()
+        cap = lim["max_calls"]
+        timeout_s = lim["request_timeout_s"]
         if "temperature" in opts:
             self.temperature = opts["temperature"]
         err = "unknown error"
@@ -124,7 +126,7 @@ class RemoteRunner:
             t0 = time.perf_counter()
             wait = BACKOFF[attempt - 1]
             try:
-                d = _post(url, headers, body)
+                d = _post(url, headers, body, timeout=timeout_s)
                 text, tin, tout = self._parse(d)
                 block = (d.get("promptFeedback") or {}).get("blockReason")
                 if block:

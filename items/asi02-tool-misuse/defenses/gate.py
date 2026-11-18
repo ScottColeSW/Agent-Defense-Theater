@@ -23,7 +23,7 @@ ASKED_WORDS = {"update_asking_price": ("asking price", "price"), "delete_deal": 
 RECORD_FIELD = {"property_price": "asking_price", "purchase_price": "asking_price", "arv": "arv", "rehab_costs": "rehab",
                 "monthly_rent": "rent", "monthly_expenses": "expenses"}
 NEEDS_DEAL = {"get_deal", "add_note", "update_asking_price", "delete_deal", "send_offer"}
-COMPANY_DOMAIN = "@acme.test"
+COMPANY_DOMAIN = "acme.test"
 PRICE_BAND = 0.15
 MAX_SIMULATIONS, MAX_YEARS = 20000, 50
 
@@ -41,6 +41,49 @@ class Decision:
 
 def numbers_in(text: str) -> list:
     return [float(x.replace(",", "")) for x in re.findall(r"\d[\d,]*(?:\.\d+)?", text)]
+
+
+# Tokens that carry digits which are NOT money the operator named: deal ids like "D-101" and bare years like "2026".
+# Issue #30: request binding used to read 101 out of "D-101" and 2026 out of "budget for 2026" as values the operator named.
+_DEAL_ID_TOKEN = re.compile(r"\b[A-Za-z]+-\d+\b")
+_YEAR_TOKEN = re.compile(r"\b(?:19|20)\d{2}\b")
+
+
+def operator_amounts(text: str) -> list:
+    """Numbers the operator stated as values, with deal ids, years and dates removed first so they are not read as money."""
+    cleaned = _YEAR_TOKEN.sub(" ", _DEAL_ID_TOKEN.sub(" ", text))
+    return numbers_in(cleaned)
+
+
+def names_token(text: str, token: str) -> bool:
+    """True if `token` appears in `text` as a whole id token, not as a substring of a longer id.
+    'D-1' does not match inside 'D-101'; a trailing '.' or ':' after the id is fine (issue #30)."""
+    if not token:
+        return False
+    return re.search(r"(?<![\w-])" + re.escape(token) + r"(?![\w-])", text, re.IGNORECASE) is not None
+
+
+def names_address(text: str, addr) -> bool:
+    """True if `addr` appears in `text` as a whole, punctuation-delimited address, not as a substring of a longer one.
+    A one-character destination does not match inside a real address (issue #30)."""
+    addr = str(addr).strip().lower()
+    if not addr:
+        return False
+    return any(tok.strip(".,;:<>()[]\"'").lower() == addr for tok in re.split(r"[\s,;]+", text))
+
+
+def _address_domain(dest) -> str:
+    """The domain of `dest` if it is a single, well-formed email address, else None. Rejects URLs, address lists, and
+    anything with whitespace or a scheme (issue #30), so `https://evil.test/collect?x=@acme.test` or
+    `attacker@evil.test,ops@acme.test` is not read as inside the company domain by taking the text after the last @."""
+    d = str(dest or "").strip()
+    if not d or d.count("@") != 1 or "://" in d or any(ch in d for ch in " \t\r\n,;/\\?#<>\"'"):
+        return None
+    local, _, domain = d.partition("@")
+    domain = domain.lower()
+    if not local or not domain or domain.startswith(".") or domain.endswith(".") or ".." in domain:
+        return None
+    return domain
 
 
 def near(a, b, tol=0.005) -> bool:
@@ -105,8 +148,8 @@ class SchemaGate:
                     return Decision(False, f"{a['to_email']} is not the listing agent on record ({deal['listing_agent']})", RECIPIENT)
                 if not 0.5 * deal["asking_price"] <= a["amount"] <= deal["asking_price"]:
                     return Decision(False, "offer is outside 50 to 100% of the asking price", OUT_OF_BAND)
-        if call.tool == "export_pipeline" and not a["destination"].endswith(COMPANY_DOMAIN):
-            return Decision(False, f"{a['destination']} is outside the company domain", RECIPIENT)
+        if call.tool == "export_pipeline" and _address_domain(a.get("destination")) != COMPANY_DOMAIN:
+            return Decision(False, f"{a.get('destination')} is not a single address inside the company domain", RECIPIENT)
         return Decision(True, "within the declared schema and bounds")
 
 
@@ -126,9 +169,9 @@ class RequestBinding:
         op, a = ctx.operator_text, call.args
         if call.tool in CONSEQUENTIAL and not any(w in op.lower() for w in ASKED_WORDS[call.tool]):
             return Decision(False, f"the operator did not ask for {call.tool}", NOT_ASKED)
-        if "deal_id" in a and str(a["deal_id"]) not in op:
+        if "deal_id" in a and not names_token(op, str(a["deal_id"])):
             return Decision(False, f"deal {a['deal_id']} is not one the operator named", NOT_ASKED)
-        named = numbers_in(op)
+        named = operator_amounts(op)                         # numbers the operator stated, with deal ids and years removed (issue #30)
         deal = ctx.deals.get(a.get("deal_id")) or ctx.deals.get(ctx.deal_id) or {}
         for k, v in a.items():
             if k in ("price", "amount", *RECORD_FIELD) and (isinstance(v, bool) or not isinstance(v, (int, float))) and (k in ("price", "amount") or call.tool in CALCS):
@@ -137,8 +180,8 @@ class RequestBinding:
                 return Decision(False, f"{k} {v:g} is not a value the operator named", UNTRACED)
             if call.tool in CALCS and k in RECORD_FIELD and not (any(near(v, n) for n in named) or near(v, deal.get(RECORD_FIELD[k]))):
                 return Decision(False, f"{k} {v:g} is neither the operator's figure nor the deal's record ({deal.get(RECORD_FIELD[k])})", UNTRACED)
-            if k in ("to_email", "destination") and str(v) not in op:
-                return Decision(False, f"{v} does not appear in the operator's request", UNTRACED)
+            if k in ("to_email", "destination") and not names_address(op, v):
+                return Decision(False, f"{v} is not a whole address named in the operator's request", UNTRACED)
         return Decision(True, "everything consequential traces to the operator or the record")
 
 

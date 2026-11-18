@@ -40,7 +40,7 @@ flowchart TB
     provider ---|"6 · provenance checked before any call"| agent
 ```
 
-This draft is deliberately plain. A contributor is welcome to replace it with a more polished visual (see [issue 37](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/37)): a tool such as Canva, Excalidraw or draw.io, exported as an SVG committed under `docs/img/`, works well, as long as it keeps the six numbered boundaries, has a transparent background, and uses no pure-white or pure-black fills so it stays legible in both GitHub themes.
+The diagram is deliberately plain, and its six numbered boundaries match the coverage table below. A more polished visual is welcome as a drop-in replacement: a tool such as Canva, Excalidraw or draw.io, exported as an SVG committed under `docs/img/`, works well, as long as it keeps the six numbered boundaries, has a transparent background, and uses no pure-white or pure-black fills so it stays legible in both GitHub themes.
 
 **Out of scope.** Model training attacks, model theft, and infrastructure attacks unrelated to agents. Container and kernel escapes (the ASI05 sandbox claims only that the agent's own code cannot leave it, not that the container cannot be broken by other means).
 

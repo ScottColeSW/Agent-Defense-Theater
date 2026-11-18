@@ -38,6 +38,35 @@ def test_manifest_pin_sees_a_changed_description_a_lookalike_and_a_missing_tool(
     assert pin.code_fingerprint([ITEM / "scenario.py"], "a") != pin.code_fingerprint([ITEM / "scenario.py"], "b")
 
 
+def test_code_pin_sees_boundaries_renames_and_unlisted_files(tmp_path):
+    """Issue #31: the code pin must see bytes moved across a file boundary, a rename, and a file added beside the listed ones."""
+    load_scenario("asi04")
+    pin = _pin()
+    a, b = tmp_path / "a.js", tmp_path / "b.js"
+    a.write_bytes(b"AAAA")
+    b.write_bytes(b"BBBB")
+    base = pin.code_fingerprint([a, b])
+    assert pin.code_fingerprint([a, b]) == base                       # an unchanged tree verifies
+
+    a.write_bytes(b"AAAABBBB")                                         # move the whole of b.js onto a.js, leave b.js empty:
+    b.write_bytes(b"")                                                 # the combined bytes are unchanged, but the boundary moved
+    assert pin.code_fingerprint([a, b]) != base
+
+    a.write_bytes(b"AAAA")
+    b.write_bytes(b"BBBB")
+    c = tmp_path / "c.js"
+    b.rename(c)                                                        # same contents, different name
+    assert pin.code_fingerprint([a, c]) != base
+
+    assert pin.unlisted_files(str(tmp_path), [a, c]) == []             # nothing unlisted yet
+    (tmp_path / "evil.js").write_bytes(b"x")
+    assert pin.unlisted_files(str(tmp_path), [a, c]) == ["evil.js"]    # a file added beside the pinned ones is caught
+    (tmp_path / ".hidden.js").write_bytes(b"x")                        # dotfiles and sub-directories are the documented limit
+    (tmp_path / "node_modules").mkdir()
+    (tmp_path / "node_modules" / "dep.js").write_bytes(b"x")
+    assert pin.unlisted_files(str(tmp_path), [a, c]) == ["evil.js"]
+
+
 def test_the_proxy_stages_each_tampering_and_canary_aware_passes_only_the_reviewed_inputs(tmp_path):
     load_scenario("asi04")
     pin = _pin()

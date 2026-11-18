@@ -6,15 +6,17 @@
 - Canary diff (detect): the reviewed calls are run again and their answers compared with the answers recorded at review. It catches a
   server whose behavior changed and whose manifest did not. It cannot see an attacker that recognizes the reviewed inputs.
 - Code pin (prevent): a hash of the files that define the server. Any change to the contents of a listed file refuses the server, including a
-  legitimate update. It needs the files to be hashable, which a remote server does not offer. It hashes the listed files' contents in order, so
-  it does not see a change that moves code between two listed files without changing their combined bytes, or a change to a file the pin does
-  not list (issue 31); it catches a change to a listed file's contents, not every modification.
+  legitimate update. It needs the files to be hashable, which a remote server does not offer. Each listed file contributes a record of its name,
+  its byte length and a hash of its contents, so moving code between two listed files, or renaming one, changes the fingerprint (issue 31). The
+  pin still covers only the paths it is given: a file added beside the listed ones is caught by `unlisted_files`, not by the fingerprint, and a
+  change inside the dependency tree (for example under `node_modules`) is outside what the pin covers and is a documented limit.
 
 A refused server is not loaded and the agent works without its tools (it fails closed).
 """
 import difflib
 import hashlib
 import json
+import os
 
 CANARY_CALLS = [
     ("calculate_cocr", {"property_price": 245000, "down_payment_pct": 0.2, "loan_interest_rate": 0.065, "loan_term_years": 30, "monthly_rent": 2150, "monthly_expenses": 640}),
@@ -62,12 +64,35 @@ def record_golden(call_tool) -> dict:
 
 
 def code_fingerprint(paths: list, extra: str = "") -> str:
-    h = hashlib.sha256()
+    """A hash of the files that define a server. Each file contributes a record of its base name, its byte length and a hash of
+    its contents, so moving bytes from one listed file into another, or renaming a file, changes the fingerprint (issue #31).
+    The record uses the base name, not the full path, so the fingerprint does not depend on where the tree sits on disk."""
+    records = []
     for p in sorted(str(x) for x in paths):
         with open(p, "rb") as f:
-            h.update(f.read())
+            data = f.read()
+        records.append([os.path.basename(p), len(data), hashlib.sha256(data).hexdigest()])
+    h = hashlib.sha256()
+    h.update(json.dumps(records, sort_keys=True, ensure_ascii=False).encode("utf-8"))
     h.update(extra.encode("utf-8"))
     return h.hexdigest()
+
+
+def unlisted_files(directory: str, listed, suffixes=(".js", ".mjs", ".cjs", ".json", ".ts")) -> list:
+    """Code files sitting directly in `directory` whose base name is not among `listed` (issue #31). A file added beside the
+    pinned ones can change what the server loads even when no pinned file changed, so a caller that wants to catch that refuses
+    the server when this is non-empty. Dotfiles and sub-directories (node_modules among them) are not covered: that is the same
+    documented limit as the fingerprint, which hashes only the paths it is given."""
+    allow = {os.path.basename(str(x)) for x in listed}
+    out = []
+    for name in sorted(os.listdir(directory)):
+        if name.startswith(".") or not os.path.isfile(os.path.join(directory, name)):
+            continue
+        if suffixes and not name.endswith(tuple(suffixes)):
+            continue
+        if name not in allow:
+            out.append(name)
+    return out
 
 
 CHECKS = {"none": (), "manifest_pin": ("manifest",), "canary_diff": ("canary",), "code_pin": ("code",), "manifest_pin+canary_diff": ("manifest", "canary")}

@@ -13,8 +13,10 @@ Modes:
   audit_block   a sys.addaudithook callback raises inside the hook for open() outside the sandbox directory,
                 os.system, subprocess.Popen and socket.connect, which aborts the underlying operation rather
                 than just logging it (confirmed empirically before this was built: see the session record).
-                Reaching the same operation through pathlib or a getattr-built call still fires the same
-                interpreter-level event, so the block does not depend on how the code spells the call.
+                Reaching one of these gated operations through pathlib or a getattr-built call still fires the
+                same interpreter-level event, so the block holds across the three spellings tested. It is not a
+                sandbox, though: it gates only the calls it names, and the issue-26 review found an `os.execv`
+                read it never gated (see PREREGISTRATION.md and the os-boundary run, which closes that gap).
   timeout_contain  no audit hook; the parent applies a short wall-clock cap instead.
   audit_block+timeout_contain  both together.
 

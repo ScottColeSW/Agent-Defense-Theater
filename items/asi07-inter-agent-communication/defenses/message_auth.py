@@ -14,7 +14,9 @@ Four conditions:
                 signature; does not catch a replay, because a replayed signature really is valid for the
                 (nonce, clears) it was produced for -- it says nothing about which deal that now claims to be.
   prevent       Verifies the signature AND that the message's own claimed deal id matches the deal this
-                exchange is actually about. The one check that catches the replay.
+                exchange is actually about. This catches a replay that leaves the old deal id in place. The
+                deal id is outside the signature, though, so a replay with that field rewritten (or a genuine
+                message delivered twice) still passes it, which the bound-signature run (issue 25) closes.
   contain       Whatever the message says, verified or not, the decider's send_offer is gated by an
                 independent recomputation of the deal's true cash-on-cash from its own real record (the same
                 technique ASI08 uses) -- a forged "it clears" claim cannot matter if the number it is forging

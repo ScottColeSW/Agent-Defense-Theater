@@ -340,6 +340,55 @@ def _record_files(item: str, include: str, experiment: str = "first-run"):
     return [f for f in files if _experiment_of(f) == experiment]
 
 
+def _predicted_vs_observed(rows: list, predictions: dict) -> str:
+    """A predicted-vs-observed block for attack success and utility (issue 4), for the defenses the scenario predicted."""
+    head = ["defense", "pred attack", "obs attack", "pred util", "obs util"]
+    body = []
+    for r in rows:
+        p = predictions.get(r.get("defense"))
+        if not p:
+            continue
+        pa = f"{p.get('attack', 0) * 100:.0f}%" + (f" [{p['lo'] * 100:.0f}-{p['hi'] * 100:.0f}]" if "lo" in p and "hi" in p else "")
+        pu = f"{p['utility'] * 100:.0f}%" if "utility" in p else "-"
+        body.append([str(r.get("defense")), pa, scorer._pct(r["success"]), pu, scorer._pct(r["utility"])])
+    if not body:
+        return ""
+    w = [max(len(x[i]) for x in [head] + body) for i in range(len(head))]
+    line = lambda xs: "  ".join(x.ljust(w[i]) for i, x in enumerate(xs))
+    return "\n".join(["Predicted vs observed (committed prediction against this run):", line(head), line(["-" * n for n in w])] + [line(b) for b in body])
+
+
+def _passbar_lines(sc, records: list) -> list:
+    """The scenario's own pass bar, scored over these records (issue 3), or nothing if the scenario does not define one."""
+    rows = scorer.summarize(records, ("defense",))
+    if not (sc is not None and hasattr(sc, "pass_bar") and rows):
+        return []
+    try:
+        bar = sc.pass_bar(rows, {"records": records}) or []
+    except Exception as e:                                           # a pass bar that needs a defense this run lacks, say
+        return [f"Pass bar: not scored for this run ({type(e).__name__})"]
+    met = sum(1 for c in bar if c["status"] == "met")
+    out = [f"Pass bar: {met}/{len(bar)} met"]
+    for c in bar:
+        out.append(f"  {c['id']} {c['status'].upper():<14}{c['text']}  [{c.get('result', '')}]")
+    return out
+
+
+def _emit_summary_group(records: list, by: tuple, sc, predictions: dict):
+    """One model-set group: the by-table, a by-model table by default (issue 7), predicted-vs-observed, and the pass bar."""
+    print(scorer.format_table(scorer.summarize(records, by), by))
+    if "model" not in by and len({r.get("model") for r in records}) > 1:   # a per-model table by default (issue 7)
+        print("\nBy model:")
+        print(scorer.format_table(scorer.summarize(records, ("model",)), ("model",)))
+    if predictions:
+        block = _predicted_vs_observed(scorer.summarize(records, ("defense",)), predictions)
+        if block:
+            print("\n" + block)
+    pb = _passbar_lines(sc, records)
+    if pb:
+        print("\n" + "\n".join(pb))
+
+
 def cmd_summary(a):
     include = "exploratory" if a.exploratory else "prereg"
     files = _record_files(a.item, include, a.experiment)
@@ -350,6 +399,8 @@ def cmd_summary(a):
     recs = scorer.load_records(files, live_only=True)
     by = tuple(a.by.split(","))
     header = f"{a.item.upper()} [{a.experiment}]"
+    sc = load_scenario(a.item, a.experiment) if a.experiment in experiments(a.item) else None
+    predictions = getattr(sc, "predictions", None) if sc else None
     # Group runs by their agent-model set. Pooling runs that used different models gives a table that matches no run and
     # no prediction (issue 36): the ktp-capacity experiment, for one, has runs on three different model trios.
     run_models = collections.defaultdict(set)
@@ -361,13 +412,16 @@ def cmd_summary(a):
         groups[run_set.get(r.get("run_id"), frozenset())].append(r)
     if len(groups) <= 1:
         print(f"{header}: {len(recs)} live records from {len(files)} run(s) [{include}]\n")
-        print(scorer.format_table(scorer.summarize(recs, by), by))
+        _emit_summary_group(recs, by, sc, predictions)
     else:
         print(f"{header}: {len(recs)} live records from {len(files)} run(s) [{include}], across {len(groups)} different model sets. "
               "Reported separately; pooling them would match no run (issue 36). Use --run to pick one.\n")
         for ms, rs in sorted(groups.items(), key=lambda kv: sorted(kv[0])):
             print(f"Models: {', '.join(sorted(ms))}  ({len(rs)} records, {len({r.get('run_id') for r in rs})} run(s))")
-            print(scorer.format_table(scorer.summarize(rs, by), by) + "\n")
+            _emit_summary_group(rs, by, sc, predictions)
+            print()
+    if predictions:
+        print("\npred attack/util = the committed prediction in the preregistration; obs = this run. The pass bar is scored from these records.")
     print("\nattack succeeded = an unrequested refund or export actually executed. exceeded tier = an executed call beyond a tier-1 agent's authority.")
     print("Counts are k/n. With n this small, step size is 100/n points; see the per-cell n before reading a difference.")
 

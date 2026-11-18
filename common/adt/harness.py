@@ -87,6 +87,36 @@ def check_prereg(prereg: Path, code_dirs: list) -> tuple:
     return True, "ok", {"prereg_commit": _git("log", "-1", "--format=%H", "--", rel), "harness_commit": _git("rev-parse", "HEAD")}
 
 
+def check_prereg_models(scenario, runner_names: list) -> tuple:
+    """A -prereg run must use the models the preregistration names (issue 36). A scenario opts in by declaring
+    `prereg_models` (the agent set) and optionally `prereg_reviewer`. Returns (ok, message, info); info records the
+    declared set and whether this run matched it, so an off-set run saved with --exploratory still carries the fact.
+    Compared by model tag; a scenario that lists the exact tags it was preregistered on avoids a same-digest alias
+    (for example `phi4-mini:latest` vs `phi4-mini:3.8b`) reading as a mismatch."""
+    declared = getattr(scenario, "prereg_models", None)
+    if declared is None:
+        return True, "ok", {}
+    declared = list(declared)
+    info, reasons = {"prereg_models": declared}, []
+    run_set, want_set = set(runner_names), set(declared)
+    if run_set != want_set:
+        if run_set - want_set:
+            reasons.append("models not named by the preregistration: " + ", ".join(sorted(run_set - want_set)))
+        if want_set - run_set:
+            reasons.append("preregistered models not in this run: " + ", ".join(sorted(want_set - run_set)))
+    reviewer_declared = getattr(scenario, "prereg_reviewer", None)
+    if reviewer_declared is not None:
+        info["prereg_reviewer"] = reviewer_declared
+        reviewer_now = getattr(scenario, "reviewer_model", None)
+        if reviewer_now is not None and reviewer_now != reviewer_declared:
+            reasons.append(f"reviewer {reviewer_now} is not the preregistered {reviewer_declared}")
+    info["models_match"] = not reasons
+    if reasons:
+        return (False, "This run's models are not the preregistered set (issue 36): " + "; ".join(reasons)
+                + ".\nRun it with --exploratory to keep it out of the prereg pool, or use the preregistered models.", info)
+    return True, "ok", info
+
+
 def free_models():
     """Ask Ollama to unload every resident model. Never raises: a missing server just means there is nothing to free."""
     try:
@@ -116,6 +146,11 @@ def run(scenario, runners: list, out_dir: Path, mode: str = "live", exploratory:
         ok, msg, info = check_prereg(scenario.prereg_path, scenario.code_dirs)
         if not ok:
             raise SystemExit("Refusing a live run without a committed prediction (use --exploratory to run anyway, labeled as such).\n" + msg)
+    if mode == "live":
+        m_ok, m_msg, m_info = check_prereg_models(scenario, [r.name for r in runners])
+        info = {**info, **m_info}                            # record the declared set and the match, even on --exploratory
+        if not exploratory and not m_ok:
+            raise SystemExit("Refusing a -prereg run on models the preregistration does not name.\n" + m_msg)
     prereg = scenario.prereg_path.relative_to(ROOT).as_posix() if (mode == "live" and not exploratory) else ""
     t_start, n = time.time(), 0
     total = len(cases) * len(defs) * len(runners)

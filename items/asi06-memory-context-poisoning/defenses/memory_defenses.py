@@ -29,12 +29,17 @@ Four conditions:
   contain  External documents are never committed as live beliefs at all, under any judgment. Quarantined:
            kept, visible to this run's own records, but never reachable by the decider's recall().
 """
-from palimpsest import Memory
+try:
+    from palimpsest import Memory
+except ImportError:                 # palimpsest is a private sibling package (the memory backend), not on PyPI.
+    Memory = None                   # Import lazily so the rest of the harness (and CI) loads without it; build_memory raises when actually used.
 
 MODES = ("none", "floor", "detect", "contain")
 
 
-def build_memory(mode: str) -> Memory:
+def build_memory(mode: str) -> "Memory":
+    if Memory is None:
+        raise RuntimeError("asi06 memory defenses need the 'palimpsest' package (the private memory backend), which is not installed.")
     if mode not in MODES:
         raise ValueError(f"unknown mode {mode!r}")
     return Memory(path=":memory:", author="agent", floor=(mode == "floor"))

@@ -389,6 +389,66 @@ def _emit_summary_group(records: list, by: tuple, sc, predictions: dict):
         print("\n" + "\n".join(pb))
 
 
+def _why(files, recs, defense_filter=None, model_filter=None):
+    """List in-tier valid work that did not complete, with why: a model error, no tool call, a broker veto, or a hold
+    the reviewer denied (issue 5). Reasons from the decision log are joined by (defense, case) as report.build_report does."""
+    bad = [r for r in recs if r["attack"] == "none" and r.get("tier_ok") is not False and r["outcome"] != "task_succeeded"]
+    if defense_filter:
+        bad = [r for r in bad if r["defense"] == defense_filter]
+    if model_filter:
+        bad = [r for r in bad if r["model"] == model_filter]
+    if not bad:
+        print("No in-tier valid work failed to complete" + (" for that filter" if (defense_filter or model_filter) else "") + ".")
+        return
+    log = collections.defaultdict(set)                          # (defense, case) -> {reason strings}
+    for f in files:
+        dl = f.with_name(f.name.replace(".jsonl", ".decisions.jsonl"))
+        if not dl.exists():
+            continue
+        for line in dl.read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            e = json.loads(line)
+            saw = e.get("saw", {})
+            key = (saw.get("defense"), saw.get("case"))
+            if e.get("actor", "").startswith("approver:"):
+                log[key].add(f"reviewer {e.get('verdict')}: {e.get('reason', '')}")
+            elif e.get("verdict") == "deny":
+                codes = ", ".join(saw.get("codes") or []) or (e.get("reason", "") or "")[:80]
+                log[key].add(f"broker denied: {codes}")
+
+    def why(r):
+        if r.get("model_error"):
+            return f"model error: {str(r['model_error'])[:70]}"
+        if not r.get("attempted") and not r.get("calls"):
+            return "the model made no tool call"
+        if r.get("holds"):
+            return "held for a reviewer (see the reason below)"
+        if r.get("denied"):
+            return "the broker vetoed the call (see the reason below)"
+        return "did not complete (no call denied, no hold, no model error)"
+
+    groups = collections.defaultdict(list)
+    for r in bad:
+        groups[(r["defense"], r["model"], r["task"])].append(r)
+    print(f"In-tier valid work that did not complete: {len(bad)} record(s) across {len(groups)} case(s).\n")
+    head = ["defense", "model", "task", "n", "outcome", "why"]
+    body = [[d, m, t, str(len(rs)), rs[0]["outcome"], why(rs[0])] for (d, m, t), rs in sorted(groups.items())]
+    w = [max(len(x[i]) for x in [head] + body) for i in range(len(head))]
+    line = lambda xs: "  ".join(x.ljust(w[i]) for i, x in enumerate(xs))
+    print("\n".join([line(head), line(["-" * n for n in w])] + [line(b) for b in body]))
+    for (d, m, t), rs in sorted(groups.items()):
+        reasons = set()
+        for r in rs:
+            reasons |= log.get((d, f"none/{t}/{r.get('ticket')}"), set())
+        if reasons:
+            print(f"\n{d} / {m} / {t}:")
+            for x in sorted(reasons):
+                print(f"  - {x}")
+    print("\nIn-tier valid work is work a tier-1 agent is allowed to do; above-tier tasks (which a gate may refuse by "
+          "design) are not listed. A reviewer verdict comes from the decision log, joined by defense and case.")
+
+
 def cmd_summary(a):
     include = "exploratory" if a.exploratory else "prereg"
     files = _record_files(a.item, include, a.experiment)
@@ -397,6 +457,9 @@ def cmd_summary(a):
     if not files:
         sys.exit(f"No {include} runs for {a.item.upper()} [{a.experiment}] yet.")
     recs = scorer.load_records(files, live_only=True)
+    if getattr(a, "why", False):
+        _why(files, recs, getattr(a, "defense", None), getattr(a, "model", None))
+        return
     by = tuple(a.by.split(","))
     header = f"{a.item.upper()} [{a.experiment}]"
     sc = load_scenario(a.item, a.experiment) if a.experiment in experiments(a.item) else None
@@ -607,7 +670,10 @@ def main(argv=None):
     s.add_argument("--scripted", action="store_true", help="human-written replies, fast, never a result")
     s.set_defaults(f=cmd_run_all)
     s = sub.add_parser("summary", help="score saved runs"); s.add_argument("item"); s.add_argument("--by", default="defense", help="comma list: defense,model,tier,attack,task")
-    s.add_argument("--run"); s.add_argument("--exploratory", action="store_true"); s.add_argument("--experiment", **EXP); s.set_defaults(f=cmd_summary)
+    s.add_argument("--run"); s.add_argument("--exploratory", action="store_true"); s.add_argument("--experiment", **EXP)
+    s.add_argument("--why", action="store_true", help="list in-tier valid work that did not complete, with why (model, broker or reviewer)")
+    s.add_argument("--defense", help="with --why: only this defense"); s.add_argument("--model", help="with --why: only this model")
+    s.set_defaults(f=cmd_summary)
     s = sub.add_parser("risk", help="Risk vs Confidence: measured containment under a transparent assumptions model")
     s.add_argument("item", nargs="?", help="one item (default: every item with a preregistered run)")
     s.add_argument("--experiment", **EXP)

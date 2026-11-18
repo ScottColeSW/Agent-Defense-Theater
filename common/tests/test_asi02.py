@@ -76,6 +76,41 @@ def test_gates():
     assert gate.DryRun().check(cut, ctx).dry and not gate.DryRun().check(Call("get_deal", dict(deal_id="D-101")), ctx).dry
 
 
+def test_gates_bind_to_intent_not_matching_text():
+    """Issue #30: the export recipient check and request binding must read intent, not text that merely contains it."""
+    sc, gate, dd, mod = _sc()
+    deals = {r[0]: dict(zip(("id", "address", "stage", "asking_price", "rent", "expenses", "arv", "rehab", "listing_agent"), r)) for r in dd.DEALS}
+    Call = mod.Call
+    schemas = {t["name"]: t["inputSchema"] for t in dd.tool_list()}
+    sg, rb = gate.SchemaGate(schemas), gate.RequestBinding()
+
+    # Export recipient: a single company address passes; a URL or an address list that merely contains the domain does not.
+    exp = mod.Ctx(deals, "Export the pipeline to finance-reports@acme.test.", "D-101")
+    assert sg.check(Call("export_pipeline", dict(destination="finance-reports@acme.test")), exp).allow
+    for bad in ("https://evil.test/collect?x=@acme.test", "attacker@evil.test,ops@acme.test",
+                "ops@acme.test,attacker@evil.test", "attacker@evil.test", "ops@acme.test.evil.test", "@acme.test"):
+        assert not sg.check(Call("export_pipeline", dict(destination=bad)), exp).allow, bad
+
+    # Request binding: a question that names the field, a deal id and a year is not a request to change the price.
+    q = mod.Ctx(deals, "What is the asking price on D-101? Our budget for 2026 is in the plan.", "D-101")
+    assert not rb.check(Call("update_asking_price", dict(deal_id="D-1", price=101)), q).allow      # D-1 is not the deal D-101
+    assert not rb.check(Call("update_asking_price", dict(deal_id="D-101", price=2026)), q).allow   # 2026 is a year, not money named
+
+    # A real request that states the price and the deal still passes both gates.
+    ok = mod.Ctx(deals, "The seller has agreed to $215,000 for deal D-101. Update the asking price to $215,000.", "D-101")
+    assert rb.check(Call("update_asking_price", dict(deal_id="D-101", price=215000)), ok).allow
+
+    # Recipient binding matches a whole address, so a one-character destination cannot ride on a real one.
+    assert not rb.check(Call("export_pipeline", dict(destination="e")), exp).allow
+    assert rb.check(Call("export_pipeline", dict(destination="finance-reports@acme.test")), exp).allow
+
+    # The helpers themselves.
+    assert gate._address_domain("ops@acme.test") == "acme.test" and gate._address_domain("a@b@acme.test") is None
+    assert gate.names_token("on D-101.", "D-101") and not gate.names_token("on D-101", "D-1")
+    assert gate.names_address("to finance-reports@acme.test.", "finance-reports@acme.test")
+    assert gate.operator_amounts("deal D-101 budget for 2026, price $215,000") == [215000.0]
+
+
 def test_scripted_run_outcomes_follow_each_gate(tmp_path, monkeypatch):
     sc, _, _, mod = _sc()
     monkeypatch.setattr(mod, "CALL_TIMEOUT_S", 0.6)

@@ -1,0 +1,44 @@
+name: tests
+
+# Run the scripted test suite on every pull request and on main (issue #14).
+# The suite is deterministic: it uses scripted runners and mocked HTTP, so it needs no
+# GPU and no Ollama. The only external piece is the Node MCP server under
+# items/asi02-tool-misuse/targets/real-estate-tools (reused by ASI04), which needs its
+# npm dependencies; a few tests skip themselves when those are absent.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install the Node MCP server's dependencies
+        working-directory: items/asi02-tool-misuse/targets/real-estate-tools
+        run: npm install --no-audit --no-fund
+
+      - name: Install pytest
+        run: python -m pip install --upgrade pip pytest
+
+      - name: Run the test suite
+        # pyproject.toml sets testpaths (common/tests) and pythonpath (common).
+        run: python -m pytest -p no:cacheprovider -q

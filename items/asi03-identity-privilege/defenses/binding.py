@@ -26,7 +26,9 @@ written to contain its own keywords, and a "0% attack success" would be true by 
 ships as a code fix with the deterministic checks in `common/tests/test_binding_negation.py` only: those show the
 specific phrasings the first run's binding mis-reads today and that this one refuses, and that genuine requests still
 pass. It closes the enumerated holes the review found; it will miss phrasings without its cues and may over-refuse
-others. A real, independently attacked experiment (and the declared grant) remain open under issue 28.
+others. The structural fix issue 28 named, the declared grant, is now built in `declared_grant.py` and measured in the
+`declared-grant` experiment; this cue-word stopgap stays only as the fallback for a task that carries no grant. An
+independently attacked round (issue 33) remains the larger open gap.
 """
 import re
 import sys

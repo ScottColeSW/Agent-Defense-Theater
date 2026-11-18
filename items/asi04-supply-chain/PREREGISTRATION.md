@@ -131,3 +131,11 @@ Every rate of tampered tools taking effect fell inside its predicted range, the 
 - **`canary_aware` was written to beat the canary comparison, and the pass bar said so in advance.** The code pin and the manifest pin detect by construction. What the run adds is the cost of each, and that a remote server's files cannot be hashed at all.
 - **A refused server stops the work in this test.** A team might fall back to another server, ask a person, or accept the risk.
 - Three small models, one pass each, paired samples. Nine cases a cell.
+
+### Addendum, 2026-11-18 (issue #31): the code pin now sees file boundaries
+
+A review found that `code_fingerprint` hashed the listed files' contents one after another, with no path or length, so moving the whole of one listed file onto the end of another and leaving the first empty gave the same fingerprint, and a rename was invisible. The docstring's claim that the code pin "stops everything by construction" and "catches every modification" was therefore too strong.
+
+Fixed: each file now contributes a record of its base name, its byte length and a hash of its contents, so a boundary move and a rename both change the fingerprint. A new `unlisted_files` helper reports a code file added beside the listed ones, for a caller that wants to refuse on it; the dependency tree (for example `node_modules`) stays outside the pin, now stated as a documented limit rather than implied coverage. Model-free tests cover each case.
+
+This changes no result here. The code pin's value is computed at load from the live files, not from a committed constant, so there is no recorded pin to remake and no saved record is modified. The tampering variants in this experiment are staged by a proxy process (an added file and a mode string), which the fingerprint already distinguished, so every run outcome stands; the fix closes a hole shown by calling the function directly, not one any staged attack used. What it corrects is the overclaim: the code pin catches a change to a listed file's contents, a boundary move and a rename, and with `unlisted_files` a new sibling, but not a change inside the dependency tree.

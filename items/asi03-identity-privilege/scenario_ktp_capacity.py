@@ -55,6 +55,8 @@ class AsiKtpCapacity(probe.AsiDuplicateProbe):
     sequence = 13
     needs_orchestrator = False
     prereg_path = HERE / "PREREGISTRATION-ktp-capacity.md"
+    prereg_models = ["llama3.1:8b", "qwen2.5:7b", "phi4-mini:3.8b"]   # the agents the prereg names (issue 36); other models need --exploratory
+    prereg_reviewer = "qwen2.5:7b"
     CONDS = CONDS
     defenses = DEFENSES
     title = "ASI03 KTP capacity gate: a veto no hold can reopen, and a capacity that moves"

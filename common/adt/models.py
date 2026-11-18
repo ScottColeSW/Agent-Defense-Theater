@@ -45,6 +45,17 @@ def ollama_models(host: str = HOST) -> list:
         return [(m["name"], m.get("details", {}).get("parameter_size", "?")) for m in json.load(r)["models"]]
 
 
+def ollama_version(host: str = HOST):
+    """The Ollama server's version string from GET /api/version (issue 11), or None if it is unreachable, so a scripted
+    run or a down server records null rather than failing. The digest alone does not pin output: a different server
+    version can change the runtime, sampler or template, so the version belongs in the run's metadata. Stdlib only."""
+    try:
+        with urllib.request.urlopen(host + "/api/version", timeout=5) as r:
+            return json.load(r).get("version")
+    except Exception:
+        return None
+
+
 class OllamaRunner:
     """Temperature 0 and a fixed seed unless a call asks otherwise. JSON output mode, because the agents here answer with a tool plan.
 

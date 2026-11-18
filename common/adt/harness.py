@@ -15,7 +15,7 @@ from pathlib import Path
 
 from . import gpucooler, modelmgr, resources
 from .decisionlog import DecisionLog
-from .models import NO_RETRY, CachedRunner, ModelError, Reply
+from .models import NO_RETRY, CachedRunner, ModelError, Reply, ollama_version
 from .schema import now, validate
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -209,6 +209,7 @@ def run(scenario, runners: list, out_dir: Path, mode: str = "live", exploratory:
             "defenses": [d.name for d in defs], "cases": len(cases), "records": n, "seconds": round(time.time() - t_start, 1),
             "decision_log_head": log.head, "decision_log_entries": log.seq, "hardware_note": HARDWARE_NOTE, **info,
             "gpu": gpucooler.active.stats() if gpucooler.active else None, "model_info": _model_info(runners, scenario),
+            "ollama_version": ollama_version() if mode == "live" else None,      # issue 11: pin the server version; null on scripted/unreachable
             "started": now()}
     if gpucooler.active:
         (out_dir / f"{run_id}.gpu.json").write_text(json.dumps(gpucooler.active.timeline()), encoding="utf-8")

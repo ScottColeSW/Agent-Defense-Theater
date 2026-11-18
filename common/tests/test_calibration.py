@@ -1,21 +1,9 @@
 import sys
-import urllib.request
 from pathlib import Path
-
-import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from adt import decisionlog, harness, models, modelmgr, scorer
 from adt.loader import experiments, load_scenario
-
-
-def _ollama_up() -> bool:
-    """Whether a local Ollama is reachable. A few tests run a scripted agent but a live model reviewer, so they need it."""
-    try:
-        urllib.request.urlopen(models.HOST + "/api/tags", timeout=1)
-        return True
-    except Exception:
-        return False
 
 
 def _cal():
@@ -77,8 +65,6 @@ def test_make_runners_sets_think_only_for_thinking_models(monkeypatch):
 
 
 def test_thinking_scripted_run_and_sidecar(tmp_path):
-    if not _ollama_up():
-        pytest.skip("the hold+bottomline condition calls a live model reviewer; needs a running Ollama")
     sc = load_scenario("asi03", "thinking-agents")
     assert [d.name for d in sc.defenses] == ["none", "scoped_credentials", "task_binding", "hold+bottomline"]
 
@@ -91,7 +77,9 @@ def test_thinking_scripted_run_and_sidecar(tmp_path):
             r.tokens_out = 50
             return r
 
-    meta = harness.run(sc, [Thinker()], tmp_path, mode="scripted", progress=None)
+    # The sidecar is written per record in the harness, independent of the defense, so the reviewer-free `none`
+    # condition exercises it. Dropping hold+bottomline here keeps the test hermetic (no live model reviewer) and fast.
+    meta = harness.run(sc, [Thinker()], tmp_path, mode="scripted", progress=None, defenses=[sc.defenses[0]])
     side = tmp_path / f"{meta['run_id']}.thinking.jsonl"
     assert side.exists() and "let me think" in side.read_text(encoding="utf-8")
     recs = scorer.load_records([tmp_path / f"{meta['run_id']}.jsonl"], live_only=False)

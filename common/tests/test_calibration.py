@@ -1,9 +1,21 @@
 import sys
+import urllib.request
 from pathlib import Path
+
+import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from adt import decisionlog, harness, models, modelmgr, scorer
 from adt.loader import experiments, load_scenario
+
+
+def _ollama_up() -> bool:
+    """Whether a local Ollama is reachable. A few tests run a scripted agent but a live model reviewer, so they need it."""
+    try:
+        urllib.request.urlopen(models.HOST + "/api/tags", timeout=1)
+        return True
+    except Exception:
+        return False
 
 
 def _cal():
@@ -65,6 +77,8 @@ def test_make_runners_sets_think_only_for_thinking_models(monkeypatch):
 
 
 def test_thinking_scripted_run_and_sidecar(tmp_path):
+    if not _ollama_up():
+        pytest.skip("the hold+bottomline condition calls a live model reviewer; needs a running Ollama")
     sc = load_scenario("asi03", "thinking-agents")
     assert [d.name for d in sc.defenses] == ["none", "scoped_credentials", "task_binding", "hold+bottomline"]
 

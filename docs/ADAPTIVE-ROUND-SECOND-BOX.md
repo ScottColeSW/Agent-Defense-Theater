@@ -51,6 +51,12 @@ VRAM unloading and will thrash).
 
 ## Setup
 
+**Topology.** Run `adt` on **box 1** — the machine with the GPU. The three victims
+always run locally there (the harness loads them on the local GPU; the `--attacker`
+flag only changes where the attacker runs). **Box 2** serves the attacker over the
+network as an OpenAI-compatible endpoint. Box 1 reaches it by IP, so the two
+machines must be on the same network and box 2's port must be open to box 1.
+
 ### 1. Serve the attacker on the second machine
 
 Any OpenAI-compatible endpoint works. The turnkey one is Ollama in Docker:
@@ -88,19 +94,38 @@ api_key = ollama               # Ollama ignores it; any non-empty string
 base_url = http://<second-box-ip>:11434/v1
 ```
 
-### 3. Run the informed round
+`box2` works as the attacker provider because the harness treats **any `keys.ini`
+section that has a `base_url` and a non-empty `api_key` as a remote provider**
+(`keys.is_remote`). The `api_key` value is required but ignored by Ollama, so any
+non-empty string does. Without the `base_url`, `adt informed` refuses the run with
+*"The attacker has to be a hosted model (provider:model)"*.
+
+### 3. Verify box 2 is reachable before the run
+
+From box 1, confirm the endpoint answers and serves the model, so a four-round run
+does not fail partway:
+
+```powershell
+curl http://<second-box-ip>:11434/v1/models
+```
+
+### 4. Run the informed round
 
 ```powershell
 python adt.py informed asi03 --attacker box2:<model> --models llama3.1:8b,qwen2.5:7b,phi4-mini:3.8b
 ```
 
-`--attacker <section>:<model>` uses the remote OpenAI endpoint (box 2); the victims
-run locally via `--models`. (The alternative `--local-attacker <ollama-model>` runs
-the attacker as a local Ollama model on the same box — that is the single-GPU
-baseline, not this task.) Caps live in `informed.py`
-(`ROUNDS`, `PER_ROUND`, `MAX_ATTACKER_CALLS`, `MAX_PROVIDER_REQUESTS`); raise
-`MAX_PROVIDER_REQUESTS` if the attacker is remote and the round stops early on the
-request cap.
+A remote `--attacker` runs under the **`informed`** experiment by default
+(`PREREGISTRATION-informed.md`, with its pass bar); pass `--experiment <id>` to use
+another. If the attacker is a large, slow model, raise `request_timeout_s` under
+`[limits]` in `keys.ini` (the default is 180s; the blind round used 600) so a long
+reply is not cut off.
+
+(The alternative `--local-attacker <ollama-model>` runs the attacker as a local
+Ollama model on the same box — that is the single-GPU baseline, not this task.) The
+round caps live in `informed.py` (`ROUNDS`, `PER_ROUND`, `MAX_ATTACKER_CALLS`,
+`MAX_PROVIDER_REQUESTS`); the attacker makes about one call per round, so the
+provider-request cap is comfortably above a four-round run.
 
 ## What to deliver
 

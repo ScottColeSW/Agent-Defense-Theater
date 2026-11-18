@@ -74,10 +74,12 @@ def provider_config(provider: str) -> dict:
 
 
 def limits() -> dict:
-    """Spending guards from [limits]: max_output_tokens (per call) and max_calls (per process, 0 = no cap)."""
+    """Spending guards from [limits]: max_output_tokens (per call), max_calls (per process, 0 = no cap),
+    request_timeout_s (seconds to wait on one HTTP reply; raise it for a slow local model)."""
     cp = _parser()
     g = lambda k, d: cp.getint("limits", k, fallback=d) if cp.has_section("limits") else d
-    return {"max_output_tokens": g("max_output_tokens", DEFAULT_MAX_OUTPUT), "max_calls": g("max_calls", 0)}
+    return {"max_output_tokens": g("max_output_tokens", DEFAULT_MAX_OUTPUT), "max_calls": g("max_calls", 0),
+            "request_timeout_s": g("request_timeout_s", 180)}
 
 
 def status() -> list:

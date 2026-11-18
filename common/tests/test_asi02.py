@@ -16,7 +16,7 @@ def _sc():
 
 def test_registered_and_sized():
     sc, *_ = _sc()
-    assert experiments("asi02") == ["first-run"]
+    assert experiments("asi02") == ["first-run", "blind"]
     cases = sc.cases()
     assert len(cases) == 57 and sum(c.kind == "attack" for c in cases) == 40 and len(sc.defenses) == 6
     assert sum(c.kind == "legit" and c.data["tier_ok"] for c in cases) == 9 and sum(c.kind == "legit" and not c.data["tier_ok"] for c in cases) == 8

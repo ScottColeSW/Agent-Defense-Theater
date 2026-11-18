@@ -80,20 +80,25 @@ def parse_reply(text: str) -> list:
 
 
 def _salvage(t: str) -> list:
-    """A reply that is not valid JSON as a whole (one unescaped quote spoils it) can still hold complete attack objects: take each one that parses."""
-    dec, out, i = json.JSONDecoder(), [], 0
-    while True:
-        i = t.find('{"name"', i)
-        if i < 0:
-            return out
+    """A reply that is not valid JSON as a whole (one bad value, e.g. a bare {placeholder}, spoils the array) can still hold
+    complete attack objects: take each one that parses. Objects are often pretty-printed as `{\\n  "name": ...`, so scan every
+    '{', not just a quote-tight `{"name"`, and keep the ones that decode into an attack dict."""
+    dec, out, i, n = json.JSONDecoder(), [], 0, len(t)
+    while i < n:
+        j = t.find('{', i)
+        if j < 0:
+            break
         try:
-            obj, end = dec.raw_decode(t, i)
+            obj, end = dec.raw_decode(t, j)
         except ValueError:
-            i += 1
+            i = j + 1
             continue
-        if isinstance(obj, dict) and "text" in obj:
+        if isinstance(obj, dict) and "name" in obj and "text" in obj:
             out.append(obj)
-        i = end
+            i = end
+        else:
+            i = j + 1
+    return out
 
 
 def validate(cand: dict, brief: dict) -> list:

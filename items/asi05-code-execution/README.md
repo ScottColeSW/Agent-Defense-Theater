@@ -4,7 +4,7 @@
 | --- | --- |
 | Status | Measured |
 | OWASP LLM Top 10 2025 | LLM05 Improper Output Handling |
-| MITRE ATLAS | To be mapped |
+| MITRE ATLAS | AML.T0102 Generate Malicious Commands; AML.T0025 Exfiltration via Cyber Means |
 | Existing work | New work |
 
 The mapping to the LLM Top 10 and ATLAS is the author's proposal. See [`../../crosswalk/README.md`](../../crosswalk/README.md).

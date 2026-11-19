@@ -4,7 +4,7 @@
 | --- | --- |
 | Status | Measured: AI reviewers, and a first round of five people |
 | OWASP LLM Top 10 2025 | LLM09 Misinformation (partial) |
-| MITRE ATLAS | To be mapped |
+| MITRE ATLAS | AML.T0067 LLM Trusted Output Components Manipulation |
 | Existing work | Agent Theater Framework |
 
 The mapping to the LLM Top 10 and ATLAS is the author's proposal. See [`../../crosswalk/README.md`](../../crosswalk/README.md).

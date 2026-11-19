@@ -1,6 +1,6 @@
 # Open work
 
-Every item below is a stub: a gap the project knows about and has not closed. Each one is taken from [`LIMITS-AND-ANSWERS.md`](LIMITS-AND-ANSWERS.md) or the [crosswalk](../crosswalk/README.md), so nothing here is a new claim. Status for all of them is **Stub, unclaimed**.
+Every open item below is a stub: a gap the project knows about and has not closed. Each one is taken from [`LIMITS-AND-ANSWERS.md`](LIMITS-AND-ANSWERS.md) or the [crosswalk](../crosswalk/README.md), so nothing here is a new claim. The status of each open item is **Stub, unclaimed**. A few rows are marked **Done** where the gap was recently closed (issues 14, 16, 17, 18, and the ATLAS mapping).
 
 To take one: say so in an issue, copy [`PREREGISTRATION-TEMPLATE.md`](PREREGISTRATION-TEMPLATE.md) into the item folder, commit the prediction, then run. See [`../CONTRIBUTING.md`](../CONTRIBUTING.md).
 
@@ -37,14 +37,14 @@ From the capability map in [`PURPLE-TEAM-MAP.md`](PURPLE-TEAM-MAP.md). Each is a
 
 | Stub | Starting point |
 | --- | --- |
-| A continuous integration workflow that runs the tests on every pull request | The `pytest` suite already runs from `common/tests`. Needs a workflow file and a decision about which tests need a live model |
+| A continuous integration workflow that runs the tests on every pull request | **Done** (issue 14): `.github/workflows/tests.yml` runs the pytest suite on every pull request, hermetic with no live model |
 | Auto-created issues for failed pass-bar criteria | The pass-bar scoring lives in `common/adt/passbar.py`, so a failed criterion can be detected in code |
 | Classify failures as error or misalignment | Outcomes are scored without causes. Start with the ASI10 records |
 | Learned behavior baseline against slow drift | Listed as a next step in the Black ICE roadmap |
 | Trend scoring across repeated rounds | Needs the same experiment run on a schedule |
 | Cross-tenant exposure test | Not modeled in any item |
 | Continuous prompt fuzzing | Not built. `attackgen` is the nearest starting point |
-| Real-time policy shadow mode | Wrap a broker so it records what it would have decided without enforcing it. The KTP broker already returns structured decisions. [Issue 18](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/18) |
+| Real-time policy shadow mode | **Done** (issue 18, PR 72): `items/asi03-identity-privilege/defenses/shadow.py` ShadowBroker and the `ktp-shadow` experiment, a faithful predictor of the enforcing gate |
 | Corpus diffing | A read-only diff of two ASI06 corpus versions. [Issue 19](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/19) |
 | AI-BOM / SBOM diffing | A read-only diff of the behavior-defining elements in two runs' metadata. [Issue 20](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/20) |
 | Executive reporting | A one-page plain-language summary of a run's pass bar and caveats. Start from the pass-bar console issue ([issue 3](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/3)) |
@@ -60,8 +60,8 @@ Surfaces named in the State of Agentic AI Security and Governance report (v2.01,
 | Delegation through spawned sub-agents | Credentials inherited from a parent agent and revocation through a chain | The untested delegation-chain check in ASI03 |
 | Shadow AI discovered through delegated OAuth access | Broad delegated scopes granted to third-party AI tools | The loose-keys toolkit in [`LOOSE-KEYS.md`](LOOSE-KEYS.md) already audits a grant inventory |
 | Trajectory-level logging | The report calls it a primary runtime control. The decision log records each defense decision, not the full agent trajectory | Extend the decision log entry format in `common/decision-log/FORMAT.md` |
-| Capability composition as a design gate (the "Rule of Two") | The Securing Agentic Applications guide says an agent should not combine private data, untrusted input and external communication. No item tests it | A scenario where an agent holds all three and one leg is then removed |
-| Graduated kill switch (warn, limit, suspend, kill) | ASI10 tested a one-step kill switch only | Extend the ASI10 defenses with tiers and measure restricted calls per tier |
+| Capability composition as a design gate (the "Rule of Two") | The Securing Agentic Applications guide says an agent should not combine private data, untrusted input and external communication | **Done** (issue 17, PR 74): the `rule-of-two` experiment on ASI05 runs all three legs and removes each in turn; removing any one dropped exfiltration to zero |
+| Graduated kill switch (warn, limit, suspend, kill) | ASI10 tested a one-step kill switch only | **Done** (issue 16, PR 73): `items/asi10-rogue-agents/defenses/graduated.py` and the `graduated-switch` experiment, measured per tier |
 | Block a release when behavior-defining elements change results | The guide asks for revalidation when the model, prompt or tool set changes. Here it is manual | Re-run a fixed set of preregistered cases when `common/` or an item's prompt changes, which also needs the CI stub above |
 | Check recorded successes and blocks for unintended routes | The exploit-generation report finds scores inflated by unintended solutions. Outcomes here are not checked that way | Partly done. `tools/audit_decision_logs.py` (by miaoyang-data) flags repeated allowed calls, shared-token allows and missing reasons in the saved logs. It does not read how an outcome was reached. Sampled route traces across all streak classes are documented in [`LOG-AUDIT-FINDINGS.md`](LOG-AUDIT-FINDINGS.md) ([issue 13](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/13)). Broader sampling of non-loop trajectories remains open |
 | Repetitive tool-loop detection | The report notes high-frequency, low-diversity tool calls as a candidate signal for model-driven activity | Measured, no detector yet. `tools/audit_decision_logs.py` (by miaoyang-data) finds consecutive identical calls in the saved logs. It recovers the 32 repeated refunds in each run that uses the duplicate-refund texts, and finds no repeated allowed call in any other ASI03 run. Where a log does not record arguments (ASI10) it can only show a repeated tool. The findings note comparing duplicate-refund probes against valid tasks and `probe_failed_first` controls across 39 runs is now in [`LOG-AUDIT-FINDINGS.md`](LOG-AUDIT-FINDINGS.md) ([issue 12](https://github.com/ScottColeSW/Agent-Defense-Theater/issues/12)); a live runtime detector remains open |
@@ -70,7 +70,7 @@ Surfaces named in the State of Agentic AI Security and Governance report (v2.01,
 
 | Gap | Where | Starting point |
 | --- | --- | --- |
-| MITRE ATLAS IDs are "To be mapped" for most rows | `crosswalk/coverage.csv` | Candidates from the OWASP LLM Top 10 are listed in [`../crosswalk/README.md`](../crosswalk/README.md). Verify each against the current ATLAS release before filling it in |
+| MITRE ATLAS IDs are "To be mapped" for most rows | `crosswalk/coverage.csv` | **Done**: every item mapped against the ATLAS-2026.07 release in `crosswalk/coverage.csv`; ASI07 recorded as no direct technique (nearest AML.T0073 Impersonation) |
 | No item maps to LLM02 Sensitive Information Disclosure or LLM07 System Prompt Leakage | `crosswalk/coverage.csv` | ASI05's secret-exfiltration attacks overlap LLM02. Decide whether to add a partial match |
 | ASI07 has no direct LLM Top 10 match | `crosswalk/coverage.csv` | Confirm that is still true against the OWASP Agentic Top 10 text |
 

@@ -4,7 +4,7 @@
 | --- | --- |
 | Status | Measured (first preregistered live run, with an addendum) |
 | OWASP LLM Top 10 2025 | LLM03 Supply Chain |
-| MITRE ATLAS | To be mapped |
+| MITRE ATLAS | AML.T0010.005 AI Supply Chain Compromise: AI Agent Tool; AML.T0110 AI Agent Tool Poisoning |
 | Existing work | New work |
 
 The mapping to the LLM Top 10 and ATLAS is the author's proposal. See [`../../crosswalk/README.md`](../../crosswalk/README.md).

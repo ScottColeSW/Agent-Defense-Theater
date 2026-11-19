@@ -1,0 +1,101 @@
+{
+ "run_id": "asi05-rule-of-two-20261119T174601-prereg",
+ "item": "ASI05",
+ "experiment": "rule-of-two",
+ "mode": "live",
+ "exploratory": false,
+ "models": [
+  "llama3.1:8b",
+  "qwen2.5:7b",
+  "phi4-mini:3.8b"
+ ],
+ "defenses": [
+  "trifecta",
+  "no_private",
+  "no_untrusted",
+  "no_external"
+ ],
+ "cases": 14,
+ "records": 168,
+ "seconds": 415.9,
+ "decision_log_head": "6595ae46af8ec65ff6dac106cc0029256057212b6eb2f2c82dd9338fc0b7f73b",
+ "decision_log_entries": 168,
+ "hardware_note": "One workstation, RTX 2080 Super 8 GB. Local models up to 8B parameters.",
+ "prereg_commit": "54bb36668b1f969e634c4bcc54f573a53f6b2b8f",
+ "harness_commit": "54bb36668b1f969e634c4bcc54f573a53f6b2b8f",
+ "prereg_models": [
+  "llama3.1:8b",
+  "qwen2.5:7b",
+  "phi4-mini:3.8b"
+ ],
+ "prereg_reviewer": "qwen2.5:7b",
+ "models_match": true,
+ "gpu": {
+  "max_c": 72,
+  "resume_c": 60,
+  "soft_c": 66,
+  "peak_c": 68,
+  "pauses": 0,
+  "paused_s": 0.0,
+  "eased": 0,
+  "eased_s": 0.0,
+  "settled_s": 6.3,
+  "settle_c": 60,
+  "available": true
+ },
+ "model_info": {
+  "llama3.1:8b": {
+   "name": "llama3.1:8b",
+   "digest": "46e0c10c039e019119339687c3c1757cc81b9da49709a3b3924863ba87ca666e",
+   "capabilities": [
+    "completion",
+    "tools"
+   ],
+   "family": "llama",
+   "params": "8.0B",
+   "quant": "Q4_K_M",
+   "context": 131072,
+   "think": null,
+   "temperature": 0.0,
+   "seed": 0,
+   "num_predict": 1024,
+   "timeout_s": 120
+  },
+  "qwen2.5:7b": {
+   "name": "qwen2.5:7b",
+   "digest": "845dbda0ea48ed749caafd9e6037047aa19acfcfd82e704d7ca97d631a0b697e",
+   "capabilities": [
+    "completion",
+    "tools"
+   ],
+   "family": "qwen2",
+   "params": "7.6B",
+   "quant": "Q4_K_M",
+   "context": 32768,
+   "think": null,
+   "temperature": 0.0,
+   "seed": 0,
+   "num_predict": 1024,
+   "timeout_s": 120
+  },
+  "phi4-mini:3.8b": {
+   "name": "phi4-mini:3.8b",
+   "digest": "78fad5d182a7c33065e153a5f8ba210754207ba9d91973f57dffa7f487363753",
+   "capabilities": [
+    "completion",
+    "tools"
+   ],
+   "family": "phi3",
+   "params": "3.8B",
+   "quant": "Q4_K_M",
+   "context": 131072,
+   "think": null,
+   "temperature": 0.0,
+   "seed": 0,
+   "num_predict": 1024,
+   "timeout_s": 120
+  }
+ },
+ "ollama_version": "0.40.16",
+ "started": "2026-11-19T17:52:57Z"
+}

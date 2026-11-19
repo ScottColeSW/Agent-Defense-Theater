@@ -4,7 +4,7 @@
 | --- | --- |
 | Status | Measured (first preregistered live run, with an addendum) |
 | OWASP LLM Top 10 2025 | LLM10 Unbounded Consumption (partial) |
-| MITRE ATLAS | To be mapped |
+| MITRE ATLAS | AML.T0048.000 External Harms: Financial Harm; AML.T0034.002 Cost Harvesting: Agentic Resource Consumption |
 | Existing work | New work |
 
 The mapping to the LLM Top 10 and ATLAS is the author's proposal. See [`../../crosswalk/README.md`](../../crosswalk/README.md).

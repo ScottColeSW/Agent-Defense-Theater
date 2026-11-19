@@ -6,7 +6,7 @@
 
 - Item names come from the OWASP Top 10 for Agentic Applications 2026.
 - LLM Top 10 matches are the author's proposal. "Partial" means the overlap is real but incomplete, and "No direct match" means none was found.
-- ATLAS IDs listed were checked against the ATLAS data. Rows marked "To be mapped" have not been checked yet and must be verified against the current ATLAS release before they are filled in.
+- ATLAS IDs were checked against the ATLAS data, the ATLAS-2026.07 release (format-version 6.0.0). Every item now carries a proposed ATLAS mapping at technique level. ASI07 has no direct technique and is recorded as "No direct match", with AML.T0073 Impersonation noted as the nearest. The mappings are the author's proposal, not an OWASP or MITRE endorsement; the 2026 OWASP appendix itself maps at tactic level, so these are the finer-grained proposal.
 
 ## Maintenance
 
@@ -57,7 +57,7 @@ Checked against the published PDF (version 2025, November 18, 2024). Only entry 
 What this changes and what it does not:
 
 - Every LLM Top 10 title used in `coverage.csv` matches the PDF.
-- The ATLAS column in `coverage.csv` is left as "To be mapped" where it was. These IDs belong to the LLM entries, not to the agentic items, and the rule above still applies: verify against the current ATLAS release before filling a row. They are candidates for ASI04, ASI08 and ASI09.
+- The ATLAS column in `coverage.csv` is now filled for every item, mapped to the ATLAS-2026.07 release. The 2026 edition added agent-specific techniques (AI Agent Tool Invocation, AI Agent Tool Poisoning, Generate Malicious Commands, Agentic Resource Consumption, LLM Trusted Output Components Manipulation) that fit these items directly, so the 2025 LLM-entry candidate IDs above are superseded by the item-level mappings.
 - LLM02 and LLM07 have no matching item. ASI05's secret-exfiltration attacks overlap LLM02. That is listed as a stub in [`../docs/OPEN-WORK.md`](../docs/OPEN-WORK.md).
 
 ## Other files

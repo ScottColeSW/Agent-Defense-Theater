@@ -4,7 +4,7 @@
 | --- | --- |
 | Status | Measured |
 | OWASP LLM Top 10 2025 | LLM06 Excessive Agency |
-| MITRE ATLAS | To be mapped |
+| MITRE ATLAS | AML.T0053 AI Agent Tool Invocation (scope drift and excessive agency) |
 | Existing work | Agent Theater Framework and Void-Marauders |
 
 The mapping to the LLM Top 10 and ATLAS is the author's proposal. See [`../../crosswalk/README.md`](../../crosswalk/README.md).

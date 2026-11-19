@@ -4,7 +4,7 @@
 | --- | --- |
 | Status | Measured |
 | OWASP LLM Top 10 2025 | No direct match |
-| MITRE ATLAS | To be mapped |
+| MITRE ATLAS | No direct match. Nearest is AML.T0073 Impersonation (targets people and organizations not agents) |
 | Existing work | New work |
 
 The mapping to the LLM Top 10 and ATLAS is the author's proposal. See [`../../crosswalk/README.md`](../../crosswalk/README.md).

@@ -64,11 +64,11 @@ class OllamaRunner:
     A model that cannot think refuses think=True or False with HTTP 400, so only pass it for thinking-capable models."""
 
     def __init__(self, model: str, host: str = HOST, num_ctx: int = 4096, seed: int = 0, keep_alive: str = "10m",
-                 think=None, temperature: float = 0.0, num_predict: int = None, label: str = ""):
+                 think=None, temperature: float = 0.0, num_predict: int = None, label: str = "", timeout: float = None):
         self.model, self.host, self.seed, self.keep_alive, self.think, self.temperature = model, host, seed, keep_alive, think, temperature
         self.num_ctx = max(num_ctx, 8192) if think else num_ctx                     # reasoning needs room
         self.num_predict = num_predict if num_predict is not None else (4096 if think else DEFAULT_NUM_PREDICT)
-        self.timeout = THINK_TIMEOUT_S if think else TIMEOUT_S
+        self.timeout = timeout if timeout is not None else (THINK_TIMEOUT_S if think else TIMEOUT_S)   # a slow large model (a big local attacker) needs a longer cap
         self.name = model + label
 
     def describe(self) -> dict:

@@ -61,7 +61,7 @@ def test_every_condition_runs_the_agents_code_in_a_container_never_on_the_host()
 
 
 def test_the_experiment_is_listed_and_network_free():
-    assert experiments("asi05") == ["first-run", "os-boundary"]
+    assert experiments("asi05") == ["first-run", "os-boundary", "rule-of-two"]
     sc, _, _ = _mods()
     assert [d.name for d in sc.defenses] == ["none", "audit_block+timeout_contain", "os_boundary"]
     assert set(sc.predictions) == {d.name for d in sc.defenses}

@@ -19,6 +19,7 @@ PROVIDERS = {
     "mistral":    ("openai", "https://api.mistral.ai/v1", ("MISTRAL_API_KEY",)),
     "xai":        ("openai", "https://api.x.ai/v1", ("XAI_API_KEY",)),
     "deepseek":   ("openai", "https://api.deepseek.com/v1", ("DEEPSEEK_API_KEY",)),
+    "nvidia":     ("openai", "https://integrate.api.nvidia.com/v1", ("NVIDIA_API_KEY", "NGC_API_KEY")),
 }
 RESERVED = {"limits"}
 DEFAULT_MAX_OUTPUT = 2048

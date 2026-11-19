@@ -2,6 +2,8 @@
 
 [`coverage.csv`](coverage.csv) holds one row per OWASP agentic item: its name, the proposed OWASP LLM Top 10 2025 match, the proposed MITRE ATLAS match, status, existing work, and limits.
 
+If you are placing your own agents against a framework, read this as a map of what has been measured, not a compliance claim: each item links to the scenario that tests that risk, so you can see which defense held and what it cost, not just which box is ticked.
+
 ## How the mapping was made
 
 - Item names come from the OWASP Top 10 for Agentic Applications 2026.

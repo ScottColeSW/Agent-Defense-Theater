@@ -26,6 +26,17 @@ The targets are simulated: a support desk, a deal pipeline, mail that lands in a
 
 The whole range is organized as a threat model, following [Shostack's Four Question Frame](https://github.com/adamshostack/4QuestionFrame): what are we working on, what can go wrong, what are we going to do about it, and did we do a good enough job. [`docs/THREAT-MODEL.md`](docs/THREAT-MODEL.md) lays that out, with a table from each trust boundary to the item that tests it and the measured result.
 
+## If you build or buy AI agents, start here
+
+You do not need this repository to take something from it. A few lessons transfer to any agent you run, and they are the traps that most "our product is secure" claims walk past:
+
+1. **Score two numbers, not one.** A defense that blocks the attack but also blocks the real work is not a good defense. Ask what a control costs in legitimate work, not only how many attacks it stops.
+2. **Read harm from the system, not the agent.** Decide whether something bad happened from the database, the server or the log, never from the agent's own account of what it did.
+3. **"Zero breaches" usually means no strong attacker has tried.** A control at 0% against the person who wrote it has not been shown to hold. Test with attackers who did not write the defense, and with attackers who know it.
+4. **Structural controls beat trust-based ones.** The defenses that held here check an action against what was actually asked, recompute a result independently, or put a boundary where the agent's code cannot reach it. The ones that failed trusted what they were shown: a reviewer reading the agent's own reason, a gate matching text instead of intent.
+
+Two short reads turn those into practice: the [agent security checklist](docs/CHECKLIST.md), eleven questions each with its caveat, and the [methodology](docs/METHODOLOGY.md), the rules that make a result here worth reading. Everything below is one bench applying them, with its limits stated on every result.
+
 ## Where the project stands
 
 All ten OWASP Agentic risks are measured. Each has at least one preregistered live run with its prediction committed first, the strongest defense's containment recorded with a 95% floor, and the legitimate work that defense cost reported beside it. The harness refuses a live run that is unpredicted, uncommitted, or on models the preregistration does not name; harm is read from the database or the server, never the agent's word; every decision goes into a hash-chained log you can verify; and the test suite now runs on every pull request. The defenses that held were the structural ones: an independent recomputation (ASI07, ASI08), request binding with a one-shot approval (ASI03), an operating-system boundary the agent's code cannot reach (ASI05). The ones that failed trusted what they were shown: a model reviewer reading the agent's own reason, a gate matching text instead of intent, a code pin that detects every change by construction but refuses every legitimate update too.

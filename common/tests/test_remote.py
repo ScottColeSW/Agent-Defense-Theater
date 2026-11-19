@@ -43,6 +43,19 @@ def test_names_route_by_prefix(ini):
     assert isinstance(models.make_runner("openai:gpt-x"), remote.RemoteRunner)
 
 
+def test_nvidia_nim_is_a_built_in_openai_provider(ini, monkeypatch):
+    monkeypatch.delenv("NVIDIA_API_KEY", raising=False)
+    monkeypatch.delenv("NGC_API_KEY", raising=False)
+    assert keys.split("nvidia:nvidia/llama-3.1-nemotron-70b-instruct") == ("nvidia", "nvidia/llama-3.1-nemotron-70b-instruct")
+    with pytest.raises(KeyError) as e:                       # no key set: fails before any call, names the env var, never a key
+        models.make_runner("nvidia:meta/llama-3.1-70b-instruct")
+    assert "NVIDIA_API_KEY" in str(e.value)
+    monkeypatch.setenv("NVIDIA_API_KEY", "nvapi-SECRET6")
+    c = keys.provider_config("nvidia")
+    assert c["format"] == "openai" and c["base_url"] == "https://integrate.api.nvidia.com/v1"
+    assert isinstance(models.make_runner("nvidia:meta/llama-3.1-70b-instruct"), remote.RemoteRunner)
+
+
 def test_missing_key_fails_before_any_call_and_names_no_key(ini):
     with pytest.raises(KeyError) as e:
         models.make_runner("groq:llama")

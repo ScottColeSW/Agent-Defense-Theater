@@ -19,6 +19,12 @@ class Failing:
         raise ModelError("failing: HTTP 500 (after one retry)")
 
 
+def test_ollama_runner_timeout_defaults_and_overrides():
+    assert OllamaRunner("m").timeout == models.TIMEOUT_S                       # default cap, unchanged for victims
+    assert OllamaRunner("m", timeout=1200).timeout == 1200                     # a slow large local attacker can raise it
+    assert models.make_runner("m", timeout=900).timeout == 900                # make_runner passes it through to a local model
+
+
 def test_a_failing_model_does_not_stop_the_run_and_is_counted(tmp_path):
     sc = load_scenario("asi03")
     Failing.calls = 0

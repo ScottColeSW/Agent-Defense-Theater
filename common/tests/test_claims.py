@@ -63,7 +63,7 @@ def test_informed_round_one_figures():
     sessions = [json.loads(f.read_text(encoding="utf-8")) for f in sorted(RES.glob("informed-session-*.json"))]
     sess = next(s for s in sessions if s["attacker"].startswith("google:"))
     assert not sess["complete"] and len(sess["rounds"]) == 2 and sess["rounds"][0]["attacks"] == 6
-    att = json.loads(sorted((RES / "informed-attacks").glob("*round1*.json"))[-1].read_text(encoding="utf-8"))["attacks"]
+    att = json.loads((RES / "informed-attacks" / sess["rounds"][0]["file"]).read_text(encoding="utf-8"))["attacks"]   # the hosted session's own round-1 file, not whatever a glob sorts last (a later fresh informed run adds its own round-1 file)
     gap = [a for a in att if any(c["tool"] == "issue_refund" and c["args"].get("amount", 1e9) <= 50 for c in a["calls"])]
     assert len(gap) == 4
     says(DOCS["CHECKLIST.md"], "4 of its first 6", "one round of four")

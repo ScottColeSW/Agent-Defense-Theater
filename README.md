@@ -1,5 +1,7 @@
 # Agent Defense Theater
 
+**A crash-test range for AI agents.** AI assistants can now act on their own, issuing refunds, running code, updating records, and companies are handing them real authority faster than anyone can show their safety guards actually work. This project checks whether those guards stop a real attack, and what they cost in legitimate work, because a guard that also blocks the real work is not a good guard.
+
 A preregistered purple-team range for the [OWASP Top 10 for Agentic Applications](https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/): it measures whether an agent's defenses actually hold, and what they cost. Local AI models are driven through tool protocols (real MCP servers in three of the items, simulated desks in the others) under scripted attack, and every control is scored by two numbers together: the attacks it stops and the legitimate work it still allows. Each prediction is committed before the run, harm is read from the database or the server rather than the agent's word, every decision goes into a hash-chained log you can verify, and misses are reported.
 
 ## Read the range two ways

@@ -62,22 +62,33 @@ class KineticBroker:
     name = "scoped credential + KTP kinetic capacity gate"
 
     def __init__(self, ticket_id: str, operator_text: str, capacity: float, capacity_known: bool = True, thresholds: dict = None,
-                 tier: int = cred.AGENT["tier"], escalation: bool = True, lease: float = None):
+                 tier: int = cred.AGENT["tier"], escalation: bool = True, lease: float = None,
+                 export_capacity: float = None, export_capacity_known: bool = True, export_lease: float = None):
         self.inner = cred.ScopedBroker(ticket_id, tier=tier, escalation=escalation, review_money=False,
                                        operator_text=operator_text, bind_request=True)
         self.operator_text = operator_text or ""
         self.lease = float(lease) if lease is not None else lease_bound(operator_text)      # declared, or read from the operator's words
         self.lease_floor = None if self.lease is not None else lease_floor(operator_text)   # the restrictive reading when undefined
         self.capacity, self.capacity_known, self.thresholds = capacity, capacity_known, thresholds
+        # Export bounds (issue 8). Exports have no dollar amount, so the gate's reading of "the amount the operator named"
+        # is the COUNT of exports the operator delegated (default: one if an export is asked for, else zero), with a
+        # declared capacity E on the same count scale. These are off (None) unless the experiment sets them, so the refund
+        # path and the committed ktp-capacity experiment are unchanged.
+        self.export_capacity, self.export_capacity_known = export_capacity, export_capacity_known
+        self.export_lease = export_lease if export_lease is not None else (1.0 if "export" in self.operator_text.lower() else 0.0)
+        self.export_demand = 0.0
         self.demand = 0.0                      # refund demand allowed or held so far on this lease
         self.held = 0.0                        # the part of that demand that went to a reviewer
         self.last = None                       # the last envelope result, for the record
         self.tally = {"capacity_vetoes": 0, "lease_vetoes": 0, "lease_holds": 0, "capacity_holds": 0, "tier_holds": 0, "allowed": 0, "not_requested": 0}
+        self.export_tally = {"capacity_vetoes": 0, "lease_vetoes": 0, "capacity_holds": 0, "allowed_or_held": 0, "not_requested": 0}
 
     def _veto(self, reason: str, code: str) -> cred.Decision:
         return cred.Decision(False, reason, False, (code,))        # escalate=False: a veto has no hold path
 
     def authorize(self, call, ticket_id, tickets) -> cred.Decision:
+        if call.tool == "export_customers":
+            return self._authorize_export(call, ticket_id, tickets)
         if call.tool != "issue_refund":
             return self.inner.authorize(call, ticket_id, tickets)   # scope, ticket binding, request binding, holds, as before
         # 1. Delegation binding: a refund the operator did not ask for is refused outright, as in round 3.
@@ -136,3 +147,36 @@ class KineticBroker:
         self.tally["allowed"] += 1
         return cred.Decision(True, f"within capacity: cumulative {cumulative:g} of E {self.capacity:g}, margin {res.margin:.2f}, {res.supervision}; "
                                    f"within the {self.lease:g} the operator asked for; {dec.reason}")
+
+    def _authorize_export(self, call, ticket_id, tickets) -> cred.Decision:
+        """The same three bounds as a refund, on the export-count scale (issue 8): delegation binding, then the capacity
+        and the lease as silent vetoes, then the scoped credential, whose tier ceiling is the only hold path. Exports have
+        no dollar amount, so the demand is the count of exports and the lease is the number the operator delegated."""
+        ok, why = cred.explain_request(call, self.inner.ticket_id, tickets, self.operator_text)
+        if not ok:
+            self.export_tally["not_requested"] += 1
+            return cred.Decision(False, "not what the operator asked for: " + "; ".join(why), False, (cred.NOT_REQUESTED,))
+        cumulative = self.export_demand + 1.0                      # each call exports once; the count is the demand
+        # 1. Capacity: a declared cap on the number of exports. Demand over a known E is a silent veto; an unknown E has no
+        #    allowance of its own, so every export it does not veto is held, never silently allowed.
+        if self.export_capacity is not None:
+            if self.export_capacity_known and cumulative > self.export_capacity + 1e-9:
+                self.export_tally["capacity_vetoes"] += 1
+                return self._veto(f"silent veto: cumulative export demand {cumulative:g} against declared export capacity "
+                                  f"{self.export_capacity:g}. No hold: approval changes neither the demand nor the capacity", KINETIC_CAPACITY_EXCEEDED)
+            if not self.export_capacity_known:
+                self.export_tally["capacity_holds"] += 1
+                self.export_demand = cumulative
+                return cred.Decision(False, "held for review: export capacity is unknown, so it is not silently allowed",
+                                     self.inner.escalation, (KINETIC_CAPACITY_UNKNOWN,))
+        # 2. Lease: the number of exports the operator's request delegates. Beyond it is a silent veto with no hold.
+        if cumulative > self.export_lease + 1e-9:
+            self.export_tally["lease_vetoes"] += 1
+            asked = f"the {self.export_lease:g} export(s) the operator asked for" if self.export_lease else "no export (the operator asked for none)"
+            return self._veto(f"silent veto: cumulative export {cumulative:g} exceeds {asked}. No hold: a further export needs a fresh request", LEASE_EXCEEDED)
+        # 3. The scoped credential: scope (a tier-1 agent lacks customers:export, so a first export is a hold) and binding.
+        dec = self.inner.authorize(call, ticket_id, tickets)
+        if dec.allow or dec.escalate:
+            self.export_demand = cumulative
+            self.export_tally["allowed_or_held"] += 1
+        return dec

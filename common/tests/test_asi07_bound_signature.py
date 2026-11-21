@@ -75,7 +75,7 @@ def test_a_refused_message_does_not_use_up_its_nonce():
 # ---- the experiment, scripted (never a result) ----
 
 def test_listed_second_with_three_replays_and_four_conditions():
-    assert experiments("asi07") == ["first-run", "bound-signature"]
+    assert experiments("asi07") == ["first-run", "bound-signature", "agent-card-poisoning"]
     sc = load_scenario("asi07", "bound-signature")
     assert [d.name for d in sc.defenses] == ["none", "prevent", "prevent_bound", "contain"]
     cases = sc.cases()

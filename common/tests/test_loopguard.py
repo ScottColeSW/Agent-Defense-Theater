@@ -88,3 +88,20 @@ def test_ignores_failure_recovery_and_harness_retries(tmp_path):
         reason="valid distinct ticket",
     )
     assert len(detector.alerts) == 0
+
+
+def test_a_raising_observer_never_breaks_the_run_or_the_log(tmp_path):
+    log_path = tmp_path / "noisy.decisions.jsonl"
+
+    def boom(entry):
+        raise RuntimeError("buggy observer")
+
+    log = DecisionLog(log_path, observers=[boom])
+    entry = log.append(
+        actor="support-agent", tier="quiet", delegation=["user", "support-agent"],
+        action="issue_refund", saw={"args": {"ticket_id": "T-1001", "amount": 10}},
+        verdict="allow", reason="telemetry observer must not crash the run",
+    )
+    assert entry["seq"] == 1                      # append returned normally despite the raising observer
+    v = verify(log_path)
+    assert v.ok is True and v.entries == 1        # the entry was written and the hash chain stayed intact

@@ -1,4 +1,4 @@
-﻿"""Tamper-evident decision log: a hash chain, one JSON line per decision.
+"""Tamper-evident decision log: a hash chain, one JSON line per decision.
 
 Each entry holds the hash of the previous entry, so editing or deleting history breaks
 the chain at that point. This shows tampering after the fact. It does not prevent it,
@@ -45,7 +45,10 @@ class DecisionLog:
             f.write(json.dumps(entry, ensure_ascii=False) + "\n")
         self.prev = entry["hash"]
         for obs in self._observers:
-            obs(entry)
+            try:
+                obs(entry)
+            except Exception:
+                pass                     # a read-only telemetry observer must never break the run or the log (the entry is already written and hashed)
         return entry
 
     @property

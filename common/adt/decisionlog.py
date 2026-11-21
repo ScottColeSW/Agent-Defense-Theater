@@ -8,6 +8,7 @@ import hashlib
 import json
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Callable, Optional
 
 from .schema import now
 
@@ -20,15 +21,20 @@ def _digest(entry: dict) -> str:
 
 
 class DecisionLog:
-    def __init__(self, path):
+    def __init__(self, path, observers: Optional[list[Callable[[dict], None]]] = None):
         self.path = Path(path)
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self.seq, self.prev = 0, GENESIS
+        self._observers: list[Callable[[dict], None]] = list(observers) if observers else []
         if self.path.exists():
             for line in self.path.read_text(encoding="utf-8").splitlines():
                 if line.strip():
                     e = json.loads(line)
                     self.seq, self.prev = e["seq"], e["hash"]
+
+    def add_observer(self, fn: Callable[[dict], None]) -> None:
+        """Register a read-only callback invoked after each entry is appended."""
+        self._observers.append(fn)
 
     def append(self, *, actor: str, tier: str, delegation: list, action: str, saw: dict, verdict: str, reason: str) -> dict:
         self.seq += 1
@@ -38,6 +44,11 @@ class DecisionLog:
         with self.path.open("a", encoding="utf-8") as f:
             f.write(json.dumps(entry, ensure_ascii=False) + "\n")
         self.prev = entry["hash"]
+        for obs in self._observers:
+            try:
+                obs(entry)
+            except Exception:
+                pass                     # a read-only telemetry observer must never break the run or the log (the entry is already written and hashed)
         return entry
 
     @property

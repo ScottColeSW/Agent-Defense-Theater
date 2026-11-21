@@ -10,6 +10,23 @@ If you are placing your own agents against a framework, read this as a map of wh
 - LLM Top 10 matches are the author's proposal. "Partial" means the overlap is real but incomplete, and "No direct match" means none was found.
 - ATLAS IDs were checked against the ATLAS data, the ATLAS-2026.07 release (format-version 6.0.0). Every item now carries a proposed ATLAS mapping at technique level. ASI07 has no direct technique and is recorded as "No direct match", with AML.T0073 Impersonation noted as the nearest. The mappings are the author's proposal, not an OWASP or MITRE endorsement; the 2026 OWASP appendix itself maps at tactic level, so these are the finer-grained proposal.
 
+## STRIDE mapping (threat categories)
+
+For a threat-modeling reader, here is each item placed against STRIDE (Spoofing, Tampering, Repudiation, Information Disclosure, Denial of Service, Elevation of Privilege). This is the author's proposal, the same caveat as the OWASP and ATLAS columns: STRIDE was built for component data flows, not agent cognition, so prompt injection, for example, lands under Tampering because it alters the instruction stream the agent trusts. Each item links to the scenario that tests it.
+
+| Item | STRIDE | Why |
+| --- | --- | --- |
+| [ASI01](../items/asi01-goal-hijack/) Agent Goal Hijack | Tampering | Injected instructions alter the agent's objective and plan. |
+| [ASI02](../items/asi02-tool-misuse/) Tool Misuse and Exploitation | Elevation of Privilege; Tampering | The agent invokes privileged tools with unsafe or manipulated parameters. |
+| [ASI03](../items/asi03-identity-privilege/) Identity and Privilege Abuse | Elevation of Privilege; Spoofing | The agent acts with authority beyond its tier, or under a shared or assumed identity. |
+| [ASI04](../items/asi04-supply-chain/) Agentic Supply Chain | Tampering | A tampered tool or dependency is staged in front of the real one. |
+| [ASI05](../items/asi05-code-execution/) Unexpected Code Execution | Elevation of Privilege; Information Disclosure (Denial of Service for the compute tier) | Generated code escapes the sandbox, exfiltrates a secret, or exhausts compute. |
+| [ASI06](../items/asi06-memory-context-poisoning/) Memory and Context Poisoning | Tampering | A forged document alters the memory the agent later trusts. |
+| [ASI07](../items/asi07-inter-agent-communication/) Insecure Inter-Agent Communication | Spoofing; Tampering; Repudiation | A forged or replayed message impersonates a sender; an unsigned receipt leaves the action deniable. |
+| [ASI08](../items/asi08-cascading-failures/) Cascading Failures | Tampering | A false figure injected into one agent propagates as trusted data through the crew. |
+| [ASI09](../items/asi09-human-agent-trust/) Human-Agent Trust Exploitation | Spoofing | The agent's self-written account misrepresents what it did, so a human approves. |
+| [ASI10](../items/asi10-rogue-agents/) Rogue Agents | Elevation of Privilege; Repudiation | The agent takes restricted actions outside its scope and reports them as routine. |
+
 ## Maintenance
 
 The README matrix, `site/index.html`, and this CSV show the same data. Update the CSV first and copy the change to the other two until a generator exists.

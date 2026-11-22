@@ -230,3 +230,7 @@ keys.ini
 
 # Canary registry (fingerprints only, but local state)
 canaries.json
+
+# Downloaded OWASP Cheat Sheet Series site (third-party reference material, not our work;
+# used locally to extract a references crosswalk, never redistributed)
+docs/2021_OWASP_site/

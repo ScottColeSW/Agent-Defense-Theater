@@ -83,3 +83,4 @@ What this changes and what it does not:
 
 - [`governance.csv`](governance.csv) and [`governance-links.json`](governance-links.json): the governance crosswalk and which pass-bar criteria of each test bear on which row. See [`../docs/GOVERNANCE-CROSSWALK.md`](../docs/GOVERNANCE-CROSSWALK.md).
 - [`threat-surfaces.json`](threat-surfaces.json): the author's grouping of planted attacks into prompt injection, identity and authority claims, and excessive agency, used by the report's Threat surfaces view.
+- [`owasp-cheatsheets.md`](owasp-cheatsheets.md): a map from each item and experiment to the OWASP Cheat Sheets that give the corresponding defender guidance, with the places that guidance independently states findings measured here.

@@ -14,7 +14,9 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from . import gpucooler, modelmgr, resources
+from dataclasses import asdict
 from .decisionlog import DecisionLog
+from .loopguard import RuntimeLoopDetector
 from .models import NO_RETRY, CachedRunner, ModelError, Reply, ollama_version
 from .schema import now, validate
 
@@ -126,7 +128,8 @@ def free_models():
 
 
 def run(scenario, runners: list, out_dir: Path, mode: str = "live", exploratory: bool = False,
-        defenses: list = None, progress=print, on_start=None, on_progress=None, should_stop=None) -> dict:
+        defenses: list = None, progress=print, on_start=None, on_progress=None, should_stop=None,
+        loop_detect: bool = False) -> dict:
     """Run every case against every defense and model. Writes <run_id>.jsonl, a decision log and <run_id>.meta.json."""
     out_dir = Path(out_dir)
     tag = "scripted" if mode == "scripted" else ("exploratory" if exploratory else "prereg")
@@ -140,6 +143,15 @@ def run(scenario, runners: list, out_dir: Path, mode: str = "live", exploratory:
         if problems:
             raise SystemExit("Not starting: this machine is short of resources.\n  " + "\n  ".join(problems))
     rec_path, log = out_dir / f"{run_id}.jsonl", DecisionLog(out_dir / f"{run_id}.decisions.jsonl")
+    detector = RuntimeLoopDetector() if loop_detect else None
+    loop_alerts: list[dict] = []
+    case_ctx: dict = {}
+    if detector is not None:
+        def _on_log_entry(entry: dict) -> None:
+            alert = detector.observe(entry, context=case_ctx)
+            if alert is not None:
+                loop_alerts.append(asdict(alert))
+        log.add_observer(_on_log_entry)
     cases, defs = scenario.cases(), defenses or scenario.defenses
     info = {}
     if mode == "live" and not exploratory:
@@ -166,6 +178,10 @@ def run(scenario, runners: list, out_dir: Path, mode: str = "live", exploratory:
             previous = getattr(runner, "model", None)
             cr = CachedRunner(runner) if mode == "live" else runner
             for i, (case, d) in enumerate(pairs, 1):
+                if detector is not None:
+                    detector.reset()
+                    case_ctx.clear()
+                    case_ctx.update({"model": runner.name, "defense": d.name, "attack": case.attack, "task": case.task, "tier": case.tier})
                 cut_before = getattr(cr, "truncations", 0)
                 try:
                     res = scenario.run_case(case, d, cr, log)
@@ -211,6 +227,13 @@ def run(scenario, runners: list, out_dir: Path, mode: str = "live", exploratory:
             "gpu": gpucooler.active.stats() if gpucooler.active else None, "model_info": _model_info(runners, scenario),
             "ollama_version": ollama_version() if mode == "live" else None,      # issue 11: pin the server version; null on scripted/unreachable
             "started": now()}
+    if detector is not None:
+        meta["loop_detect"] = True
+        meta["loop_alerts"] = len(loop_alerts)
+        loops_path = out_dir / f"{run_id}.loops.jsonl"
+        with loops_path.open("w", encoding="utf-8") as lf:
+            for item in loop_alerts:
+                lf.write(json.dumps(item, ensure_ascii=False) + "\n")
     if gpucooler.active:
         (out_dir / f"{run_id}.gpu.json").write_text(json.dumps(gpucooler.active.timeline()), encoding="utf-8")
     (out_dir / f"{run_id}.meta.json").write_text(json.dumps(meta, indent=1), encoding="utf-8")

@@ -191,7 +191,7 @@ The [governance crosswalk](docs/GOVERNANCE-CROSSWALK.md) sets each measurement b
 
 ## Related projects
 
-[Palimpsest](https://github.com/ScottColeSW/Palimpsest) (the memory gate), [Aegis Vector](https://github.com/ScottColeSW/Project-Aegis-Vector) (forgery testbed and episode player), [Void-Marauders](https://github.com/ScottColeSW/Void-Marauders) (outcome-sensitive trust between agents), [Evo](https://github.com/ScottColeSW/Evo) (multi-agent simulation with a benchmark harness).
+[Palimpsest](https://github.com/ScottColeSW/Palimpsest) (the memory gate), [Aegis Vector](https://github.com/ScottColeSW/Project-Aegis-Vector) (forgery testbed and episode player), [Void-Marauders](https://github.com/ScottColeSW/Void-Marauders) (outcome-sensitive trust between agents), [Evo](https://github.com/ScottColeSW/Evo) (multi-agent simulation with a benchmark harness), [AI Agent Exposure Appraisal](https://github.com/ScottColeSW/ai-agent-exposure-appraisal) (measured results set beside the questions an executive would ask, with the cost and caveat next to each).
 
 ## External citations
 

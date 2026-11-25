@@ -79,6 +79,10 @@ What this changes and what it does not:
 - The ATLAS column in `coverage.csv` is now filled for every item, mapped to the ATLAS-2026.07 release. The 2026 edition added agent-specific techniques (AI Agent Tool Invocation, AI Agent Tool Poisoning, Generate Malicious Commands, Agentic Resource Consumption, LLM Trusted Output Components Manipulation) that fit these items directly, so the 2025 LLM-entry candidate IDs above are superseded by the item-level mappings.
 - LLM02 and LLM07 have no matching item. ASI05's secret-exfiltration attacks overlap LLM02. That is listed as a stub in [`../docs/OPEN-WORK.md`](../docs/OPEN-WORK.md).
 
+## Related production enforcement
+
+The structural defenses that held here have production counterparts worth naming for a reader placing their own controls. [Project Shirudo](https://github.com/shirudo-dev/shirudo) (OpenAI and Cisco, BSD-2 licensed) is a BPF-based platform that enforces an agent boundary at the Linux kernel: signed BPF loaders, boot-time guards that root on the target cannot bypass, and TPM-signed attestation of the loaded state. It names LLM-agent policy enforcement among its use cases, and it sits one layer below this bench. ASI05's `os_boundary` result is the measured, behavioral analog of its kernel enforcement, and its offline-verifiable attestation is the hardware analog of this project's hash-chained decision log. The two are complementary, not competing: enforce at the kernel what a compromised agent cannot reach, and measure at the behavior layer whether the agent's own authorization holds. This is the author's framing, offered as context, not an endorsement by either project.
+
 ## Other files
 
 - [`governance.csv`](governance.csv) and [`governance-links.json`](governance-links.json): the governance crosswalk and which pass-bar criteria of each test bear on which row. See [`../docs/GOVERNANCE-CROSSWALK.md`](../docs/GOVERNANCE-CROSSWALK.md).

@@ -8,7 +8,7 @@ from adt.loader import experiments, load_scenario
 
 def test_registered_sized_and_every_fault_aims_at_a_deal_that_does_not_clear_the_bar():
     sc = load_scenario("asi08")
-    assert experiments("asi08") == ["first-run"]
+    assert experiments("asi08") == ["first-run", "tool-budget"]
     cases = sc.cases()
     assert len(cases) == 25 and sum(c.kind == "attack" for c in cases) == 15 and len(sc.defenses) == 4
     for c in cases:

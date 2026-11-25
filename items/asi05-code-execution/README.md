@@ -51,6 +51,8 @@ A data agent (a live local model) writes Python to answer a ticket; the code run
 
 The container boundary here is relied on for one narrow thing, confirmed before it was: a Linux container cannot open a Windows GUI window, and `docker rm -f` reliably tears down the whole process tree. It is not a micro-VM and is not relied on against a kernel exploit or a container-escape technique, which stays out of scope. A container on a workstation remains a demonstration of the mechanism, not a production boundary to trust; that would need real isolation (a micro-VM or user-space kernel) and a security review of the sandbox itself.
 
+A production example of that direction is [Project Shirudo](https://github.com/shirudo-dev/shirudo) (OpenAI and Cisco, BSD-2), a BPF-based platform that enforces such a boundary at the Linux kernel, with signed BPF loaders and boot-time guards that root on the target cannot bypass, and which lists LLM-agent policy enforcement among its use cases. The `os_boundary` condition here is the measured, behavioral analog of that kernel enforcement one layer up, and Shirudo's TPM-signed, offline-verifiable attestation is the hardware analog of this repository's hash-chained decision log. The two are complementary: the kernel enforces what a compromised agent's code cannot reach, while this bench measures whether the agent's own authorization holds.
+
 ## Folder map
 
 - `attacks/`: attack payloads and generators, one file per tier.
